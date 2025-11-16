@@ -119,6 +119,17 @@ jobs:
           echo "After chmod listing"
           ls -la android || true
 
+      - name: Normalize gradlew line endings and ensure exec
+        run: |
+          echo "Normalize line endings for android/gradlew and set exec"
+          if [ -f android/gradlew ]; then
+            sed -i 's/\r$//' android/gradlew || true
+            chmod +x android/gradlew || true
+            echo "gradlew permissions after normalize:"; ls -la android/gradlew || true
+          else
+            echo "android/gradlew not found"
+          fi
+
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
