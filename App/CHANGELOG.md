@@ -5,6 +5,17 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2025-11-16
+
+### Fixed
+- CI release pipeline reliability: replaced deprecated tauri-action step with direct build + robust artifact upload
+- Ensured stable artifact names and added Windows EXE (NSIS) alongside MSI
+- Improved GitHub release creation to avoid intermittent timeout when attaching assets
+- README Quick Download links point to stable filenames produced by CI
+
+### Notes
+- If you tried v1.4.0 quick links earlier, they may have 404’d while CI was attaching assets. v1.4.1 resolves this.
+
 ## [1.4.0] - 2025-11-16
 
 ### 🎨 UI/UX Improvements
