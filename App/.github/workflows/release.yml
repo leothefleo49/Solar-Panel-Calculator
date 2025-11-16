@@ -141,6 +141,8 @@ jobs:
 
       - name: Build Android APK (release)
         working-directory: android
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: ./gradlew --no-daemon --stacktrace clean :app:assembleRelease
 
       - name: Detect signing secrets
@@ -198,6 +200,8 @@ jobs:
       - name: Build Android APK (debug fallback)
         if: steps.detect_signing.outputs.has_signing != 'true'
         working-directory: android
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: ./gradlew --no-daemon --stacktrace :app:assembleDebug
 
       - name: Rename APKs for release
