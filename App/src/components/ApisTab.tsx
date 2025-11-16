@@ -10,10 +10,14 @@ const ApisTab = () => {
     setSolarKey,
     setMapsKey,
     setGeminiKey,
+    setShoppingKey,
+    setShoppingCx,
     clearUnifiedKey,
     clearSolarKey,
     clearMapsKey,
     clearGeminiKey,
+    clearShoppingKey,
+    clearShoppingCx,
   } = useGoogleApiStore()
   const { apiKey, setApiKey, clearApiKey } = useChatStore()
   const [showKeys, setShowKeys] = useState(false)
@@ -104,6 +108,28 @@ const ApisTab = () => {
                 />
                 {apiKey && <button type="button" onClick={clearApiKey} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
               </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">Shopping API Key (Optional) <InfoTooltip content="Google Custom Search API key for product search. Free tier: 100 queries/day." /></label>
+                <input
+                  type={showKeys ? 'text' : 'password'}
+                  value={apiKeys.shopping || ''}
+                  onChange={(e) => setShoppingKey(e.target.value)}
+                  placeholder="Custom Search API key"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+                />
+                {apiKeys.shopping && <button type="button" onClick={clearShoppingKey} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">Shopping Engine ID (CX) <InfoTooltip content="Custom Search Engine ID. Create at programmablesearchengine.google.com - enable 'Search the entire web'." /></label>
+                <input
+                  type={showKeys ? 'text' : 'password'}
+                  value={apiKeys.shoppingCx || ''}
+                  onChange={(e) => setShoppingCx(e.target.value)}
+                  placeholder="Custom Search CX"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+                />
+                {apiKeys.shoppingCx && <button type="button" onClick={clearShoppingCx} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
+              </div>
             </div>
           )}
         </div>
@@ -113,8 +139,9 @@ const ApisTab = () => {
         <h4 className="text-sm font-semibold uppercase tracking-widest text-slate-300">Key Setup Instructions</h4>
         <ol className="list-decimal list-inside text-xs text-slate-300 space-y-1">
           <li>Create a Google Cloud project or reuse existing.</li>
-          <li>Enable: Solar API, Maps JavaScript API, Geocoding API, Gemini API (optional for unified usage).</li>
+          <li>Enable: Solar API, Maps JavaScript API, Geocoding API, Custom Search API, Gemini API (optional for unified usage).</li>
           <li>Generate a restricted API key (HTTP referrers / bundle id / package name as appropriate).</li>
+          <li>For Shopping API: visit <a href="https://programmablesearchengine.google.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">programmablesearchengine.google.com</a>, create a search engine, enable "Search the entire web", copy the CX (Engine ID).</li>
           <li>For unified mode paste the same key in Unified field; for separate mode supply each key individually.</li>
           <li>Obtain AI provider key (OpenAI dashboard, Anthropic console, xAI portal, or Gemini) and paste under AI Provider Key.</li>
           <li>If using unified Google workflow, Gemini key may be the same as unified key; AI provider switch in Chat Assistant still works.</li>

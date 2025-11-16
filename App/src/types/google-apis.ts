@@ -8,6 +8,8 @@ export interface GoogleApiKeys {
   solar?: string; // Separate Solar API key
   maps?: string; // Separate Maps API key
   gemini?: string; // Separate Gemini AI key
+  shopping?: string; // Separate Shopping API key (Custom Search API)
+  shoppingCx?: string; // Custom Search Engine ID for Shopping
 }
 
 export interface SolarPotentialRequest {

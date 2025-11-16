@@ -16,6 +16,10 @@ android {
             // Default reference: AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
+        // Include all common ABIs to prevent install hangs due to missing architecture support
+        ndk {
+            abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+        }
     }
 
     buildTypes {
@@ -29,6 +33,16 @@ android {
             // Faster iteration; keep resources intact
             minifyEnabled false
             shrinkResources false
+        }
+    }
+
+    // Produce universal APK (single APK with all ABIs)
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            universalApk true
         }
     }
 

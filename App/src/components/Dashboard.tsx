@@ -16,6 +16,7 @@ import { useSolarStore } from '../state/solarStore'
 import type { SolarStoreState } from '../state/solarStore'
 import SolarApiIntegration from './SolarApiIntegration'
 import ApisTab from './ApisTab.tsx'
+import ShoppingCart from './ShoppingCart'
 import {
   buildModelSnapshot,
   formatCurrency,
@@ -29,6 +30,7 @@ const TAB_DEFINITION = [
   { id: 'financial', label: 'Financial Summary' },
   { id: 'production', label: 'Production & Performance' },
   { id: 'battery', label: 'Battery & Outage Simulation' },
+  { id: 'shopping', label: 'Shopping Cart' },
   { id: 'apis', label: 'APIs' },
   { id: 'solarIntegration', label: 'Google Solar Integration' },
   { id: 'datasheet', label: '25-Year Data Sheet' },
@@ -137,6 +139,7 @@ const Dashboard = () => {
             netMetering={config.netMetering}
           />
         )}
+        {activeTab === 'shopping' && <ShoppingCart />}
         {activeTab === 'apis' && <ApisTab />}
         {activeTab === 'solarIntegration' && <SolarIntegrationTab />}
         {activeTab === 'datasheet' && <DataSheetTab rows={snapshot.projection} />}

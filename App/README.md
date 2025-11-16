@@ -294,6 +294,13 @@ See [RELEASE_INSTRUCTIONS.md](./RELEASE_INSTRUCTIONS.md) for detailed build inst
 - **Resource merge failures**: Run `./gradlew clean` then rebuild.
 - **App crashes on launch**: Confirm `minSdkVersion` (23) device compatibility; run `adb logcat` to inspect.
 - **APK won't install**: Enable "Install from Unknown Sources"; verify architecture (x86 emulator cannot run arm64-only builds).
+- **Install progress hangs at 100%**: This usually means a **signature mismatch** or **missing ABI**. Debug:
+  1. Uninstall any existing version: `adb uninstall com.solarpanel.calculator`
+  2. Try install via adb: `adb install -r path/to/app.apk` (watch for `INSTALL_FAILED_*` errors)
+  3. Check APK signature: `apksigner verify --verbose app.apk` (requires Android SDK build-tools)
+  4. Verify ABIs included: `unzip -l app.apk | grep lib/` (should show arm64-v8a, armeabi-v7a, x86, x86_64)
+  5. Capture install logs: `adb logcat -c && adb logcat > install-log.txt` (then install and check log for PackageManager errors)
+  6. Ensure latest build includes universal APK (check `android/app/build.gradle` for `splits { abi { universalApk true } }`)
 
 ### CORS Errors
 Desktop/Android handle CORS automatically. Web deployment requires backend proxy for AI APIs.

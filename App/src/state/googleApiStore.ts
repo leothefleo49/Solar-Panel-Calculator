@@ -13,13 +13,18 @@ interface GoogleApiState {
   setSolarKey: (key: string) => void;
   setMapsKey: (key: string) => void;
   setGeminiKey: (key: string) => void;
+  setShoppingKey: (key: string) => void;
+  setShoppingCx: (cx: string) => void;
   clearUnifiedKey: () => void;
   clearSolarKey: () => void;
   clearMapsKey: () => void;
   clearGeminiKey: () => void;
+  clearShoppingKey: () => void;
+  clearShoppingCx: () => void;
   clearAllKeys: () => void;
   hasAnySolarAccess: () => boolean;
   hasMapsAccess: () => boolean;
+  hasShoppingAccess: () => boolean;
 }
 
 export const useGoogleApiStore = create<GoogleApiState>()(
@@ -45,6 +50,16 @@ export const useGoogleApiStore = create<GoogleApiState>()(
       setGeminiKey: (key: string) =>
         set((state) => ({
           apiKeys: { ...state.apiKeys, gemini: key },
+        })),
+
+      setShoppingKey: (key: string) =>
+        set((state) => ({
+          apiKeys: { ...state.apiKeys, shopping: key },
+        })),
+
+      setShoppingCx: (cx: string) =>
+        set((state) => ({
+          apiKeys: { ...state.apiKeys, shoppingCx: cx },
         })),
 
       clearUnifiedKey: () =>
@@ -75,6 +90,20 @@ export const useGoogleApiStore = create<GoogleApiState>()(
           return { apiKeys: rest };
         }),
 
+      clearShoppingKey: () =>
+        set((state) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { shopping, ...rest } = state.apiKeys;
+          return { apiKeys: rest };
+        }),
+
+      clearShoppingCx: () =>
+        set((state) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { shoppingCx, ...rest } = state.apiKeys;
+          return { apiKeys: rest };
+        }),
+
       clearAllKeys: () => set({ apiKeys: {} }),
 
       hasAnySolarAccess: () => {
@@ -85,6 +114,11 @@ export const useGoogleApiStore = create<GoogleApiState>()(
       hasMapsAccess: () => {
         const keys = get().apiKeys;
         return !!(keys.unified || keys.maps);
+      },
+
+      hasShoppingAccess: () => {
+        const keys = get().apiKeys;
+        return !!((keys.unified || keys.shopping) && keys.shoppingCx);
       },
     }),
     {
