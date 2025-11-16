@@ -3,11 +3,13 @@ import type { MouseEvent } from 'react'
 import { useChatStore } from '../state/chatStore'
 import { buildModelSnapshot } from '../utils/calculations'
 import { useSolarStore } from '../state/solarStore'
+import { useCartStore } from '../state/cartStore'
 import { callOpenAI, callGeminiFlash, callClaude, callGrok } from '../utils/aiProviders'
 
 const ChatAssistant = () => {
   const config = useSolarStore((s) => s.config)
   const snapshot = buildModelSnapshot(config)
+  const { items: cartItems, checkCompatibility, getMissingComponents } = useCartStore()
   const {
     apiKey,
     clearApiKey,
@@ -87,7 +89,29 @@ const ChatAssistant = () => {
     setLoading(true)
     try {
       const contextBlob = `System Summary:\nArray Size: ${snapshot.systemSizeKw.toFixed(2)} kWdc\nAnnual Production: ${snapshot.annualProduction.toFixed(0)} kWh\nBreak-Even Year: ${snapshot.summary.breakEvenYear ?? 'Not reached'}\n25-Year Savings: $${snapshot.summary.totalSavings.toFixed(0)}\nNet Upfront Cost: $${snapshot.summary.netUpfrontCost.toFixed(0)}\nAverage Monthly Production: ${snapshot.averageMonthlyProduction.toFixed(0)} kWh\nNet Metering: ${config.netMetering ? 'Enabled' : 'Disabled'}\n`
-      const knowledge = 'Core Concepts: PV module efficiency, degradation (~0.5%/yr typical), inverter lifetime, BOS cost drivers, capacity factor, peak sun hours, utility escalation, ROI, break-even, battery autonomy hours. Provide practical guidance and warn when assumptions look out of band.'
+      
+      // Shopping cart context
+      const compatibility = checkCompatibility()
+      const missingComponents = getMissingComponents()
+      let cartContext = ''
+      if (cartItems.length > 0) {
+        cartContext = `\nShopping Cart (${cartItems.length} items):\n`
+        cartItems.forEach(item => {
+          cartContext += `- ${item.name} (${item.category}, qty: ${item.quantity})`
+          if (item.specs.power) cartContext += ` ${item.specs.power}W`
+          if (item.specs.voltage) cartContext += ` ${item.specs.voltage}V`
+          if (item.price) cartContext += ` $${item.price * item.quantity}`
+          cartContext += '\n'
+        })
+        cartContext += `Compatibility: ${compatibility.passed ? 'OK' : 'ISSUES'}\n`
+        if (compatibility.errors.length) cartContext += `Errors: ${compatibility.errors.join('; ')}\n`
+        if (compatibility.warnings.length) cartContext += `Warnings: ${compatibility.warnings.join('; ')}\n`
+        if (missingComponents.length) cartContext += `Missing: ${missingComponents.join(', ')}\n`
+      } else {
+        cartContext = '\nShopping Cart: Empty. User can search products in Shopping Cart tab or manually add items.\n'
+      }
+
+      const knowledge = 'Core Concepts: PV module efficiency, degradation (~0.5%/yr typical), inverter lifetime, BOS cost drivers, capacity factor, peak sun hours, utility escalation, ROI, break-even, battery autonomy hours. Provide practical guidance and warn when assumptions look out of band. For shopping assistance: help validate product specs match system requirements, check NEC compliance (690/705/706), suggest compatible components, warn about voltage/ampacity mismatches. You can guide users to the Shopping Cart tab to add products or adjust configurator values based on cart items.'
 
       const chatMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
         {
@@ -96,7 +120,7 @@ const ChatAssistant = () => {
             'You are a friendly, expert solar PV financial & technical analysis assistant. Be warm, encouraging, and approachable while staying precise and professional. Use clear language, celebrate smart design choices, and gently flag concerns. Keep responses concise yet thorough.',
         },
         { role: 'system', content: knowledge },
-        { role: 'system', content: contextBlob },
+        { role: 'system', content: contextBlob + cartContext },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: question },
       ]

@@ -37,10 +37,10 @@ function validateCompatibility(items: CartItem[]): CompatibilityCheck {
   if (panelVoltages.length && inverterRanges.length) {
     const totalPanelVoltage = Math.max(...panelVoltages) * panels.reduce((sum, p) => sum + p.quantity, 0);
     for (const range of inverterRanges) {
-      if (totalPanelVoltage > range.max) {
+      if (range && totalPanelVoltage > range.max) {
         errors.push(`Total panel voltage (${totalPanelVoltage}V) exceeds inverter max (${range.max}V)`);
       }
-      if (totalPanelVoltage < range.min) {
+      if (range && totalPanelVoltage < range.min) {
         warnings.push(`Total panel voltage (${totalPanelVoltage}V) below inverter minimum (${range.min}V)`);
       }
     }
