@@ -5,6 +5,17 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2025-11-16
+
+### Fixed
+- **Chat Controls Alignment**: Upload Files, Start/Stop Voice, and Play Last Reply buttons now align on one row with equal height (h-9)
+- **Themed Scrollbars**: Applied smooth blue gradient scrollbars to API Usage and Shopping Cart overflow lists; removed arrow buttons
+- **Configurator Collapse**: Fixed left panel to preserve reopen handle when minimized; no longer "gone forever" after collapse
+
+### Changed
+- Configurator container uses width toggle (`w-[24rem]` → `w-0`) instead of unmounting to maintain persistent edge handle
+- Added `modern-scroll` class to all overflow containers for consistent themed scrollbar experience
+
 ## [1.4.2] - 2025-11-16
 
 ### Fixed
