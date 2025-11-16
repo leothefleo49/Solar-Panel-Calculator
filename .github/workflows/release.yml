@@ -1,0 +1,221 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Release Build Matrix
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      include_ios:
+        description: 'Attempt iOS build (requires signing secrets)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  build-tauri:
+    name: Desktop (Tauri) ${{ matrix.platform }}
+    strategy:
+      matrix:
+        include:
+          - platform: windows
+            os: windows-latest
+          - platform: macos
+            os: macos-latest
+          - platform: linux
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: App
+      - name: Build Tauri App
+        uses: tauri-apps/tauri-action@v0
+        with:
+          projectPath: App
+          # Build only; release attached in final job
+          releaseDraft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-android:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: App
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: 'App/package-lock.json'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK components (platform-tools, build-tools, platforms)
+        shell: bash
+        run: |
+          set -e
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "platforms;android-33" "build-tools;33.0.2" || true
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --list || true
+
+      - name: Diagnostic - Java/Gradle/SDK versions
+        shell: bash
+        run: |
+          java -version || true
+          echo "JAVA_HOME=$JAVA_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la android || true
+          if [ -f android/gradlew ]; then
+            echo "gradlew exists, permissions:"; ls -la android/gradlew || true
+          fi
+
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Ensure Gradle wrapper is executable
+        run: |
+          echo "Listing android directory before chmod"
+          ls -la android || true
+          chmod +x android/gradlew || true
+          echo "After chmod listing"
+          ls -la android || true
+
+      - name: Normalize gradlew line endings and ensure exec
+        run: |
+          echo "Normalize line endings for android/gradlew and set exec"
+          if [ -f android/gradlew ]; then
+            sed -i 's/\r$//' android/gradlew || true
+            chmod +x android/gradlew || true
+            echo "gradlew permissions after normalize:"; ls -la android/gradlew || true
+          else
+            echo "android/gradlew not found"
+          fi
+
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build Android APK (release)
+        working-directory: android
+        # JAVA_HOME provided by setup-java; no override needed
+        run: ./gradlew --no-daemon --stacktrace clean :app:assembleRelease
+
+      # Signing steps removed to avoid lint errors for undefined secrets.
+      # To enable signing:
+      # 1. Add secrets ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+      #    ANDROID_KEY_ALIAS, ANDROID_KEY_ALIAS_PASSWORD in repo settings.
+      # 2. Reintroduce detect_signing, decode keystore, and signing steps.
+      # 3. Optionally build a debug fallback if unsigned.
+
+      - name: Rename APKs for release
+        shell: bash
+        run: |
+          APK_DIR="android/app/build/outputs/apk"
+          mkdir -p android/app/build/outputs/release-artifacts
+          if [ -f "$APK_DIR/release/app-release-signed.apk" ]; then
+            cp "$APK_DIR/release/app-release-signed.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
+          elif [ -f "$APK_DIR/release/app-release-unsigned.apk" ]; then
+            cp "$APK_DIR/release/app-release-unsigned.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android-Unsigned.apk"
+          fi
+          if [ -f "$APK_DIR/debug/app-debug.apk" ]; then
+            cp "$APK_DIR/debug/app-debug.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android-Debug.apk"
+          fi
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Solar-Panel-Calculator-Android
+          path: App/android/app/build/outputs/release-artifacts/*.apk
+
+      # Android release attachment handled in final release-attach job; remove direct release step
+
+  build-ios:
+    if: ${{ github.event.inputs.include_ios == 'true' }}
+    name: iOS (Placeholder)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: App
+      - name: Add iOS Platform (Capacitor)
+        run: |
+          npx cap add ios || echo 'iOS platform already added'
+        working-directory: App
+      - name: Sync iOS
+        run: npm run cap:sync:ios
+        working-directory: App
+      - name: Xcode Build (Unsigned)
+        run: |
+          cd ios
+          xcodebuild -scheme App -configuration Release -sdk iphoneos build | xcpretty || true
+        working-directory: App
+      - name: Archive Placeholder
+        run: echo 'Add signing & export steps once Apple credentials configured.'
+
+  checksums:
+    name: Generate Checksums
+    needs: [build-tauri, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Generate SHA256SUMS
+        run: |
+          cd dist
+          find . -type f -exec sha256sum {} \; | sort > SHA256SUMS.txt
+      - name: Upload Checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksums
+          path: dist/SHA256SUMS.txt
+
+  release-attach:
+    name: Attach Android & Checksums to Release
+    needs: [build-tauri, build-android, checksums]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Display Artifacts
+        run: ls -R artifacts
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: artifacts/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
