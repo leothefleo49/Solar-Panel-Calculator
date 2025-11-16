@@ -466,19 +466,19 @@ const ChatAssistant = () => {
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300">
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-300">
           {recognitionSupported ? (
             listening ? (
               <button
                 type="button"
                 onClick={stopListening}
-                className="rounded-lg border border-rose-500/40 bg-rose-500/20 px-3 py-1.5 font-semibold text-rose-200 hover:bg-rose-500/30"
+                className="inline-flex h-9 items-center rounded-lg border border-rose-500/40 bg-rose-500/20 px-3 font-semibold text-rose-200 hover:bg-rose-500/30"
               >Stop Voice</button>
             ) : (
               <button
                 type="button"
                 onClick={startListening}
-                className="rounded-lg border border-accent/50 bg-accent/20 px-3 py-1.5 font-semibold text-accent hover:bg-accent/30"
+                className="inline-flex h-9 items-center rounded-lg border border-accent/50 bg-accent/20 px-3 font-semibold text-accent hover:bg-accent/30"
               >Start Voice</button>
             )
           ) : (
@@ -489,12 +489,9 @@ const ChatAssistant = () => {
               type="button"
               onClick={speakLastAssistant}
               disabled={!lastAssistantRef.current}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-semibold text-white/80 hover:border-accent hover:text-white disabled:opacity-40"
+              className="inline-flex h-9 items-center rounded-lg border border-white/10 bg-white/5 px-3 font-semibold text-white/80 hover:border-accent hover:text-white disabled:opacity-40"
             >Play Last Reply</button>
           )}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
           <input
             type="file"
             multiple
@@ -510,7 +507,7 @@ const ChatAssistant = () => {
           <button
             type="button"
             onClick={() => document.getElementById('chat-image-input')?.click()}
-            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/80 transition hover:border-accent hover:text-white"
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-white/80 transition hover:border-accent hover:text-white"
           >
             <span className="text-base">+</span>
             Upload Files
