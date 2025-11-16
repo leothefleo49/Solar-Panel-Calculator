@@ -1,0 +1,47 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Dev (Vite)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "options": {"cwd": "${workspaceFolder}/App"},
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "Build (Vite)",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "options": {"cwd": "${workspaceFolder}/App"},
+      "problemMatcher": ["$tsc"],
+      "group": "build"
+    },
+    {
+      "label": "Tauri Dev",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "tauri:dev"],
+      "options": {"cwd": "${workspaceFolder}/App"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Tauri Build",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "tauri:build"],
+      "options": {"cwd": "${workspaceFolder}/App"},
+      "problemMatcher": []
+    },
+    {
+      "label": "Smoke Test Release",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "smoke:test"],
+      "options": {"cwd": "${workspaceFolder}/App"},
+      "problemMatcher": []
+    }
+  ]
+}
