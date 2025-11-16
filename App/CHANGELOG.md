@@ -5,6 +5,89 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-11-16
+
+### Added
+- **💰 Loan Financing Calculator**: Complete financing mode with credit-based rate estimation
+  - Toggle between Cash and Loan financing modes
+  - Loan amount, term (5-30 years), and interest rate fields
+  - Credit score input (300-850) with AI-powered rate estimator
+  - Automatic rate estimation: 5.5% (780+), 6.5% (740-779), 7.5% (700-739), 8.5% (660-699), 10.0% (620-659), 12.0% (<620)
+  - Monthly loan payment calculations using standard amortization formula
+  - Break-even analysis adjusted for financing costs
+  - 25-year projection includes loan payments in annual benefit calculations
+  - Financial summary displays total loan cost and interest paid
+- **📦 Bulk Equipment Pricing**: Per-unit and bulk package pricing for all equipment
+  - Panels: Toggle between per-unit cost and bulk package pricing (1-100 units)
+  - Inverters: Separate pricing mode with bulk options (1-100 units)
+  - Batteries: Independent pricing toggle with bulk quantities (1-10 units)
+  - Smart cost calculations automatically use effective pricing based on selected mode
+  - Conditional field disabling (per-unit field disabled in bulk mode, vice versa)
+- **☀️ Yearly Sun Hours Mode**: Support for annual sun hours instead of daily
+  - Toggle between daily (hrs/day) and yearly (hrs/year) modes
+  - Automatic conversion in production calculations
+  - Max value updated to 8760 hrs (365 days × 24 hours)
+  - Matches Google Solar API output format
+  - Dynamic suffix changes based on selected mode
+- **🎨 Custom Scrollbar Theming**: Modern gradient scrollbar design
+  - Smooth blue gradient (rgba(56,189,248) → rgba(14,165,233))
+  - Transparent track with subtle white border
+  - No arrow buttons (display: none)
+  - 12px main scrollbar, 8px panel scrollbars
+  - Hover effects for enhanced usability
+- **📐 Resized Fullscreen Button**: Repositioned to avoid chat assistant overlap
+  - Reduced from h-5 w-5 to h-4 w-4
+  - Moved from top-4 right-4 to top-3 right-3
+  - Smaller padding (p-2 from p-2.5)
+  - More compact rounded-lg (from rounded-xl)
+- **🎛️ Collapsible Sidebars**: Minimize configurator and chat assistant for more dashboard space
+  - Configurator collapses to left edge with vertical tab
+  - Chat Assistant collapses to right edge with vertical tab
+  - One-click expand/collapse with arrow icons
+  - Dashboard automatically expands when panels are minimized
+  - State persists across sessions
+
+### Changed
+- **Enhanced Financial Model**: Loan payments integrated into all projections
+  - `buildProjectionRow()`: Subtracts annual loan payments from total benefit during loan term
+  - `buildFinancialSummary()`: Calculates effective upfront cost (net cost - loan amount)
+  - Break-even year accounts for financing mode (compares against loan-adjusted cost)
+- **Improved Equipment Costing**: New helper functions for flexible pricing
+  - `getEffectivePanelCost()`: Returns bulk or per-unit cost based on pricing mode
+  - `getEffectiveInverterCost()`: Mode-aware inverter pricing
+  - `getEffectiveBatteryCost()`: Smart battery cost calculation
+  - `calculateTotalUpfrontCost()`: Uses effective costs for all equipment
+- **Extended Configuration Schema**: 23 new configuration fields
+  - New field types: `modeToggle`, `bulkPricing`, `loanEstimate`
+  - Financing Options section with 5 fields
+  - Bulk pricing fields for panels, inverters, batteries (12 fields total)
+  - Sun hours mode toggle and dynamic peak sun hours field
+- **Configurator UI Enhancements**: New field type handlers
+  - `modeToggle`: Horizontal 2-button toggle (Cash/Loan, Daily/Yearly, Per Unit/Bulk)
+  - `bulkPricing`: Number input for package quantities with "units" suffix
+  - `loanEstimate`: Credit score input with "Estimate Rate" AI button + real-time rate preview
+- **Default Values Updated**: New defaults for all added fields
+  - `sunHoursMode: 'daily'`, `pricingMode: 'perUnit'`
+  - `panelBulkCount: 1`, `panelBulkCost: 6720`
+  - `inverterPricingMode: 'perUnit'`, `inverterBulkCount: 1`, `inverterBulkCost: 3500`
+  - `batteryPricingMode: 'perUnit'`, `batteryBulkCount: 1`, `batteryBulkCost: 12000`
+  - `financingMode: 'cash'`, `loanAmount: 0`, `loanTermYears: 25`, `loanInterestRate: 6.5`, `creditScore: 720`
+
+### Fixed
+- **TypeScript Compilation**: Removed unused imports and variables
+  - Fixed `SolarApiIntegration.tsx` unused imports
+  - Fixed `googleApis.ts` unused loop variable
+
+### Technical
+- Added `FinancingMode` type: `'cash' | 'loan'`
+- Added `PricingMode` type: `'perUnit' | 'bulk'`
+- Added `SunHoursMode` type: `'daily' | 'yearly'`
+- Implemented `calculateMonthlyLoanPayment(principal, rate, years)` with standard amortization
+- Implemented `estimateLoanRate(creditScore)` with 6 credit tier brackets
+- Extended `SolarConfig` interface with 23 new fields
+- Updated all calculation utilities to support new pricing and financing modes
+- Conditional field rendering in configurator based on parent toggle states
+
 ## [1.2.0] - 2025-11-16
 
 ### Added

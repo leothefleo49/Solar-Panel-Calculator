@@ -32,6 +32,7 @@ const ChatAssistant = () => {
   const [input, setInput] = useState('')
   const [keyInput, setKeyInput] = useState('')
   const [images, setImages] = useState<File[]>([])
+  const [collapsed, setCollapsed] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -148,10 +149,37 @@ const ChatAssistant = () => {
     }
   }
 
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => setCollapsed(false)}
+        className="glass-panel fixed right-0 top-1/2 z-20 -translate-y-1/2 rounded-l-[28px] p-3 text-white hover:bg-white/10 transition"
+        title="Expand Chat Assistant"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+    )
+  }
+
   return (
-    <div className="glass-panel xl:sticky xl:top-6 flex h-full max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-[28px] p-6 text-white">
-      <h3 className="text-lg font-semibold mb-1">Solar Chat Assistant</h3>
-      <p className="text-xs text-slate-300 mb-4">Enter your API key (stored only in memory) to ask planning & calculation questions.</p>
+    <div className="glass-panel xl:sticky xl:top-6 relative flex h-full max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-[28px] p-6 text-white">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold mb-1">Solar Chat Assistant</h3>
+          <p className="text-xs text-slate-300">Enter your API key (stored only in memory) to ask planning & calculation questions.</p>
+        </div>
+        <button
+          onClick={() => setCollapsed(true)}
+          className="rounded-lg p-2 hover:bg-white/10 transition ml-2"
+          title="Minimize Chat Assistant"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
 
       <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-2">
         {conversations.map((conv) => (

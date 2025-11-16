@@ -4,6 +4,7 @@ import { CONFIG_SECTIONS, type ConfigField } from '../constants/configSchema'
 import { useSolarStore } from '../state/solarStore'
 import InfoTooltip from './InfoTooltip'
 import { openExternalUrl } from '../utils/openExternal'
+import { estimateLoanRate } from '../utils/calculations'
 
 const formatValue = (value: number) =>
   Number.isFinite(value) ? value : 0
@@ -12,6 +13,7 @@ const Configurator = () => {
   const config = useSolarStore((state) => state.config)
   const setValue = useSolarStore((state) => state.setConfigValue)
   const [usageMode, setUsageMode] = useState<'monthly' | 'yearly'>('monthly')
+  const [collapsed, setCollapsed] = useState(false)
 
   const handleToggleChange = (key: ConfigField['key']) => () => {
     const current = config[key]
@@ -20,6 +22,15 @@ const Configurator = () => {
 
   const handleSelectChange = (key: ConfigField['key']) => (event: ChangeEvent<HTMLSelectElement>) => {
     setValue(key, event.target.value as never)
+  }
+
+  const handleModeToggle = (key: ConfigField['key'], newValue: string) => {
+    setValue(key, newValue as never)
+  }
+
+  const handleEstimateLoanRate = () => {
+    const estimatedRate = estimateLoanRate(config.creditScore)
+    setValue('loanInterestRate', estimatedRate as never)
   }
 
   const renderField = (field: ConfigField) => {
@@ -62,6 +73,105 @@ const Configurator = () => {
       )
     }
 
+    if (field.type === 'modeToggle') {
+      const currentValue = config[field.key] as string
+      const options = field.options || []
+      
+      return (
+        <div>
+          {label}
+          <div className="flex gap-2">
+            {options.map((option) => (
+              <button
+                key={option}
+                type="button"
+                onClick={() => handleModeToggle(field.key, option)}
+                disabled={disabled}
+                className={clsx(
+                  'flex-1 rounded-xl px-4 py-2 text-sm font-medium transition',
+                  currentValue === option
+                    ? 'bg-accent text-slate-900'
+                    : 'border border-white/20 bg-white/5 text-slate-300 hover:border-accent/50',
+                  disabled && 'opacity-40 cursor-not-allowed'
+                )}
+              >
+                {option === 'daily' && 'Daily'}
+                {option === 'yearly' && 'Yearly'}
+                {option === 'perUnit' && 'Per Unit'}
+                {option === 'bulk' && 'Bulk Package'}
+                {option === 'cash' && 'Cash'}
+                {option === 'loan' && 'Loan'}
+                {!['daily', 'yearly', 'perUnit', 'bulk', 'cash', 'loan'].includes(option) && option}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-slate-300">{field.helper}</p>
+        </div>
+      )
+    }
+
+    if (field.type === 'bulkPricing') {
+      return (
+        <div className={clsx(disabled && 'opacity-40')}>
+          {label}
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={formatValue(config[field.key] as number)}
+              onChange={(e) => {
+                const val = Number.parseFloat(e.target.value)
+                if (!Number.isNaN(val)) setValue(field.key, val as never)
+              }}
+              disabled={disabled}
+              min={field.min}
+              max={field.max}
+              step={field.step ?? 1}
+              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <span className="text-sm text-slate-400">units</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-300">{field.helper}</p>
+        </div>
+      )
+    }
+
+    if (field.type === 'loanEstimate') {
+      return (
+        <div className={clsx(disabled && 'opacity-40')}>
+          {label}
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={formatValue(config[field.key] as number)}
+              onChange={(e) => {
+                const val = Number.parseFloat(e.target.value)
+                if (!Number.isNaN(val)) setValue(field.key, val as never)
+              }}
+              disabled={disabled}
+              min={field.min}
+              max={field.max}
+              step={field.step ?? 10}
+              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={handleEstimateLoanRate}
+              disabled={disabled}
+              className="whitespace-nowrap rounded-xl bg-accent/20 px-4 py-3 text-sm font-medium text-accent hover:bg-accent/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Estimate Rate
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-slate-300">{field.helper}</p>
+          {config.creditScore >= 300 && (
+            <p className="mt-2 text-xs text-accent">
+              Estimated Rate: {estimateLoanRate(config.creditScore).toFixed(2)}% APR
+            </p>
+          )}
+        </div>
+      )
+    }
+
     if (field.type === 'select') {
       return (
         <div>
@@ -72,7 +182,7 @@ const Configurator = () => {
             className="premium-select block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
           >
             {field.options?.map((option) => (
-              <option key={option} value={option} className="bg-slate">
+              <option key={option} value={option} className="bg-slate-900">
                 {option}
               </option>
             ))}
@@ -100,57 +210,62 @@ const Configurator = () => {
     return (
       <div className={clsx(disabled && 'opacity-40')}>
         {label}
-        <div className="flex items-center gap-3">
+        <div className="relative">
+          {isMonthlyUsageField && (
+            <div className="mb-2 flex gap-1">
+              <button
+                type="button"
+                onClick={() => setUsageMode('monthly')}
+                className={clsx(
+                  'flex-1 rounded-lg px-3 py-1 text-xs font-medium transition',
+                  usageMode === 'monthly'
+                    ? 'bg-accent text-slate-900'
+                    : 'border border-white/20 bg-white/5 text-slate-300 hover:border-accent/50'
+                )}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setUsageMode('yearly')}
+                className={clsx(
+                  'flex-1 rounded-lg px-3 py-1 text-xs font-medium transition',
+                  usageMode === 'yearly'
+                    ? 'bg-accent text-slate-900'
+                    : 'border border-white/20 bg-white/5 text-slate-300 hover:border-accent/50'
+                )}
+              >
+                Yearly
+              </button>
+            </div>
+          )}
           <input
             type={type}
-            step={step}
+            value={displayValue}
+            onChange={(event) => {
+              let value = Number.parseFloat(event.target.value)
+              if (Number.isNaN(value)) value = 0
+              // If yearly mode for monthly usage, divide by 12
+              const finalValue = isMonthlyUsageField && usageMode === 'yearly' 
+                ? value / 12
+                : value
+              setValue(field.key, finalValue as never)
+            }}
             min={min}
             max={max}
-            value={displayValue}
-            onChange={(e) => {
-              const nextValue = parseFloat(e.target.value)
-              const actualValue = isMonthlyUsageField && usageMode === 'yearly'
-                ? (Number.isNaN(nextValue) ? 0 : nextValue) / 12
-                : (Number.isNaN(nextValue) ? 0 : nextValue)
-              setValue(field.key, actualValue)
-            }}
+            step={step}
             disabled={disabled}
-            className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:border-accent focus:ring-accent"
+            className="block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 pr-16 text-sm text-white focus:border-accent focus:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
           />
-          {displaySuffix && <span className="text-xs font-semibold text-slate-300">{displaySuffix}</span>}
+          {displaySuffix && (
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">
+              {displaySuffix}
+            </span>
+          )}
         </div>
-        {isMonthlyUsageField && (
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => setUsageMode('monthly')}
-              className={clsx(
-                'rounded-lg px-3 py-1 text-xs font-medium transition',
-                usageMode === 'monthly'
-                  ? 'bg-accent text-slate-950'
-                  : 'bg-white/10 text-slate-300 hover:bg-white/20'
-              )}
-            >
-              Monthly
-            </button>
-            <button
-              type="button"
-              onClick={() => setUsageMode('yearly')}
-              className={clsx(
-                'rounded-lg px-3 py-1 text-xs font-medium transition',
-                usageMode === 'yearly'
-                  ? 'bg-accent text-slate-950'
-                  : 'bg-white/10 text-slate-300 hover:bg-white/20'
-              )}
-            >
-              Yearly
-            </button>
-          </div>
-        )}
         <p className="mt-1 text-xs text-slate-300">{field.helper}</p>
         {field.emphasizeLinks && (
-          <div className="mt-3 flex flex-wrap gap-3 text-xs">
-            <span className="text-slate-300">Need data? Jump to:</span>
+          <div className="mt-2 flex gap-2">
             <button
               type="button"
               onClick={() => openExternalUrl('https://sunroof.withgoogle.com/')}
@@ -171,30 +286,49 @@ const Configurator = () => {
     )
   }
 
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => setCollapsed(false)}
+        className="glass-panel fixed left-0 top-1/2 z-20 -translate-y-1/2 rounded-r-[28px] p-3 text-white hover:bg-white/10 transition"
+        title="Expand Configurator"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    )
+  }
+
   return (
     <aside className="glass-panel relative z-20 flex h-full min-h-0 flex-col overflow-visible rounded-[28px] p-6 text-white">
-      <div className="mb-6">
-        <p className="text-sm uppercase tracking-[0.2em] text-accent">Configurator</p>
-        <h1 className="mt-2 text-2xl font-semibold">Fine-tune every assumption</h1>
-        <p className="text-sm text-slate-300">
-          Every input below ties directly into the financial and technical model. Hover the info icons to learn
-          what typical values look like.
-        </p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.2em] text-accent">Configurator</p>
+          <h1 className="mt-2 text-2xl font-semibold">Fine-tune every assumption</h1>
+          <p className="text-sm text-slate-300">
+            Every input below ties directly into the financial and technical model. Hover the info icons to learn
+            what typical values look like.
+          </p>
+        </div>
+        <button
+          onClick={() => setCollapsed(true)}
+          className="rounded-lg p-2 hover:bg-white/10 transition"
+          title="Minimize Configurator"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
       </div>
       <div className="modern-scroll flex-1 space-y-4 overflow-y-auto pr-1">
         {CONFIG_SECTIONS.map((section) => (
-          <details
-            key={section.id}
-            className="group w-full rounded-3xl border border-white/10 bg-white/5 p-4 shadow-glass"
-            open
-          >
-            <summary className="summary-trigger flex cursor-pointer list-none items-start justify-between gap-4">
-              <div>
-                <p className="text-base font-semibold">{section.title}</p>
-                <p className="text-xs text-slate-300">{section.description}</p>
-              </div>
+          <details key={section.id} open>
+            <summary className="summary-trigger mb-3 cursor-pointer select-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base font-semibold text-white hover:bg-white/10">
+              {section.title}
             </summary>
-            <div className="mt-4 space-y-4">
+            <div className="mb-6 space-y-4 px-1">
+              <p className="text-xs text-slate-400">{section.description}</p>
               {section.fields.map((field) => (
                 <div key={field.key}>{renderField(field)}</div>
               ))}
