@@ -17,12 +17,16 @@ jobs:
         include:
           - platform: 'windows-latest'
             args: '--target x86_64-pc-windows-msvc'
+            os_label: 'Windows'
           - platform: 'ubuntu-22.04'
             args: '--target x86_64-unknown-linux-gnu'
+            os_label: 'Linux'
           - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
+            os_label: 'macOS-Intel'
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
+            os_label: 'macOS-AppleSilicon'
 
     runs-on: ${{ matrix.platform }}
     defaults:
@@ -60,7 +64,16 @@ jobs:
           projectPath: App
           tagName: ${{ github.ref_name }}
           releaseName: 'Solar Panel Calculator ${{ github.ref_name }}'
-          releaseBody: 'See INSTALLATION.md for platform-specific installation instructions.'
+          releaseBody: |
+            ## Download Instructions
+            
+            **Windows**: Download `Solar-Panel-Calculator_x.x.x_x64_en-US.msi`
+            **macOS (Apple Silicon)**: Download `Solar-Panel-Calculator_x.x.x_aarch64.dmg`
+            **macOS (Intel)**: Download `Solar-Panel-Calculator_x.x.x_x64.dmg`
+            **Linux**: Download `Solar-Panel-Calculator_x.x.x_amd64.AppImage` or `.deb`
+            **Android**: Download `Solar-Panel-Calculator-Android.apk`
+            
+            See INSTALLATION.md for detailed instructions.
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
