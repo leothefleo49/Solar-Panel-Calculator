@@ -2,9 +2,21 @@
 
 ## 📦 Platform Support
 
-- **Desktop**: Windows, macOS, Linux (via Tauri)
-- **Mobile**: Android (via Capacitor)
+- **Desktop**: Windows, macOS (Intel & Apple Silicon), Linux (via Tauri)
+- **Mobile**: Android, iOS (via Capacitor)
 - **Web**: Progressive Web App
+
+---
+
+## 🆕 Latest Features
+
+- ✅ **Monthly/Yearly Input Toggle**: Enter costs on monthly or yearly basis
+- ✅ **External Link Support**: Opens Google Sunroof and NREL PVWatts in system browser
+- ✅ **Proper Window Sizing**: Desktop app centers on primary screen (1400x900)
+- ✅ **Fullscreen Mode**: Toggle button in top-right corner
+- ✅ **Persistent Storage**: API keys and chat history saved locally
+- ✅ **Themed Scrollbars**: Custom scrollbar styling matching app theme
+- ✅ **All AI Providers Visible**: Fixed Grok display in provider dropdown
 
 ---
 
@@ -47,6 +59,23 @@ npm run cap:build:android
 
 ---
 
+### iOS Mobile App (macOS only)
+
+```bash
+# Install dependencies
+npm install
+
+# Build and open Xcode
+npm run cap:ios
+
+# Or just sync without opening Xcode
+npm run cap:sync:ios
+```
+
+**Note**: iOS builds require Xcode and Apple Developer account for distribution.
+
+---
+
 ## 📥 One-Click Download from GitHub
 
 ### For Users
@@ -54,11 +83,14 @@ npm run cap:build:android
 1. Go to [Releases](https://github.com/leothefleo49/Solar-Panel-Calculator/releases)
 2. Download the latest version for your platform:
    - **Windows**: `Solar.Panel.Calculator_1.0.0_x64_en-US.msi` or `.exe`
-   - **macOS**: `Solar.Panel.Calculator_1.0.0_x64.dmg` (Intel) or `_aarch64.dmg` (Apple Silicon)
-   - **Linux**: `solar-panel-calculator_1.0.0_amd64.AppImage` or `.deb`
+   - **macOS Intel**: `Solar.Panel.Calculator_1.0.0_x64.dmg`
+   - **macOS Apple Silicon**: `Solar.Panel.Calculator_1.0.0_aarch64.dmg`
+   - **Linux AppImage**: `solar-panel-calculator_1.0.0_amd64.AppImage`
+   - **Linux Debian/Ubuntu**: `solar-panel-calculator_1.0.0_amd64.deb`
    - **Android**: `app-release.apk`
+   - **iOS**: Build locally with Xcode or download from TestFlight/App Store
 
-3. Install and run!
+3. Install and run! See [INSTALLATION.md](INSTALLATION.md) for detailed platform-specific instructions.
 
 ### Automated Releases
 

@@ -6,10 +6,14 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
+    iosScheme: 'capacitor',
     cleartext: true
   },
   android: {
     allowMixedContent: true
+  },
+  ios: {
+    contentInset: 'automatic'
   }
 };
 

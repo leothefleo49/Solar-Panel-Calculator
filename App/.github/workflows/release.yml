@@ -55,7 +55,7 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Solar Panel Calculator ${{ github.ref_name }}'
-          releaseBody: 'See CHANGELOG.md for details.'
+          releaseBody: 'See INSTALLATION.md for platform-specific installation instructions.'
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
@@ -87,9 +87,7 @@ jobs:
         run: npm run build
 
       - name: Sync Capacitor
-        run: |
-          npm install @capacitor/cli @capacitor/core @capacitor/android
-          npx cap sync android
+        run: npx cap sync android
 
       - name: Build Android APK
         working-directory: android

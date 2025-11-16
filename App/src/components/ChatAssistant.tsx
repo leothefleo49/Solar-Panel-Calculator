@@ -11,6 +11,7 @@ const ChatAssistant = () => {
   const {
     apiKey,
     setApiKey,
+    clearApiKey,
     loading,
     setLoading,
     provider,
@@ -183,8 +184,8 @@ const ChatAssistant = () => {
       </div>
 
       <div className="mb-4 space-y-2">
-        <div className="flex flex-wrap gap-2 items-center">
-          <div className="flex gap-2" role="tablist" aria-label="Provider">
+        <div className="flex flex-wrap gap-2 items-start">
+          <div className="flex flex-wrap gap-2" role="tablist" aria-label="Provider">
             <button
               type="button"
               onClick={() => setProvider('google')}
@@ -218,7 +219,7 @@ const ChatAssistant = () => {
           <select
             value={model}
             onChange={(e) => setModel(e.target.value)}
-            className="premium-select rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-xs focus:border-accent focus:ring-accent"
+            className="premium-select rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-xs focus:border-accent focus:ring-accent min-w-[140px]"
           >
             {provider === 'google' && (
               <>
@@ -274,13 +275,22 @@ const ChatAssistant = () => {
             />
           )}
 
-          {!apiKey && (
+          {!apiKey ? (
             <button
               type="button"
               onClick={() => setApiKey(keyInput || providerEnvKey || '')}
               className="rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-slate-950 transition hover:brightness-110"
             >
               Use Key
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => clearApiKey()}
+              className="rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110"
+              title="Clear saved API key"
+            >
+              Clear Key
             </button>
           )}
         </div>

@@ -1,8 +1,9 @@
-import { type ChangeEvent } from 'react'
+import { type ChangeEvent, useState } from 'react'
 import clsx from 'clsx'
 import { CONFIG_SECTIONS, type ConfigField } from '../constants/configSchema'
 import { useSolarStore } from '../state/solarStore'
 import InfoTooltip from './InfoTooltip'
+import { openExternalUrl } from '../utils/openExternal'
 
 const formatValue = (value: number) =>
   Number.isFinite(value) ? value : 0
@@ -10,11 +11,7 @@ const formatValue = (value: number) =>
 const Configurator = () => {
   const config = useSolarStore((state) => state.config)
   const setValue = useSolarStore((state) => state.setConfigValue)
-
-  const handleNumericChange = (key: ConfigField['key']) => (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = parseFloat(event.target.value)
-    setValue(key, Number.isNaN(nextValue) ? 0 : nextValue)
-  }
+  const [usageMode, setUsageMode] = useState<'monthly' | 'yearly'>('monthly')
 
   const handleToggleChange = (key: ConfigField['key']) => () => {
     const current = config[key]
@@ -91,6 +88,15 @@ const Configurator = () => {
     const max = field.max ?? 999999
     const type = 'number'
 
+    // Special handling for monthlyUsage field
+    const isMonthlyUsageField = field.key === 'monthlyUsage'
+    const displayValue = isMonthlyUsageField && usageMode === 'yearly' 
+      ? formatValue((config[field.key] as number) * 12)
+      : formatValue(config[field.key] as number)
+    const displaySuffix = isMonthlyUsageField 
+      ? (usageMode === 'monthly' ? 'kWh/mo' : 'kWh/yr')
+      : suffix
+
     return (
       <div className={clsx(disabled && 'opacity-40')}>
         {label}
@@ -100,33 +106,65 @@ const Configurator = () => {
             step={step}
             min={min}
             max={max}
-            value={formatValue(config[field.key] as number)}
-            onChange={handleNumericChange(field.key)}
+            value={displayValue}
+            onChange={(e) => {
+              const nextValue = parseFloat(e.target.value)
+              const actualValue = isMonthlyUsageField && usageMode === 'yearly'
+                ? (Number.isNaN(nextValue) ? 0 : nextValue) / 12
+                : (Number.isNaN(nextValue) ? 0 : nextValue)
+              setValue(field.key, actualValue)
+            }}
             disabled={disabled}
             className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-slate-400 focus:border-accent focus:ring-accent"
           />
-          {suffix && <span className="text-xs font-semibold text-slate-300">{suffix}</span>}
+          {displaySuffix && <span className="text-xs font-semibold text-slate-300">{displaySuffix}</span>}
         </div>
+        {isMonthlyUsageField && (
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setUsageMode('monthly')}
+              className={clsx(
+                'rounded-lg px-3 py-1 text-xs font-medium transition',
+                usageMode === 'monthly'
+                  ? 'bg-accent text-slate-950'
+                  : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              )}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              onClick={() => setUsageMode('yearly')}
+              className={clsx(
+                'rounded-lg px-3 py-1 text-xs font-medium transition',
+                usageMode === 'yearly'
+                  ? 'bg-accent text-slate-950'
+                  : 'bg-white/10 text-slate-300 hover:bg-white/20'
+              )}
+            >
+              Yearly
+            </button>
+          </div>
+        )}
         <p className="mt-1 text-xs text-slate-300">{field.helper}</p>
         {field.emphasizeLinks && (
           <div className="mt-3 flex flex-wrap gap-3 text-xs">
             <span className="text-slate-300">Need data? Jump to:</span>
-            <a
+            <button
+              type="button"
+              onClick={() => openExternalUrl('https://sunroof.withgoogle.com/')}
               className="rounded-full border border-accent/60 bg-accent/10 px-3 py-1 font-semibold text-accent transition hover:bg-accent/20"
-              href="https://sunroof.withgoogle.com/"
-              target="_blank"
-              rel="noreferrer"
             >
               Google Project Sunroof
-            </a>
-            <a
+            </button>
+            <button
+              type="button"
+              onClick={() => openExternalUrl('https://pvwatts.nrel.gov/')}
               className="rounded-full border border-accent/60 bg-accent/10 px-3 py-1 font-semibold text-accent transition hover:bg-accent/20"
-              href="https://pvwatts.nrel.gov/"
-              target="_blank"
-              rel="noreferrer"
             >
               NREL PVWatts
-            </a>
+            </button>
           </div>
         )}
       </div>

@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export type ChatMessage = {
   id: string
@@ -31,6 +32,7 @@ interface ChatState {
   conversations: Conversation[]
   activeConversationId: string
   setApiKey: (key: string) => void
+  clearApiKey: () => void
   setProvider: (p: Provider) => void
   setModel: (m: string) => void
   addMessage: (role: ChatMessage['role'], content: string) => void
@@ -49,84 +51,99 @@ const createNewConversation = (): Conversation => ({
   lastUsed: Date.now(),
 })
 
-export const useChatStore = create<ChatState>((set) => ({
-  apiKey: null,
-  provider: 'google',
-  model: defaultModelByProvider.google,
-  loading: false,
-  conversations: [createNewConversation()],
-  activeConversationId: '',
-  setApiKey: (key) => set({ apiKey: key.trim() || null }),
-  setProvider: (p) => set({ provider: p, model: defaultModelByProvider[p] }),
-  setModel: (m) => set({ model: m }),
-  addMessage: (role, content) =>
-    set((state) => {
-      const activeId = state.activeConversationId || state.conversations[0]?.id
-      if (!activeId) return state
-      const updated = state.conversations.map((conv) =>
-        conv.id === activeId
-          ? {
-              ...conv,
-              messages: [
-                ...conv.messages,
-                { id: crypto.randomUUID(), role, content, timestamp: Date.now() },
-              ],
-              lastUsed: Date.now(),
-              title: conv.messages.length === 0 && role === 'user' ? content.slice(0, 30) + (content.length > 30 ? '...' : '') : conv.title,
-            }
-          : conv,
-      )
-      return { conversations: updated, activeConversationId: activeId }
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set) => ({
+      apiKey: null,
+      provider: 'google',
+      model: defaultModelByProvider.google,
+      loading: false,
+      conversations: [createNewConversation()],
+      activeConversationId: '',
+      setApiKey: (key) => set({ apiKey: key.trim() || null }),
+      clearApiKey: () => set({ apiKey: null }),
+      setProvider: (p) => set({ provider: p, model: defaultModelByProvider[p] }),
+      setModel: (m) => set({ model: m }),
+      addMessage: (role, content) =>
+        set((state) => {
+          const activeId = state.activeConversationId || state.conversations[0]?.id
+          if (!activeId) return state
+          const updated = state.conversations.map((conv) =>
+            conv.id === activeId
+              ? {
+                  ...conv,
+                  messages: [
+                    ...conv.messages,
+                    { id: crypto.randomUUID(), role, content, timestamp: Date.now() },
+                  ],
+                  lastUsed: Date.now(),
+                  title: conv.messages.length === 0 && role === 'user' ? content.slice(0, 30) + (content.length > 30 ? '...' : '') : conv.title,
+                }
+              : conv,
+          )
+          return { conversations: updated, activeConversationId: activeId }
+        }),
+      setLoading: (value) => set({ loading: value }),
+      replaceLastAssistant: (content) =>
+        set((state) => {
+          const activeId = state.activeConversationId || state.conversations[0]?.id
+          if (!activeId) return state
+          const updated = state.conversations.map((conv) => {
+            if (conv.id !== activeId) return conv
+            const idx = [...conv.messages].reverse().findIndex((m) => m.role === 'assistant')
+            if (idx === -1) return conv
+            const revIndex = conv.messages.length - 1 - idx
+            const updatedMessages = [...conv.messages]
+            updatedMessages[revIndex] = { ...updatedMessages[revIndex], content }
+            return { ...conv, messages: updatedMessages, lastUsed: Date.now() }
+          })
+          return { conversations: updated }
+        }),
+      createConversation: () =>
+        set((state) => {
+          if (state.conversations.length >= 5) {
+            return state
+          }
+          const newConv = createNewConversation()
+          return { conversations: [...state.conversations, newConv], activeConversationId: newConv.id }
+        }),
+      deleteConversation: (id) =>
+        set((state) => {
+          const filtered = state.conversations.filter((c) => c.id !== id)
+          // Always keep at least one conversation
+          if (filtered.length === 0) {
+            const newConv = createNewConversation()
+            return { conversations: [newConv], activeConversationId: newConv.id }
+          }
+          const newActiveId = state.activeConversationId === id ? filtered[0].id : state.activeConversationId
+          return { conversations: filtered, activeConversationId: newActiveId }
+        }),
+      switchConversation: (id) =>
+        set((state) => {
+          const updated = state.conversations.map((conv) =>
+            conv.id === id ? { ...conv, lastUsed: Date.now() } : conv,
+          )
+          return { conversations: updated, activeConversationId: id }
+        }),
+      setConversationTitle: (id, title) =>
+        set((state) => ({
+          conversations: state.conversations.map((conv) =>
+            conv.id === id ? { ...conv, title } : conv,
+          ),
+        })),
     }),
-  setLoading: (value) => set({ loading: value }),
-  replaceLastAssistant: (content) =>
-    set((state) => {
-      const activeId = state.activeConversationId || state.conversations[0]?.id
-      if (!activeId) return state
-      const updated = state.conversations.map((conv) => {
-        if (conv.id !== activeId) return conv
-        const idx = [...conv.messages].reverse().findIndex((m) => m.role === 'assistant')
-        if (idx === -1) return conv
-        const revIndex = conv.messages.length - 1 - idx
-        const updatedMessages = [...conv.messages]
-        updatedMessages[revIndex] = { ...updatedMessages[revIndex], content }
-        return { ...conv, messages: updatedMessages, lastUsed: Date.now() }
-      })
-      return { conversations: updated }
-    }),
-  createConversation: () =>
-    set((state) => {
-      if (state.conversations.length >= 5) {
-        return state
-      }
-      const newConv = createNewConversation()
-      return { conversations: [...state.conversations, newConv], activeConversationId: newConv.id }
-    }),
-  deleteConversation: (id) =>
-    set((state) => {
-      const filtered = state.conversations.filter((c) => c.id !== id)
-      // Always keep at least one conversation
-      if (filtered.length === 0) {
-        const newConv = createNewConversation()
-        return { conversations: [newConv], activeConversationId: newConv.id }
-      }
-      const newActiveId = state.activeConversationId === id ? filtered[0].id : state.activeConversationId
-      return { conversations: filtered, activeConversationId: newActiveId }
-    }),
-  switchConversation: (id) =>
-    set((state) => {
-      const updated = state.conversations.map((conv) =>
-        conv.id === id ? { ...conv, lastUsed: Date.now() } : conv,
-      )
-      return { conversations: updated, activeConversationId: id }
-    }),
-  setConversationTitle: (id, title) =>
-    set((state) => ({
-      conversations: state.conversations.map((conv) =>
-        conv.id === id ? { ...conv, title } : conv,
-      ),
-    })),
-}))
+    {
+      name: 'solar-chat-storage',
+      partialize: (state) => ({
+        apiKey: state.apiKey,
+        provider: state.provider,
+        model: state.model,
+        conversations: state.conversations,
+        activeConversationId: state.activeConversationId,
+      }),
+    }
+  )
+)
 
 // Initialize activeConversationId after store is created
 useChatStore.setState((state) => ({
