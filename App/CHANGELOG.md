@@ -40,6 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated TypeScript declarations for Tauri window and shell APIs
 - Improved Capacitor configuration for both Android and iOS platforms
 
+## [3.0.0] - 2025-11-16
+
+### Added
+- Automated GitHub Actions workflow for building and releasing desktop and mobile apps
+- One-click download support for Windows, macOS, Linux, and Android
+- Automated release creation when version tags are pushed
+
+### Changed
+- Improved release and deployment process with GitHub Actions
+
 ## [1.0.0] - Initial Release
 
 ### Added
@@ -58,6 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Android mobile app via Capacitor
 - Responsive UI with glass-morphism design
 - Dark theme with cyan accent colors
+- Offline functionality
+- Secure encrypted API key storage (desktop only)
 
 ### Platform Support
 - **Desktop**: Tauri-based native apps
@@ -72,5 +84,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/leothefleo49/Solar-Panel-Calculator/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/leothefleo49/Solar-Panel-Calculator/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/leothefleo49/Solar-Panel-Calculator/releases/tag/v3.0.0
 [1.0.0]: https://github.com/leothefleo49/Solar-Panel-Calculator/releases/tag/v1.0.0

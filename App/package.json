@@ -1,7 +1,7 @@
 {
   "name": "solar-panel-calculator",
   "private": true,
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "Solar PV Financial & Technical Analysis Dashboard",
   "author": "leothefleo49",
   "license": "MIT",
