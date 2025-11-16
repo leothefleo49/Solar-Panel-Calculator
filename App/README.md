@@ -228,13 +228,15 @@ git push origin v1.0.0
 ```
 
 GitHub Actions produces clearly named artifacts:
-- `SolarPanelCalculator-Setup-x64.msi` / `SolarPanelCalculator-x64.exe`
-- `SolarPanelCalculator-arm64.dmg` / `SolarPanelCalculator-x64.dmg`
-- `SolarPanelCalculator-x86_64.AppImage`
-- `solar-panel-calculator_<version>_amd64.deb`
-- `solar-panel-calculator-<version>.x86_64.rpm`
-- `solar-panel-calculator-release.apk`
-- (Planned) `SolarPanelCalculator.ipa` (after iOS pipeline added)
+- `Solar-Panel-Calculator-Windows.msi` / `Solar-Panel-Calculator-Windows.exe`
+- `Solar-Panel-Calculator-macOS.dmg`
+- `Solar-Panel-Calculator-Linux.AppImage`
+  and `.deb` for Debian/Ubuntu
+- `Solar-Panel-Calculator-Android-Unsigned.apk`
+- `Solar-Panel-Calculator-iOS-Simulator.zip` (for developers)
+
+Notes:
+- iOS signing is per-user (BYO signing via Xcode). The CI iOS job is optional and does not block releases.
 
 Each release also includes a checksum file `SHA256SUMS.txt` for integrity verification.
 
@@ -243,6 +245,20 @@ Each release also includes a checksum file `SHA256SUMS.txt` for integrity verifi
 sha256sum -c SHA256SUMS.txt --ignore-missing
 ```
 Matches = file is authentic. Mismatch = re-download.
+
+#### Release Smoke Test
+Quickly validate the latest GitHub release assets:
+
+```bash
+npm run smoke:test
+```
+
+What it does:
+- Checks the latest release for Windows/macOS/Linux/Android artifacts and `SHA256SUMS.txt`
+- Performs availability checks for assets
+- On Windows, downloads the MSI/EXE and verifies SHA256 against `SHA256SUMS.txt`
+
+Expected result: prints PASS when all checks succeed (FAIL otherwise).
 
 #### Portable vs Installer (Windows)
 - Use `.msi` for start menu shortcuts & automatic uninstall.
@@ -280,14 +296,23 @@ See [RELEASE_INSTRUCTIONS.md](./RELEASE_INSTRUCTIONS.md) for detailed build inst
 - **APK won't install**: Enable "Install from Unknown Sources"; verify architecture (x86 emulator cannot run arm64-only builds).
 
 ### CORS Errors
-### iOS (Pending Pipeline)
-- Use `npm run cap:ios` to open Xcode after adding iOS platform.
-- Set signing team: Xcode → Project Settings → Signing & Capabilities.
-- Increment build number each release.
-- Export via *Archive* → *Distribute App* (TestFlight or Ad Hoc).
-
-Planned CI will produce a signed `.ipa` once Apple credentials & notarization flow are added.
 Desktop/Android handle CORS automatically. Web deployment requires backend proxy for AI APIs.
+
+### iOS BYO Signing (Per‑User)
+CI publishes an iOS Simulator build for developers. To install on devices or distribute, sign locally with your Apple account:
+
+1. Prepare project: `npm run cap:ios` (adds iOS platform) then `npx cap open ios`.
+2. In Xcode, select the app target → Signing & Capabilities → choose your Team (free Apple ID or Developer Program).
+3. Set a unique Bundle Identifier (e.g. `com.yourname.solarcalc`).
+4. Choose signing type:
+  - Development: run on your device via Xcode (free or paid).
+  - Ad Hoc/TestFlight: requires paid Apple Developer account and Distribution signing.
+5. Increment Build number (General tab) for each new archive.
+6. Product → Archive → Distribute App, then pick Development, Ad Hoc, or App Store/TestFlight.
+
+Notes:
+- The iOS job in CI is optional (continue-on-error) and won’t block desktop/Android releases.
+- The repository does not include signing credentials. Keep certificates and provisioning profiles local.
 
 ---
 
