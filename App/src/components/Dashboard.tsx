@@ -14,6 +14,7 @@ import {
 import clsx from 'clsx'
 import { useSolarStore } from '../state/solarStore'
 import type { SolarStoreState } from '../state/solarStore'
+import SolarApiIntegration from './SolarApiIntegration'
 import {
   buildModelSnapshot,
   formatCurrency,
@@ -27,6 +28,7 @@ const TAB_DEFINITION = [
   { id: 'financial', label: 'Financial Summary' },
   { id: 'production', label: 'Production & Performance' },
   { id: 'battery', label: 'Battery & Outage Simulation' },
+  { id: 'solarApi', label: 'Google Solar API' },
   { id: 'datasheet', label: '25-Year Data Sheet' },
   { id: 'aiOverview', label: 'AI Overview' },
 ] as const
@@ -121,6 +123,7 @@ const Dashboard = () => {
             netMetering={config.netMetering}
           />
         )}
+        {activeTab === 'solarApi' && <SolarApiTab />}
         {activeTab === 'datasheet' && <DataSheetTab rows={snapshot.projection} />}
         {activeTab === 'aiOverview' && <AIOverviewTab snapshot={snapshot} config={config} />}
       </div>
@@ -327,6 +330,8 @@ const ProductionTab = ({ panelChartData, monthlyData }: ProductionTabProps) => (
     </ChartCard>
   </div>
 )
+
+const SolarApiTab = () => <SolarApiIntegration />
 
 type BatteryTabProps = {
   simulation: SolarStoreState['simulation']

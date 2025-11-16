@@ -79,6 +79,12 @@ function checkRust() {
 }
 
 function checkSystemDeps() {
+  // Skip system dependency checks in CI environments
+  if (process.env.CI || process.env.GITHUB_ACTIONS) {
+    log('\n⏩ Skipping system dependency check in CI environment', 'cyan');
+    return;
+  }
+
   if (platform === 'linux') {
     log('\n🔍 Checking Linux system dependencies...', 'cyan');
     

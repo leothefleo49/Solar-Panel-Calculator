@@ -36,6 +36,7 @@ interface ChatState {
   setProvider: (p: Provider) => void
   setModel: (m: string) => void
   addMessage: (role: ChatMessage['role'], content: string) => void
+  sendMessage: (content: string) => Promise<void>
   setLoading: (value: boolean) => void
   replaceLastAssistant: (content: string) => void
   createConversation: () => void
@@ -83,6 +84,28 @@ export const useChatStore = create<ChatState>()(
           )
           return { conversations: updated, activeConversationId: activeId }
         }),
+      sendMessage: async (content) => {
+        // This is a synchronous state update - actual AI calling happens in ChatAssistant component
+        // This method just adds the user message to the conversation
+        set((state) => {
+          const activeId = state.activeConversationId || state.conversations[0]?.id
+          if (!activeId) return state
+          const updated = state.conversations.map((conv) =>
+            conv.id === activeId
+              ? {
+                  ...conv,
+                  messages: [
+                    ...conv.messages,
+                    { id: crypto.randomUUID(), role: 'user' as const, content, timestamp: Date.now() },
+                  ],
+                  lastUsed: Date.now(),
+                  title: conv.messages.length === 0 ? content.slice(0, 30) + (content.length > 30 ? '...' : '') : conv.title,
+                }
+              : conv,
+          )
+          return { conversations: updated, activeConversationId: activeId }
+        })
+      },
       setLoading: (value) => set({ loading: value }),
       replaceLastAssistant: (content) =>
         set((state) => {
