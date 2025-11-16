@@ -57,6 +57,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          projectPath: App
           tagName: ${{ github.ref_name }}
           releaseName: 'Solar Panel Calculator ${{ github.ref_name }}'
           releaseBody: 'See INSTALLATION.md for platform-specific installation instructions.'
@@ -105,12 +106,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          path: App/android/app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Create Release (Android)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          files: App/android/app/build/outputs/apk/release/app-release-unsigned.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
