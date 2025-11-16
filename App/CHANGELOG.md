@@ -5,6 +5,16 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2025-11-16
+
+### Fixed
+- Ensure GitHub release assets are attached reliably for quick downloads
+- Include Windows EXE (NSIS) artifact and consistent filenames across platforms
+- Minor workflow robustness tweaks during release attach phase
+
+### Notes
+- This version primarily addresses release asset availability so README quick links work immediately after publish.
+
 ## [1.4.1] - 2025-11-16
 
 ### Fixed
