@@ -8,8 +8,6 @@ import { useGoogleApiStore } from '../state/googleApiStore';
 import { useChatStore } from '../state/chatStore';
 import {
   analyzeSolarPotentialByAddress,
-  isSolarApiAvailable,
-  isMapsApiAvailable,
   generateAIPromptWithSolarData,
 } from '../utils/googleApis';
 import type { SolarAnalysisResult } from '../types/google-apis';

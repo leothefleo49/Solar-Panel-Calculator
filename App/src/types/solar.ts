@@ -1,4 +1,7 @@
 export type InverterType = 'String' | 'Micro'
+export type PricingMode = 'perUnit' | 'bulk'
+export type SunHoursMode = 'daily' | 'yearly'
+export type FinancingMode = 'cash' | 'loan'
 
 export interface SolarConfig {
   utilityCostPerKwh: number
@@ -8,24 +11,50 @@ export interface SolarConfig {
   monthlyUsage: number
   federalTaxCredit: number
   peakSunHours: number
+  sunHoursMode: SunHoursMode
   panelCount: number
   panelWattage: number
   panelEfficiency: number
   panelDegradationRate: number
+  
+  // Panel pricing
+  pricingMode: PricingMode
   costPerPanel: number
+  panelBulkCount: number
+  panelBulkCost: number
+  
   inverterType: InverterType
   inverterEfficiency: number
+  
+  // Inverter pricing
+  inverterPricingMode: PricingMode
   inverterCost: number
+  inverterBulkCount: number
+  inverterBulkCost: number
+  
   cablingLoss: number
   batteryEnabled: boolean
   batteryCapacity: number
   batteryDoD: number
   batteryPower: number
+  
+  // Battery pricing
+  batteryPricingMode: PricingMode
   batteryCost: number
+  batteryBulkCount: number
+  batteryBulkCost: number
+  
   mountingCost: number
   monitoringCost: number
   laborCost: number
   otherFees: number
+  
+  // Loan financing
+  financingMode: FinancingMode
+  loanAmount: number
+  loanTermYears: number
+  loanInterestRate: number
+  creditScore: number
 }
 
 export interface SimulationInputs {
@@ -52,6 +81,9 @@ export interface FinancialSummary {
   breakEvenLabel: string
   netUpfrontCost: number
   roiPercent: number
+  monthlyLoanPayment: number
+  totalLoanCost: number
+  totalInterestPaid: number
 }
 
 export interface BatterySimulationResult {

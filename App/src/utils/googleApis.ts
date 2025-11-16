@@ -245,7 +245,7 @@ export function formatSolarDataForAI(solarPotential: SolarPotential): string {
       context += `- Annual Energy: ${(config.yearlyEnergyDcKwh / 1000).toFixed(2)} MWh (${config.yearlyEnergyDcKwh.toFixed(0)} kWh)\n`;
       if (config.roofSegmentSummaries?.length > 0) {
         context += `- Segments Used: ${config.roofSegmentSummaries.length}\n`;
-        config.roofSegmentSummaries.forEach((summary, j) => {
+        config.roofSegmentSummaries.forEach((summary) => {
           context += `  - Segment ${summary.segmentIndex + 1}: ${summary.panelsCount} panels, ${getCardinalDirection(summary.azimuthDegrees)} facing, ${summary.pitchDegrees.toFixed(1)}° pitch\n`;
         });
       }
