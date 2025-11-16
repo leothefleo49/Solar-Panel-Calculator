@@ -1,15 +1,22 @@
 import Configurator from './components/Configurator'
 import Dashboard from './components/Dashboard'
+import ChatAssistant from './components/ChatAssistant'
 
 const App = () => (
-  <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-12">
-    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 lg:flex-row xl:gap-8">
-      <div className="min-w-0 lg:w-[35%] xl:w-[32%]">
+  <div className="min-h-screen px-3 py-6 sm:px-6 lg:px-10">
+    <div className="mx-auto grid w-full max-w-[1840px] gap-6 xl:gap-8 lg:grid-cols-[0.36fr_1fr] xl:grid-cols-[0.30fr_1fr_0.36fr]">
+      <div className="min-w-0 order-1">
         <Configurator />
       </div>
-      <div className="min-w-0 lg:flex-1">
+      <div className="min-w-0 order-2">
         <Dashboard />
       </div>
+      <div className="min-w-0 order-3 hidden xl:block">
+        <ChatAssistant />
+      </div>
+    </div>
+    <div className="mt-6 xl:hidden">
+      <ChatAssistant />
     </div>
   </div>
 )

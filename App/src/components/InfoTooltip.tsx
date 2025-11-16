@@ -39,10 +39,10 @@ const InfoTooltip = ({ content }: InfoTooltipProps) => {
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/40 text-white/90 transition hover:border-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="ml-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/40 bg-white/5 text-white/90 transition hover:border-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         aria-label={content}
       >
-        <span className="font-bold text-[11px] leading-none">i</span>
+        <span className="font-bold text-xs leading-[0] tracking-wide">i</span>
       </button>
       {open &&
         createPortal(

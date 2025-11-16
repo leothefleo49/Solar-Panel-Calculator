@@ -28,6 +28,7 @@ const TAB_DEFINITION = [
   { id: 'production', label: 'Production & Performance' },
   { id: 'battery', label: 'Battery & Outage Simulation' },
   { id: 'datasheet', label: '25-Year Data Sheet' },
+  { id: 'aiOverview', label: 'AI Overview' },
 ] as const
 
 type TabId = (typeof TAB_DEFINITION)[number]['id']
@@ -121,8 +122,105 @@ const Dashboard = () => {
           />
         )}
         {activeTab === 'datasheet' && <DataSheetTab rows={snapshot.projection} />}
+        {activeTab === 'aiOverview' && <AIOverviewTab snapshot={snapshot} config={config} />}
       </div>
     </section>
+  )
+}
+import { callGeminiFlash, callOpenAI, callClaude } from '../utils/aiProviders'
+import { useChatStore } from '../state/chatStore'
+type AIOverviewTabProps = {
+  snapshot: ReturnType<typeof buildModelSnapshot>
+  config: SolarStoreState['config']
+}
+
+const AIOverviewTab = ({ snapshot, config }: AIOverviewTabProps) => {
+  const { apiKey, provider, model, addMessage } = useChatStore()
+  const [analysis, setAnalysis] = useState<string>('')
+  const [loading, setLoading] = useState(false)
+  const missingFields: string[] = []
+  Object.entries(config).forEach(([k, v]) => {
+    if (v === 0 || v === '' || v === null) missingFields.push(k)
+  })
+
+  const performAnalysis = async () => {
+    if (!apiKey) {
+      setAnalysis('No API key provided. Add one in the Chat Assistant panel.')
+      return
+    }
+    setLoading(true)
+    try {
+      const context = `System Summary:\nArray Size: ${snapshot.systemSizeKw.toFixed(2)} kWdc\nAnnual Production: ${snapshot.annualProduction.toFixed(0)} kWh\nBreak-Even: ${snapshot.summary.breakEvenYear ?? 'Not reached'}\n25-Year Savings: $${snapshot.summary.totalSavings.toFixed(0)}\nROI: ${(snapshot.summary.roiPercent * 100).toFixed(1)}%\nNet Upfront Cost: $${snapshot.summary.netUpfrontCost.toFixed(0)}\nMissing/Zero Fields: ${missingFields.length ? missingFields.join(', ') : 'None'}\nNet Metering: ${config.netMetering ? 'Enabled' : 'Disabled'}\n`;
+      const prompt = `Evaluate this residential solar design. Provide: \n1) Overall Rating (Poor/Fair/Good/Excellent) with justification.\n2) Strengths (bullet list).\n3) Weaknesses / Risks.\n4) Actionable Improvement Tips (prioritized).\n5) Advanced Insight: highlight any anomalies that simple cash-flow math might miss.\n6) If missing fields are listed, explain why they matter.\n7) Offer a short call-to-action telling the user they can ask the Chat Assistant for live guidance.\nKeep it concise yet specific.`
+      const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+        { role: 'system', content: 'You are a friendly yet elite solar PV design reviewer. Be encouraging and precise, celebrating strengths while gently flagging concerns.' },
+        { role: 'system', content: context },
+        { role: 'user', content: prompt },
+      ]
+      let result
+      if (provider === 'google') {
+        result = await callGeminiFlash(apiKey, model, messages)
+      } else if (provider === 'anthropic') {
+        result = await callClaude(apiKey, model, messages)
+      } else {
+        result = await callOpenAI(apiKey, model, messages)
+      }
+      if (!result.ok) {
+        setAnalysis(`Error: ${result.error}`)
+      } else {
+        setAnalysis(result.content)
+      }
+    } catch (e) {
+      setAnalysis(`Failed: ${(e as Error).message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const sendToChat = () => {
+    if (!analysis) return
+    addMessage('assistant', `AI Overview Summary:\n${analysis}`)
+    // Suggest the user to open chat.
+    addMessage('assistant', 'Use the chat panel for adjustments—ask for sizing tweaks or deeper risk analysis.')
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+        <h3 className="text-lg font-semibold">AI System Overview</h3>
+        <p className="text-sm text-slate-300">Run an automated design & financial health review. The AI considers production, ROI, missing data, and resilience factors.</p>
+        <div className="mt-4 flex flex-wrap gap-3 items-center">
+          <button
+            type="button"
+            onClick={performAnalysis}
+            disabled={loading}
+            className="rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-slate-950 transition hover:brightness-110 disabled:opacity-40"
+          >
+            {loading ? 'Analyzing...' : 'Analyze Design'}
+          </button>
+          <button
+            type="button"
+            onClick={sendToChat}
+            disabled={!analysis}
+            className="rounded-xl border border-accent/50 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition hover:bg-accent/20 disabled:opacity-40"
+          >
+            Send Summary to Chat
+          </button>
+          {!apiKey && (
+            <span className="text-[10px] text-rose-300">Add an API key in the Chat Assistant to enable analysis.</span>
+          )}
+        </div>
+      </div>
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+        <h4 className="mb-2 text-sm font-semibold text-slate-200">Result</h4>
+        <div className="text-xs whitespace-pre-line leading-relaxed text-slate-100 min-h-[160px]">
+          {analysis || 'No analysis yet. Click Analyze Design.'}
+        </div>
+        {missingFields.length > 0 && (
+          <p className="mt-4 text-[10px] text-slate-400">Detected incomplete inputs: {missingFields.join(', ')}</p>
+        )}
+      </div>
+    </div>
   )
 }
 

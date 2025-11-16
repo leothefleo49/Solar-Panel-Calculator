@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Solar Panel Calculator</string>
+    <string name="title_activity_main">Solar Panel Calculator</string>
+    <string name="package_name">com.solarpanel.calculator</string>
+    <string name="custom_url_scheme">com.solarpanel.calculator</string>
+</resources>

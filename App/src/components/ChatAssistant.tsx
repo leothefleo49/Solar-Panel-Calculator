@@ -1,0 +1,364 @@
+import { useState, useRef, useEffect } from 'react'
+import type { MouseEvent } from 'react'
+import { useChatStore } from '../state/chatStore'
+import { buildModelSnapshot } from '../utils/calculations'
+import { useSolarStore } from '../state/solarStore'
+import { callOpenAI, callGeminiFlash, callClaude, callGrok } from '../utils/aiProviders'
+
+const ChatAssistant = () => {
+  const config = useSolarStore((s) => s.config)
+  const snapshot = buildModelSnapshot(config)
+  const {
+    apiKey,
+    setApiKey,
+    loading,
+    setLoading,
+    provider,
+    setProvider,
+    model,
+    setModel,
+    conversations,
+    activeConversationId,
+    createConversation,
+    deleteConversation,
+    switchConversation,
+    addMessage,
+  } = useChatStore()
+
+  const activeConv = conversations.find((c) => c.id === activeConversationId) || conversations[0]
+  const messages = activeConv?.messages ?? []
+
+  const [input, setInput] = useState('')
+  const [keyInput, setKeyInput] = useState('')
+  const [images, setImages] = useState<File[]>([])
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (!textareaRef.current) return
+    textareaRef.current.style.height = '3rem'
+    const scrollHeight = textareaRef.current.scrollHeight
+    const maxHeightPx = 9 * 16 // 9rem
+    textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeightPx)}px`
+  }, [input])
+
+  const envVars = import.meta.env as Record<string, string | undefined>
+  const googleEnvKey = envVars.VITE_GOOGLE_API_KEY
+  const openAIEnvKey = envVars.VITE_OPENAI_API_KEY
+  const anthropicEnvKey = envVars.VITE_ANTHROPIC_API_KEY
+  const grokEnvKey = envVars.VITE_GROK_API_KEY
+
+  const providerEnvKey =
+    provider === 'google'
+      ? googleEnvKey
+      : provider === 'anthropic'
+        ? anthropicEnvKey
+        : provider === 'grok'
+          ? grokEnvKey
+          : openAIEnvKey
+
+  const showEnvNotice = !apiKey && !!providerEnvKey
+
+  const handleDeleteConversation = (id: string, e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation()
+    if (conversations.length === 1) {
+      if (!confirm('Delete this conversation? A new one will be created.')) return
+    }
+    deleteConversation(id)
+  }
+
+  const handleCreateConversation = () => {
+    if (conversations.length >= 5) {
+      const oldest = conversations.reduce((prev, curr) => (curr.lastUsed < prev.lastUsed ? curr : prev))
+      const oldestLabel = oldest?.title?.trim() || 'Untitled chat'
+      const confirmed = confirm(`You already have 5 chats. Delete the oldest conversation (“${oldestLabel}”) to start a new one?`)
+      if (!confirmed) {
+        return
+      }
+      if (oldest) {
+        deleteConversation(oldest.id)
+      }
+    }
+    createConversation()
+  }
+
+  const handleSend = async () => {
+    if (!input.trim()) return
+    const question = input.trim()
+    setInput('')
+    addMessage('user', question)
+
+    if (!apiKey) {
+      addMessage('assistant', 'Please enter your API key first in the field above.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const contextBlob = `System Summary:\nArray Size: ${snapshot.systemSizeKw.toFixed(2)} kWdc\nAnnual Production: ${snapshot.annualProduction.toFixed(0)} kWh\nBreak-Even Year: ${snapshot.summary.breakEvenYear ?? 'Not reached'}\n25-Year Savings: $${snapshot.summary.totalSavings.toFixed(0)}\nNet Upfront Cost: $${snapshot.summary.netUpfrontCost.toFixed(0)}\nAverage Monthly Production: ${snapshot.averageMonthlyProduction.toFixed(0)} kWh\nNet Metering: ${config.netMetering ? 'Enabled' : 'Disabled'}\n`
+      const knowledge = 'Core Concepts: PV module efficiency, degradation (~0.5%/yr typical), inverter lifetime, BOS cost drivers, capacity factor, peak sun hours, utility escalation, ROI, break-even, battery autonomy hours. Provide practical guidance and warn when assumptions look out of band.'
+
+      const chatMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
+        {
+          role: 'system',
+          content:
+            'You are a friendly, expert solar PV financial & technical analysis assistant. Be warm, encouraging, and approachable while staying precise and professional. Use clear language, celebrate smart design choices, and gently flag concerns. Keep responses concise yet thorough.',
+        },
+        { role: 'system', content: knowledge },
+        { role: 'system', content: contextBlob },
+        ...messages.map((m) => ({ role: m.role, content: m.content })),
+        { role: 'user', content: question },
+      ]
+
+      let result
+      if (provider === 'google') {
+        const imagePayload = await Promise.all(
+          images.map(
+            (file) =>
+              new Promise<{ mimeType: string; data: string }>((resolve) => {
+                const reader = new FileReader()
+                reader.onload = () => {
+                  const base64 = (reader.result as string).split(',')[1]
+                  resolve({ mimeType: file.type || 'image/png', data: base64 })
+                }
+                reader.readAsDataURL(file)
+              }),
+          ),
+        )
+        result = await callGeminiFlash(apiKey, model, chatMessages, imagePayload)
+      } else if (provider === 'anthropic') {
+        result = await callClaude(apiKey, model, chatMessages)
+      } else if (provider === 'grok') {
+        result = await callGrok(apiKey, model, chatMessages)
+      } else {
+        result = await callOpenAI(apiKey, model, chatMessages)
+      }
+
+      if (!result.ok) {
+        addMessage('assistant', `API error: ${result.error}`)
+      } else {
+        addMessage('assistant', result.content)
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      addMessage('assistant', `Request failed: ${message}`)
+    } finally {
+      setLoading(false)
+      setImages([])
+    }
+  }
+
+  return (
+    <div className="glass-panel xl:sticky xl:top-6 flex h-full max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-[28px] p-6 text-white">
+      <h3 className="text-lg font-semibold mb-1">Solar Chat Assistant</h3>
+      <p className="text-xs text-slate-300 mb-4">Enter your API key (stored only in memory) to ask planning & calculation questions.</p>
+
+      <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-2">
+        {conversations.map((conv) => (
+          <button
+            key={conv.id}
+            onClick={() => switchConversation(conv.id)}
+            className={`group relative flex items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs transition ${
+              conv.id === activeConversationId
+                ? 'border-accent bg-accent/20 text-accent font-semibold'
+                : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:text-white'
+            }`}
+          >
+            <span className="max-w-[120px] truncate">{conv.title}</span>
+            <button
+              onClick={(e) => handleDeleteConversation(conv.id, e)}
+              className="ml-1 text-white/50 hover:text-red-400 transition"
+              title="Delete conversation"
+            >
+              ×
+            </button>
+          </button>
+        ))}
+        <button
+          onClick={handleCreateConversation}
+          className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:border-accent hover:text-accent"
+          title="Start another conversation"
+        >
+          + New
+        </button>
+      </div>
+
+      <div className="mb-4 space-y-2">
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="flex gap-2" role="tablist" aria-label="Provider">
+            <button
+              type="button"
+              onClick={() => setProvider('google')}
+              className={provider === 'google' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            >
+              Google
+            </button>
+            <button
+              type="button"
+              onClick={() => setProvider('openai')}
+              className={provider === 'openai' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            >
+              OpenAI
+            </button>
+            <button
+              type="button"
+              onClick={() => setProvider('anthropic')}
+              className={provider === 'anthropic' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            >
+              Claude
+            </button>
+            <button
+              type="button"
+              onClick={() => setProvider('grok')}
+              className={provider === 'grok' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            >
+              Grok
+            </button>
+          </div>
+
+          <select
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            className="premium-select rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-xs focus:border-accent focus:ring-accent"
+          >
+            {provider === 'google' && (
+              <>
+                <option value="gemini-2.5-pro" className="bg-slate">gemini-2.5-pro</option>
+                <option value="gemini-2.5-flash" className="bg-slate">gemini-2.5-flash</option>
+                <option value="gemini-2.0-ultra" className="bg-slate">gemini-2.0-ultra</option>
+                <option value="gemini-2.0-flash" className="bg-slate">gemini-2.0-flash</option>
+                <option value="gemini-1.5-pro" className="bg-slate">gemini-1.5-pro</option>
+                <option value="gemini-1.5-flash" className="bg-slate">gemini-1.5-flash</option>
+                <option value="gemini-exp-1206" className="bg-slate">gemini-exp-1206</option>
+              </>
+            )}
+            {provider === 'openai' && (
+              <>
+                <option value="gpt-5" className="bg-slate">gpt-5</option>
+                <option value="gpt-4.1" className="bg-slate">gpt-4.1</option>
+                <option value="gpt-4o" className="bg-slate">gpt-4o</option>
+                <option value="gpt-4o-mini" className="bg-slate">gpt-4o-mini</option>
+                <option value="gpt-4-turbo" className="bg-slate">gpt-4-turbo</option>
+                <option value="gpt-3.5-turbo" className="bg-slate">gpt-3.5-turbo</option>
+              </>
+            )}
+            {provider === 'anthropic' && (
+              <>
+                <option value="claude-3.5-sonnet-latest" className="bg-slate">claude-3.5-sonnet</option>
+                <option value="claude-3.5-haiku-latest" className="bg-slate">claude-3.5-haiku</option>
+                <option value="claude-3-opus-20240229" className="bg-slate">claude-3-opus</option>
+              </>
+            )}
+            {provider === 'grok' && (
+              <>
+                <option value="grok-2" className="bg-slate">grok-2</option>
+                <option value="grok-2-mini" className="bg-slate">grok-2-mini</option>
+              </>
+            )}
+          </select>
+
+          {!apiKey && (
+            <input
+              type="password"
+              placeholder={
+                provider === 'google'
+                  ? 'Google API Key'
+                  : provider === 'anthropic'
+                    ? 'Anthropic API Key'
+                    : provider === 'grok'
+                      ? 'Grok API Key'
+                      : 'OpenAI API Key'
+              }
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs focus:border-accent focus:ring-accent"
+            />
+          )}
+
+          {!apiKey && (
+            <button
+              type="button"
+              onClick={() => setApiKey(keyInput || providerEnvKey || '')}
+              className="rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-slate-950 transition hover:brightness-110"
+            >
+              Use Key
+            </button>
+          )}
+        </div>
+        {showEnvNotice && (
+          <p className="text-[10px] text-slate-400">Provider key detected in env; click “Use Key” or paste a different one.</p>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1 modern-scroll">
+        {messages.map((m) => (
+          <div
+            key={m.id}
+            className={
+              m.role === 'user'
+                ? 'rounded-2xl bg-accent/20 border border-accent/40 px-3 py-2 text-xs'
+                : 'rounded-2xl bg-white/10 border border-white/10 px-3 py-2 text-xs'
+            }
+          >
+            <p className="mb-1 font-semibold capitalize text-[10px] tracking-wide opacity-70">{m.role}</p>
+            <p className="whitespace-pre-line leading-relaxed">{m.content}</p>
+          </div>
+        ))}
+        {loading && <div className="text-xs text-slate-300 typing-dots"><span></span><span></span><span></span></div>}
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={textareaRef}
+            placeholder="Ask a question about system sizing, ROI, production..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleSend()
+              }
+            }}
+            className="flex-1 resize-none overflow-hidden rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm focus:border-accent focus:ring-accent"
+            style={{ minHeight: '3rem', maxHeight: '9rem' }}
+          />
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={loading}
+            className="h-12 rounded-xl bg-accent px-5 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:opacity-40"
+          >
+            Send
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={(e) => setImages(Array.from(e.target.files || []))}
+            className="hidden"
+            id="chat-image-input"
+          />
+          <button
+            type="button"
+            onClick={() => document.getElementById('chat-image-input')?.click()}
+            className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/80 transition hover:border-accent hover:text-white"
+          >
+            <span className="text-base">+</span>
+            Upload Files
+          </button>
+          {images.length > 0 && <span className="text-accent/80">{images.length} image(s) attached</span>}
+          {provider !== 'google' && (
+            <span className="text-[10px] text-slate-400">Image analysis currently available only with Gemini models.</span>
+          )}
+        </div>
+      </div>
+
+      <p className="mt-3 text-[10px] text-slate-400">Keys live only in memory. For production, route requests through a secure backend and add rate limiting.</p>
+    </div>
+  )
+}
+
+export default ChatAssistant
