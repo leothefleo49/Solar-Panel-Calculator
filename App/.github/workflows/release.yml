@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Release Desktop & Mobile Apps
 
 on:
@@ -64,15 +65,25 @@ jobs:
           projectPath: App
           tagName: ${{ github.ref_name }}
           releaseName: 'Solar Panel Calculator ${{ github.ref_name }}'
-          releaseBody: |
+          releaseBody: >
             ## Download Instructions
-            
-            **Windows**: Download `Solar-Panel-Calculator_x.x.x_x64_en-US.msi`
-            **macOS (Apple Silicon)**: Download `Solar-Panel-Calculator_x.x.x_aarch64.dmg`
-            **macOS (Intel)**: Download `Solar-Panel-Calculator_x.x.x_x64.dmg`
-            **Linux**: Download `Solar-Panel-Calculator_x.x.x_amd64.AppImage` or `.deb`
-            **Android**: Download `Solar-Panel-Calculator-Android.apk`
-            
+
+
+            **Windows**: Download Solar-Panel-Calculator_x.x.x_x64_en-US.msi
+
+
+            **macOS (Apple Silicon)**: Download Solar-Panel-Calculator_x.x.x_aarch64.dmg
+
+
+            **macOS (Intel)**: Download Solar-Panel-Calculator_x.x.x_x64.dmg
+
+
+            **Linux**: Download Solar-Panel-Calculator_x.x.x_amd64.AppImage or .deb
+
+
+            **Android**: Download Solar-Panel-Calculator-Android.apk
+
+
             See INSTALLATION.md for detailed instructions.
           releaseDraft: false
           prerelease: false
@@ -110,7 +121,7 @@ jobs:
           yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "platforms;android-33" "build-tools;33.0.2" || true
           $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --list || true
 
-      - name: Diagnostic: Java/Gradle/SDK versions
+      - name: Diagnostic Java and SDK versions
         shell: bash
         run: |
           java -version || true
@@ -155,6 +166,7 @@ jobs:
       - name: Build Android APK (release)
         working-directory: android
         env:
+          # yamllint disable-line rule:truthy
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: ./gradlew --no-daemon --stacktrace clean :app:assembleRelease
 
@@ -162,6 +174,7 @@ jobs:
         id: detect_signing
         shell: bash
         env:
+          # yamllint disable-line rule:truthy
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KS_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -177,6 +190,7 @@ jobs:
         if: steps.detect_signing.outputs.has_signing == 'true'
         shell: bash
         env:
+          # yamllint disable-line rule:truthy
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           echo "Decoding Android keystore"
@@ -206,6 +220,7 @@ jobs:
             --out "$SIGNED_APK" \
             "$ALIGNED_APK"
         env:
+          # yamllint disable-line rule:truthy
           KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_PASS: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
           ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -214,6 +229,7 @@ jobs:
         if: steps.detect_signing.outputs.has_signing != 'true'
         working-directory: android
         env:
+          # yamllint disable-line rule:truthy
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: ./gradlew --no-daemon --stacktrace :app:assembleDebug
 
