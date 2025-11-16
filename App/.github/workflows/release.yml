@@ -43,11 +43,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         with:
           projectPath: App
-          tagName: ${{ github.ref_name }}
-          releaseName: ${{ github.ref_name }}
-          releaseBody: 'Automated multi-platform release.'
+          # Build only; release attached in final job
           releaseDraft: false
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -157,13 +154,7 @@ jobs:
           name: Solar-Panel-Calculator-Android
           path: App/android/app/build/outputs/release-artifacts/*.apk
 
-      - name: Create Release (Android)
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: App/android/app/build/outputs/release-artifacts/*.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Android release attachment handled in final release-attach job; remove direct release step
 
   build-ios:
     if: ${{ github.event.inputs.include_ios == 'true' }}

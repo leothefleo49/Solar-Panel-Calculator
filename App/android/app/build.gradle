@@ -3,6 +3,7 @@ apply plugin: 'com.android.application'
 android {
     namespace "com.solarpanel.calculator"
     compileSdk rootProject.ext.compileSdkVersion
+
     defaultConfig {
         applicationId "com.solarpanel.calculator"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -11,34 +12,33 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+            // Default reference: AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+
     buildTypes {
         release {
-            // Enable shrinking/optimization; keep rules minimal to avoid stripping Capacitor/Tauri bridges.
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // Deterministic output for CI reproducibility
             zipAlignEnabled true
         }
-    }
-            // Explicitly disable shrinking in debug for faster iteration
+        debug {
+            // Faster iteration; keep resources intact
             minifyEnabled false
-}
+            shrinkResources false
+        }
+    }
 
-
-    // Enforce Java 17 toolchain for AGP 8.7.x
+    // Java 17 toolchain
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
 
     packagingOptions {
-        // Avoid duplicate META-INF entries that can cause build failures
         resources {
             excludes += [
                 'META-INF/DEPENDENCIES',
@@ -53,19 +53,19 @@ android {
         }
     }
 
-    // Workaround for potential permission issues on CI (gradlew exit code 126)
+    // gradlew permission workaround for CI (exit code 126)
     tasks.whenTaskAdded { task ->
         if (task.name == 'preBuild') {
             task.doFirst {
                 def gradlew = new File(rootProject.rootDir, 'gradlew')
-                if (gradlew.exists()) {
-                    gradlew.setExecutable(true)
-                }
+                if (gradlew.exists()) gradlew.setExecutable(true)
             }
         }
     }
+}
+
 repositories {
-    flatDir{
+    flatDir {
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
 }
