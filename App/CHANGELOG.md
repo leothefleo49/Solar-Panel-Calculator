@@ -5,6 +5,70 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-11-16
+
+### 🎨 UI/UX Improvements
+- **Enhanced Scrollbar Styling**: Custom themed scrollbar with smooth cyan gradient (#38bdf8 → #0ea5e9)
+  - 10px width for body, 8px for panels
+  - Removed scrollbar arrow buttons for cleaner look
+  - Added transparent scrollbar corner styling
+  - Improved hover effects and visual consistency
+- **Dynamic Chat Send Button**: Send button now dynamically matches textarea height in all aspect ratios
+  - Reduced width from 90px to 70px for more typing space
+  - Maintains proportions across different screen sizes
+- **Dropdown Arrow Repositioning**: Moved expand/collapse arrows from left to right in Configurator fine-tune sections
+  - Updated CSS with flexbox (justify-content: space-between)
+  - Improved visual hierarchy and modern UI alignment
+- **Configurator Persistent Toggle**: Collapse/expand functionality already in place
+  - Minimize button in header
+  - Expand button on left edge when collapsed
+  - State persists across sessions
+
+### 🤖 Multi-AI Provider Architecture
+- **Advanced Provider Key Management**: Complete rewrite of AI provider system
+  - Added `ProviderKeys` type for managing multiple provider keys simultaneously
+  - New methods: `setProviderKey()`, `clearProviderKey()`, `getProviderKey()`, `hasProviderKey()`, `getAvailableProviders()`
+  - Backward compatible with legacy `apiKey` field
+- **Conditional Provider Button Display**: Only shows AI provider buttons for configured keys
+  - Auto-selects first available provider if current one has no key
+  - Dynamic provider availability checks
+  - Cleaner chat interface without unused provider buttons
+- **APIs Tab Restructure**: Separated API key management into logical sections
+  - Removed Gemini-specific input from single field
+  - Added dedicated inputs for Google Gemini, OpenAI, Anthropic Claude, xAI Grok
+  - Split into "Google Cloud APIs" and "AI Provider Keys" sections
+  - Each provider has independent key storage and clear functionality
+- **Google API Key Fallback**: Gemini chat can use unified Google API key or dedicated Gemini key
+  - Automatic fallback hierarchy: provider key → unified key → gemini key
+  - Seamless integration with Google Solar API keys
+
+### 🔧 Code Quality
+- **API Configuration Centralization**: Removed all API key inputs from Solar Integration tab
+  - Simplified SolarApiIntegration.tsx (~150 lines removed)
+  - Single source of truth for API management in APIs tab
+  - Clearer user workflow and reduced UI clutter
+- **ChatAssistant.tsx Modernization**: Complete rewrite for multi-provider support
+  - Replaced single `apiKey` with per-provider key retrieval
+  - Added `availableProviders` memoization for performance
+  - Conditional rendering based on `hasProviderKey()` checks
+  - Improved error messages with provider-specific guidance
+- **External Link Verification**: Confirmed `openExternalUrl` utility works correctly
+  - Tauri shell.open for desktop
+  - Capacitor Browser for mobile
+  - window.open fallback for web
+
+### Technical
+- Enhanced `chatStore.ts` with `ProviderKeys` mapped type
+- Updated `ApisTab.tsx` with separate inputs per AI provider
+- Refactored `ChatAssistant.tsx` for conditional provider UI
+- CSS improvements in `index.css` for scrollbar theming and arrow positioning
+- HTML structure updates in `Configurator.tsx` for arrow alignment
+
+### Platform Support
+- ✅ All changes tested and compiled successfully
+- ✅ Cross-platform compatibility maintained (Windows, macOS, Linux, Android, iOS)
+- ✅ No breaking changes to existing functionality
+
 ## [1.3.0] - 2025-11-16
 
 ### Added

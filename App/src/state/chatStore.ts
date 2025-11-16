@@ -17,6 +17,13 @@ export type Conversation = {
 
 type Provider = 'google' | 'openai' | 'anthropic' | 'grok'
 
+type ProviderKeys = {
+  google?: string
+  openai?: string
+  anthropic?: string
+  grok?: string
+}
+
 const defaultModelByProvider: Record<Provider, string> = {
   google: 'gemini-2.5-pro',
   openai: 'gpt-5',
@@ -25,14 +32,25 @@ const defaultModelByProvider: Record<Provider, string> = {
 }
 
 interface ChatState {
+  // Legacy single key support (deprecated but kept for backward compat)
   apiKey: string | null
+  // New multi-provider keys
+  providerKeys: ProviderKeys
   provider: Provider
   model: string
   loading: boolean
   conversations: Conversation[]
   activeConversationId: string
+  // Legacy methods
   setApiKey: (key: string) => void
   clearApiKey: () => void
+  // New multi-provider methods
+  setProviderKey: (provider: Provider, key: string) => void
+  clearProviderKey: (provider: Provider) => void
+  getProviderKey: (provider: Provider) => string | null
+  hasProviderKey: (provider: Provider) => boolean
+  getAvailableProviders: () => Provider[]
+  // Common methods
   setProvider: (p: Provider) => void
   setModel: (m: string) => void
   addMessage: (role: ChatMessage['role'], content: string) => void
@@ -54,16 +72,68 @@ const createNewConversation = (): Conversation => ({
 
 export const useChatStore = create<ChatState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       apiKey: null,
+      providerKeys: {},
       provider: 'google',
       model: defaultModelByProvider.google,
       loading: false,
       conversations: [createNewConversation()],
       activeConversationId: '',
-      setApiKey: (key) => set({ apiKey: key.trim() || null }),
-      clearApiKey: () => set({ apiKey: null }),
-      setProvider: (p) => set({ provider: p, model: defaultModelByProvider[p] }),
+      // Legacy single key (maps to current provider)
+      setApiKey: (key) => {
+        const provider = get().provider
+        set((state) => ({
+          apiKey: key.trim() || null,
+          providerKeys: { ...state.providerKeys, [provider]: key.trim() || undefined }
+        }))
+      },
+      clearApiKey: () => {
+        const provider = get().provider
+        set((state) => {
+          const updated = { ...state.providerKeys }
+          delete updated[provider]
+          return { apiKey: null, providerKeys: updated }
+        })
+      },
+      // New multi-provider methods
+      setProviderKey: (provider, key) =>
+        set((state) => ({
+          providerKeys: { ...state.providerKeys, [provider]: key.trim() || undefined },
+          // Update legacy apiKey if setting current provider
+          apiKey: state.provider === provider ? (key.trim() || null) : state.apiKey
+        })),
+      clearProviderKey: (provider) =>
+        set((state) => {
+          const updated = { ...state.providerKeys }
+          delete updated[provider]
+          return {
+            providerKeys: updated,
+            // Clear legacy apiKey if clearing current provider
+            apiKey: state.provider === provider ? null : state.apiKey
+          }
+        }),
+      getProviderKey: (provider) => {
+        const keys = get().providerKeys
+        return keys[provider] || null
+      },
+      hasProviderKey: (provider) => {
+        const keys = get().providerKeys
+        return !!(keys[provider]?.trim())
+      },
+      getAvailableProviders: () => {
+        const keys = get().providerKeys
+        return (Object.keys(keys) as Provider[]).filter(p => keys[p]?.trim())
+      },
+      setProvider: (p) => {
+        const keys = get().providerKeys
+        set({
+          provider: p,
+          model: defaultModelByProvider[p],
+          // Update legacy apiKey to match selected provider
+          apiKey: keys[p] || null
+        })
+      },
       setModel: (m) => set({ model: m }),
       addMessage: (role, content) =>
         set((state) => {
@@ -85,8 +155,6 @@ export const useChatStore = create<ChatState>()(
           return { conversations: updated, activeConversationId: activeId }
         }),
       sendMessage: async (content) => {
-        // This is a synchronous state update - actual AI calling happens in ChatAssistant component
-        // This method just adds the user message to the conversation
         set((state) => {
           const activeId = state.activeConversationId || state.conversations[0]?.id
           if (!activeId) return state
@@ -133,7 +201,6 @@ export const useChatStore = create<ChatState>()(
       deleteConversation: (id) =>
         set((state) => {
           const filtered = state.conversations.filter((c) => c.id !== id)
-          // Always keep at least one conversation
           if (filtered.length === 0) {
             const newConv = createNewConversation()
             return { conversations: [newConv], activeConversationId: newConv.id }
@@ -159,6 +226,7 @@ export const useChatStore = create<ChatState>()(
       name: 'solar-chat-storage',
       partialize: (state) => ({
         apiKey: state.apiKey,
+        providerKeys: state.providerKeys,
         provider: state.provider,
         model: state.model,
         conversations: state.conversations,

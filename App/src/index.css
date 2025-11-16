@@ -88,8 +88,8 @@
 }
 
 body::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
 }
 
 body::-webkit-scrollbar-track {
@@ -97,19 +97,23 @@ body::-webkit-scrollbar-track {
 }
 
 body::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(56, 189, 248, 0.95), rgba(14, 165, 233, 0.8));
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.75));
   border-radius: 999px;
   border: none;
 }
 
 body::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(56, 189, 248, 1), rgba(14, 165, 233, 0.95));
+  background: linear-gradient(180deg, rgba(56, 189, 248, 1), rgba(14, 165, 233, 0.9));
 }
 
 body::-webkit-scrollbar-button {
   display: none;
   height: 0;
   width: 0;
+}
+
+body::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .modern-scroll::-webkit-scrollbar {
@@ -137,9 +141,12 @@ body::-webkit-scrollbar-button {
   width: 0;
 }
 
-/* Reworked summary trigger with centered caret icon */
+/* Reworked summary trigger with caret icon on right side */
 .summary-trigger {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .summary-trigger .caret-icon {
@@ -150,14 +157,18 @@ body::-webkit-scrollbar-button {
   border-bottom: 2px solid rgba(226,232,240,0.85);
   transform: rotate(45deg);
   transition: transform 200ms ease;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 details[open] > .summary-trigger .caret-icon {
   transform: rotate(225deg);
 }
 
-/* Ensure consistent horizontal spacing */
-.section-details > .summary-trigger span:last-child { flex: 1; }
+/* Ensure title takes available space */
+.summary-trigger > span:not(.caret-icon) {
+  flex: 1;
+}
 
 .premium-select {
   appearance: none;

@@ -4,19 +4,15 @@ import { useChatStore } from '../state/chatStore'
 import { buildModelSnapshot } from '../utils/calculations'
 import { useSolarStore } from '../state/solarStore'
 import { useCartStore } from '../state/cartStore'
-import { useGoogleApiStore } from '../state/googleApiStore'
 import { callOpenAI, callGeminiFlash, callClaude, callGrok } from '../utils/aiProviders'
 
 const ChatAssistant = () => {
   const config = useSolarStore((s) => s.config)
   const snapshot = buildModelSnapshot(config)
   const { items: cartItems, checkCompatibility, getMissingComponents } = useCartStore()
-  const { apiKeys: googleApiKeys } = useGoogleApiStore()
   const {
-    getProviderKey,
-    hasProviderKey,
-    getAvailableProviders,
-    clearProviderKey,
+    apiKey,
+    clearApiKey,
     loading,
     setLoading,
     provider,
@@ -33,10 +29,9 @@ const ChatAssistant = () => {
 
   const activeConv = conversations.find((c) => c.id === activeConversationId) || conversations[0]
   const messages = useMemo(() => activeConv?.messages ?? [], [activeConv])
-  const availableProviders = useMemo(() => getAvailableProviders(), [getAvailableProviders])
-  const currentProviderKey = getProviderKey(provider)
 
   const [input, setInput] = useState('')
+  // Removed local key input; keys now managed in APIs tab
   const [images, setImages] = useState<File[]>([])
   const [collapsed, setCollapsed] = useState(false)
   const [listening, setListening] = useState(false)
@@ -53,12 +48,9 @@ const ChatAssistant = () => {
     textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeightPx)}px`
   }, [input])
 
-  // Auto-select first available provider if current one has no key
-  useEffect(() => {
-    if (!hasProviderKey(provider) && availableProviders.length > 0) {
-      setProvider(availableProviders[0])
-    }
-  }, [provider, hasProviderKey, availableProviders, setProvider])
+  // Environment keys (if any) are now surfaced in the APIs tab; not referenced directly here.
+
+  // Provider env key management moved to APIs tab
 
   const handleDeleteConversation = (id: string, e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -72,7 +64,7 @@ const ChatAssistant = () => {
     if (conversations.length >= 5) {
       const oldest = conversations.reduce((prev, curr) => (curr.lastUsed < prev.lastUsed ? curr : prev))
       const oldestLabel = oldest?.title?.trim() || 'Untitled chat'
-      const confirmed = confirm(`You already have 5 chats. Delete the oldest conversation ("${oldestLabel}") to start a new one?`)
+      const confirmed = confirm(`You already have 5 chats. Delete the oldest conversation (“${oldestLabel}”) to start a new one?`)
       if (!confirmed) {
         return
       }
@@ -89,15 +81,8 @@ const ChatAssistant = () => {
     setInput('')
     addMessage('user', question)
 
-    // Get the appropriate API key based on provider
-    let apiKey = currentProviderKey
-    // For Google/Gemini, also check unified/separate Google API keys
-    if (provider === 'google' && !apiKey) {
-      apiKey = googleApiKeys.unified || googleApiKeys.gemini || null
-    }
-
     if (!apiKey) {
-      addMessage('assistant', `Please configure your ${provider === 'google' ? 'Google/Gemini' : provider === 'openai' ? 'OpenAI' : provider === 'anthropic' ? 'Anthropic' : 'xAI'} API key in the APIs tab.`)
+      addMessage('assistant', 'Please enter your API key first in the field above.')
       return
     }
 
@@ -179,21 +164,23 @@ const ChatAssistant = () => {
   }
 
   useEffect(() => {
-    // Insert preset guidance message once if no keys configured
-    if (availableProviders.length === 0) {
+    // Insert preset guidance message once if no API key present
+    if (!apiKey) {
       const already = messages.some(m => m.role === 'assistant' && m.content.includes('Configure your API key'))
       if (!already) {
-        addMessage('assistant', 'Configure your AI provider keys in the APIs tab to start chatting. You can add Google Gemini, OpenAI, Anthropic Claude, or xAI Grok.')
+        addMessage('assistant', 'Configure your API key(s) in the APIs tab for chat & analysis. Use Unified Google key or any AI provider key. Click "Configure APIs" button if needed.')
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
+    // Panel collapse broadcast
     window.dispatchEvent(new CustomEvent('panel-collapsed', { detail: { side: 'right', collapsed } }))
   }, [collapsed])
 
   useEffect(() => {
+    // Track last assistant message for TTS
     const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant')
     if (lastAssistant) lastAssistantRef.current = lastAssistant.content
   }, [messages])
@@ -266,7 +253,7 @@ const ChatAssistant = () => {
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <h3 className="text-lg font-semibold mb-1">Solar Chat Assistant</h3>
-          <p className="text-xs text-slate-300">Ask questions about system sizing, ROI, production, and get equipment recommendations.</p>
+          <p className="text-xs text-slate-300">Enter your API key (stored only in memory) to ask planning & calculation questions.</p>
         </div>
         <button
           onClick={() => setCollapsed(true)}
@@ -312,88 +299,78 @@ const ChatAssistant = () => {
       <div className="mb-4 space-y-2">
         <div className="flex flex-wrap gap-2 items-start">
           <div className="flex flex-wrap gap-2" role="tablist" aria-label="Provider">
-            {availableProviders.includes('google' as any) && (
-              <button
-                type="button"
-                onClick={() => setProvider('google')}
-                className={provider === 'google' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
-              >
-                Google
-              </button>
-            )}
-            {availableProviders.includes('openai' as any) && (
-              <button
-                type="button"
-                onClick={() => setProvider('openai')}
-                className={provider === 'openai' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
-              >
-                OpenAI
-              </button>
-            )}
-            {availableProviders.includes('anthropic' as any) && (
-              <button
-                type="button"
-                onClick={() => setProvider('anthropic')}
-                className={provider === 'anthropic' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
-              >
-                Claude
-              </button>
-            )}
-            {availableProviders.includes('grok' as any) && (
-              <button
-                type="button"
-                onClick={() => setProvider('grok')}
-                className={provider === 'grok' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
-              >
-                Grok
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setProvider('google')}
+              className={provider === 'google' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            >
+              Google
+            </button>
+            <button
+              type="button"
+              onClick={() => setProvider('openai')}
+              className={provider === 'openai' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            >
+              OpenAI
+            </button>
+            <button
+              type="button"
+              onClick={() => setProvider('anthropic')}
+              className={provider === 'anthropic' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            >
+              Claude
+            </button>
+            <button
+              type="button"
+              onClick={() => setProvider('grok')}
+              className={provider === 'grok' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            >
+              Grok
+            </button>
           </div>
 
-          {availableProviders.length > 0 && (
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              className="premium-select rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-xs focus:border-accent focus:ring-accent min-w-[140px]"
-            >
-              {provider === 'google' && (
-                <>
-                  <option value="gemini-2.5-pro" className="bg-slate">gemini-2.5-pro</option>
-                  <option value="gemini-2.5-flash" className="bg-slate">gemini-2.5-flash</option>
-                  <option value="gemini-2.0-ultra" className="bg-slate">gemini-2.0-ultra</option>
-                  <option value="gemini-2.0-flash" className="bg-slate">gemini-2.0-flash</option>
-                  <option value="gemini-1.5-pro" className="bg-slate">gemini-1.5-pro</option>
-                  <option value="gemini-1.5-flash" className="bg-slate">gemini-1.5-flash</option>
-                  <option value="gemini-exp-1206" className="bg-slate">gemini-exp-1206</option>
-                </>
-              )}
-              {provider === 'openai' && (
-                <>
-                  <option value="gpt-5" className="bg-slate">gpt-5</option>
-                  <option value="gpt-4.1" className="bg-slate">gpt-4.1</option>
-                  <option value="gpt-4o" className="bg-slate">gpt-4o</option>
-                  <option value="gpt-4o-mini" className="bg-slate">gpt-4o-mini</option>
-                  <option value="gpt-4-turbo" className="bg-slate">gpt-4-turbo</option>
-                  <option value="gpt-3.5-turbo" className="bg-slate">gpt-3.5-turbo</option>
-                </>
-              )}
-              {provider === 'anthropic' && (
-                <>
-                  <option value="claude-3.5-sonnet-latest" className="bg-slate">claude-3.5-sonnet</option>
-                  <option value="claude-3.5-haiku-latest" className="bg-slate">claude-3.5-haiku</option>
-                  <option value="claude-3-opus-20240229" className="bg-slate">claude-3-opus</option>
-                </>
-              )}
-              {provider === 'grok' && (
-                <>
-                  <option value="grok-2" className="bg-slate">grok-2</option>
-                  <option value="grok-2-mini" className="bg-slate">grok-2-mini</option>
-                </>
-              )}
-            </select>
-          )}
+          <select
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            className="premium-select rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-xs focus:border-accent focus:ring-accent min-w-[140px]"
+          >
+            {provider === 'google' && (
+              <>
+                <option value="gemini-2.5-pro" className="bg-slate">gemini-2.5-pro</option>
+                <option value="gemini-2.5-flash" className="bg-slate">gemini-2.5-flash</option>
+                <option value="gemini-2.0-ultra" className="bg-slate">gemini-2.0-ultra</option>
+                <option value="gemini-2.0-flash" className="bg-slate">gemini-2.0-flash</option>
+                <option value="gemini-1.5-pro" className="bg-slate">gemini-1.5-pro</option>
+                <option value="gemini-1.5-flash" className="bg-slate">gemini-1.5-flash</option>
+                <option value="gemini-exp-1206" className="bg-slate">gemini-exp-1206</option>
+              </>
+            )}
+            {provider === 'openai' && (
+              <>
+                <option value="gpt-5" className="bg-slate">gpt-5</option>
+                <option value="gpt-4.1" className="bg-slate">gpt-4.1</option>
+                <option value="gpt-4o" className="bg-slate">gpt-4o</option>
+                <option value="gpt-4o-mini" className="bg-slate">gpt-4o-mini</option>
+                <option value="gpt-4-turbo" className="bg-slate">gpt-4-turbo</option>
+                <option value="gpt-3.5-turbo" className="bg-slate">gpt-3.5-turbo</option>
+              </>
+            )}
+            {provider === 'anthropic' && (
+              <>
+                <option value="claude-3.5-sonnet-latest" className="bg-slate">claude-3.5-sonnet</option>
+                <option value="claude-3.5-haiku-latest" className="bg-slate">claude-3.5-haiku</option>
+                <option value="claude-3-opus-20240229" className="bg-slate">claude-3-opus</option>
+              </>
+            )}
+            {provider === 'grok' && (
+              <>
+                <option value="grok-2" className="bg-slate">grok-2</option>
+                <option value="grok-2-mini" className="bg-slate">grok-2-mini</option>
+              </>
+            )}
+          </select>
 
-          {availableProviders.length === 0 ? (
+          {!apiKey ? (
             <button
               type="button"
               onClick={() => window.dispatchEvent(new CustomEvent('open-dashboard-tab', { detail: { tab: 'apis' } }))}
@@ -401,22 +378,14 @@ const ChatAssistant = () => {
             >
               Configure APIs
             </button>
-          ) : hasProviderKey(provider) ? (
-            <button
-              type="button"
-              onClick={() => clearProviderKey(provider)}
-              className="rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110"
-              title={`Clear ${provider} key`}
-            >
-              Clear Key
-            </button>
           ) : (
             <button
               type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent('open-dashboard-tab', { detail: { tab: 'apis' } }))}
-              className="rounded-xl bg-yellow-500/80 px-4 py-2 text-xs font-semibold text-slate-950 transition hover:brightness-110"
+              onClick={() => clearApiKey()}
+              className="rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110"
+              title="Clear saved API key"
             >
-              Configure {provider}
+              Clear Key
             </button>
           )}
         </div>
@@ -516,13 +485,13 @@ const ChatAssistant = () => {
             Upload Files
           </button>
           {images.length > 0 && <span className="text-accent/80">{images.length} image(s) attached</span>}
-          {provider !== 'google' && images.length > 0 && (
+          {provider !== 'google' && (
             <span className="text-[10px] text-slate-400">Image analysis currently available only with Gemini models.</span>
           )}
         </div>
       </div>
 
-      <p className="mt-3 text-[10px] text-slate-400">Keys stored locally. For production, route requests through a secure backend and add rate limiting. Voice features use browser SpeechRecognition & speechSynthesis APIs.</p>
+      <p className="mt-3 text-[10px] text-slate-400">Keys live only in memory. For production, route requests through a secure backend and add rate limiting. Voice features use browser SpeechRecognition & speechSynthesis APIs.</p>
     </div>
   )
 }

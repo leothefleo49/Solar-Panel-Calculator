@@ -9,25 +9,23 @@ const ApisTab = () => {
     setUnifiedKey,
     setSolarKey,
     setMapsKey,
-    setGeminiKey,
     setShoppingKey,
     setShoppingCx,
     clearUnifiedKey,
     clearSolarKey,
     clearMapsKey,
-    clearGeminiKey,
     clearShoppingKey,
     clearShoppingCx,
   } = useGoogleApiStore()
-  const { apiKey, setApiKey, clearApiKey } = useChatStore()
+  const { setProviderKey, clearProviderKey, providerKeys } = useChatStore()
   const [showKeys, setShowKeys] = useState(false)
   const [mode, setMode] = useState<'unified' | 'separate'>(apiKeys.unified ? 'unified' : 'separate')
 
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-        <h3 className="text-lg font-semibold flex items-center gap-2">API Configuration <InfoTooltip content="Manage keys for Solar, Maps/Geocoding, Gemini AI or a Unified Google key. Also set the AI provider key used by the chat assistant." /></h3>
-        <p className="text-sm text-slate-300 mt-1">Use a unified Google Cloud key (enable Solar API, Maps, Gemini) OR separate keys per service. Add any AI provider key for chat if not using Gemini.</p>
+        <h3 className="text-lg font-semibold flex items-center gap-2">Google APIs Configuration <InfoTooltip content="Manage keys for Solar, Maps/Geocoding, Shopping. Use a unified key (enable all APIs on one key) OR separate keys per service." /></h3>
+        <p className="text-sm text-slate-300 mt-1">Configure Google Cloud APIs for solar analysis, address lookup, and product search.</p>
         <div className="mt-4 flex flex-wrap gap-3 items-center">
           <button
             type="button"
@@ -48,13 +46,13 @@ const ApisTab = () => {
         <div className="mt-5 space-y-4">
           {mode === 'unified' ? (
             <div>
-              <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">Unified Google Cloud Key <InfoTooltip content="Single key with access to Solar API, Maps (Geocoding), and Gemini AI. Enable APIs in Google Cloud Console." /></label>
+              <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">Unified Google Cloud Key <InfoTooltip content="Single key with access to Solar API, Maps (Geocoding), and Shopping (Custom Search). Enable these APIs in Google Cloud Console." /></label>
               <div className="mt-2 flex gap-2">
                 <input
                   type={showKeys ? 'text' : 'password'}
                   value={apiKeys.unified || ''}
                   onChange={(e) => setUnifiedKey(e.target.value)}
-                  placeholder="Paste unified key"
+                  placeholder="Paste unified Google Cloud key"
                   className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
                 />
                 {apiKeys.unified && (
@@ -87,28 +85,6 @@ const ApisTab = () => {
                 {apiKeys.maps && <button type="button" onClick={clearMapsKey} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">Gemini AI Key (Optional) <InfoTooltip content="Provide if using Gemini separately. Otherwise unified key or other AI provider key suffices." /></label>
-                <input
-                  type={showKeys ? 'text' : 'password'}
-                  value={apiKeys.gemini || ''}
-                  onChange={(e) => setGeminiKey(e.target.value)}
-                  placeholder="Gemini key"
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
-                />
-                {apiKeys.gemini && <button type="button" onClick={clearGeminiKey} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
-              </div>
-              <div>
-                <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">AI Provider Key <InfoTooltip content="Key for chosen chat AI (OpenAI, Anthropic, Grok, Gemini)." /></label>
-                <input
-                  type={showKeys ? 'text' : 'password'}
-                  value={apiKey || ''}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="AI provider key"
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
-                />
-                {apiKey && <button type="button" onClick={clearApiKey} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
-              </div>
-              <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">Shopping API Key (Optional) <InfoTooltip content="Google Custom Search API key for product search. Free tier: 100 queries/day." /></label>
                 <input
                   type={showKeys ? 'text' : 'password'}
@@ -135,17 +111,81 @@ const ApisTab = () => {
         </div>
       </div>
 
+      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+        <h3 className="text-lg font-semibold flex items-center gap-2">AI Provider Keys <InfoTooltip content="Configure keys for different AI chat providers. You can add multiple providers and switch between them in the chat assistant." /></h3>
+        <p className="text-sm text-slate-300 mt-1">Add API keys for AI providers you want to use in the chat assistant. Only configured providers will be available.</p>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">Google Gemini <InfoTooltip content="Google's Gemini models. Can use unified key or separate Gemini API key." /></label>
+            <input
+              type={showKeys ? 'text' : 'password'}
+              value={providerKeys.google || ''}
+              onChange={(e) => setProviderKey('google', e.target.value)}
+              placeholder="Gemini API key"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+            />
+            {providerKeys.google && <button type="button" onClick={() => clearProviderKey('google')} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">OpenAI <InfoTooltip content="OpenAI GPT models (GPT-5, GPT-4o, etc)." /></label>
+            <input
+              type={showKeys ? 'text' : 'password'}
+              value={providerKeys.openai || ''}
+              onChange={(e) => setProviderKey('openai', e.target.value)}
+              placeholder="OpenAI API key"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+            />
+            {providerKeys.openai && <button type="button" onClick={() => clearProviderKey('openai')} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">Anthropic Claude <InfoTooltip content="Anthropic's Claude models (Claude 3.5 Sonnet/Haiku, etc)." /></label>
+            <input
+              type={showKeys ? 'text' : 'password'}
+              value={providerKeys.anthropic || ''}
+              onChange={(e) => setProviderKey('anthropic', e.target.value)}
+              placeholder="Anthropic API key"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+            />
+            {providerKeys.anthropic && <button type="button" onClick={() => clearProviderKey('anthropic')} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">xAI Grok <InfoTooltip content="xAI's Grok models." /></label>
+            <input
+              type={showKeys ? 'text' : 'password'}
+              value={providerKeys.grok || ''}
+              onChange={(e) => setProviderKey('grok', e.target.value)}
+              placeholder="xAI API key"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+            />
+            {providerKeys.grok && <button type="button" onClick={() => clearProviderKey('grok')} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-3xl border border-white/10 bg-white/5 p-5 space-y-4">
-        <h4 className="text-sm font-semibold uppercase tracking-widest text-slate-300">Key Setup Instructions</h4>
-        <ol className="list-decimal list-inside text-xs text-slate-300 space-y-1">
-          <li>Create a Google Cloud project or reuse existing.</li>
-          <li>Enable: Solar API, Maps JavaScript API, Geocoding API, Custom Search API, Gemini API (optional for unified usage).</li>
-          <li>Generate a restricted API key (HTTP referrers / bundle id / package name as appropriate).</li>
-          <li>For Shopping API: visit <a href="https://programmablesearchengine.google.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">programmablesearchengine.google.com</a>, create a search engine, enable "Search the entire web", copy the CX (Engine ID).</li>
-          <li>For unified mode paste the same key in Unified field; for separate mode supply each key individually.</li>
-          <li>Obtain AI provider key (OpenAI dashboard, Anthropic console, xAI portal, or Gemini) and paste under AI Provider Key.</li>
-          <li>If using unified Google workflow, Gemini key may be the same as unified key; AI provider switch in Chat Assistant still works.</li>
-        </ol>
+        <h4 className="text-sm font-semibold uppercase tracking-widest text-slate-300">Setup Instructions</h4>
+        <div className="space-y-3 text-xs text-slate-300">
+          <div>
+            <p className="font-semibold text-accent mb-1">Google Cloud APIs:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Create project at <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Google Cloud Console</a></li>
+              <li>Enable: Solar API, Maps JavaScript API, Geocoding API, Custom Search API</li>
+              <li>Generate restricted API key (HTTP referrers / bundle id / package name)</li>
+              <li>For Shopping: visit <a href="https://programmablesearchengine.google.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">programmablesearchengine.google.com</a>, create engine, enable "Search the entire web", copy CX</li>
+              <li>Unified mode: same key for all. Separate mode: individual keys per API</li>
+            </ol>
+          </div>
+          <div>
+            <p className="font-semibold text-accent mb-1">AI Provider Keys:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li><strong>Gemini:</strong> Can use unified Google key OR separate Gemini key from AI Studio</li>
+              <li><strong>OpenAI:</strong> Get from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">platform.openai.com</a></li>
+              <li><strong>Claude:</strong> Get from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">console.anthropic.com</a></li>
+              <li><strong>Grok:</strong> Get from xAI portal</li>
+              <li>Only providers with configured keys will appear in chat assistant</li>
+            </ul>
+          </div>
+        </div>
         <p className="text-[10px] text-slate-400">Never commit keys. They persist locally via storage; clear before sharing screenshots.</p>
       </div>
     </div>

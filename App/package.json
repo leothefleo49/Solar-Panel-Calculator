@@ -1,10 +1,32 @@
 {
   "name": "solar-panel-calculator",
-  "private": true,
-  "version": "3.0.0",
-  "description": "Solar PV Financial & Technical Analysis Dashboard",
+  "private": false,
+  "version": "1.4.0",
+  "description": "Professional solar PV financial & technical analysis dashboard with Google Solar API integration, multi-AI chat assistant, and cross-platform support (Desktop, Mobile, Web)",
   "author": "leothefleo49",
   "license": "MIT",
+  "keywords": [
+    "solar",
+    "solar-panel",
+    "pv-calculator",
+    "solar-energy",
+    "roi-calculator",
+    "financial-analysis",
+    "google-solar-api",
+    "ai-assistant",
+    "tauri",
+    "capacitor",
+    "react",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leothefleo49/Solar-Panel-Calculator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/leothefleo49/Solar-Panel-Calculator/issues"
+  },
+  "homepage": "https://github.com/leothefleo49/Solar-Panel-Calculator#readme",
   "type": "module",
   "scripts": {
     "preinstall": "node -e \"console.log('Checking system dependencies...')\"",

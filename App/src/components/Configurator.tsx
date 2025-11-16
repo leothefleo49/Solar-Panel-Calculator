@@ -328,9 +328,9 @@ const Configurator = () => {
       <div className="modern-scroll flex-1 space-y-4 overflow-y-auto pr-1">
         {CONFIG_SECTIONS.map((section) => (
           <details key={section.id} className="section-details">
-            <summary className="summary-trigger mb-3 cursor-pointer select-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base font-semibold text-white hover:bg-white/10 flex items-center gap-3">
-              <span className="caret-icon" aria-hidden="true" />
+            <summary className="summary-trigger mb-3 cursor-pointer select-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base font-semibold text-white hover:bg-white/10">
               <span>{section.title}</span>
+              <span className="caret-icon" aria-hidden="true" />
             </summary>
             <div className="mb-6 space-y-4 px-1">
               <p className="text-xs text-slate-400">{section.description}</p>
