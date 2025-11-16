@@ -32,7 +32,7 @@ const App = () => {
     <div className="min-h-screen px-3 py-6 sm:px-6 lg:px-10">
       <FullscreenButton />
       <div className="mx-auto flex w-full max-w-[1840px] gap-6 xl:gap-8 transition-all duration-500">
-        <div className={leftCollapsed ? 'hidden' : 'min-w-0'}>
+        <div className={leftCollapsed ? 'flex-none w-0' : 'flex-none w-[24rem] transition-all duration-500'}>
           <Configurator />
         </div>
         <div

@@ -241,7 +241,7 @@ export default function ShoppingCart() {
         {searchResults.length > 0 && (
           <div className="space-y-2">
             <p className="text-sm font-medium text-white">{searchResults.length} Results</p>
-            <div className="max-h-96 space-y-2 overflow-y-auto">
+            <div className="modern-scroll max-h-96 space-y-2 overflow-y-auto pr-1">
               {searchResults.map((product, idx) => (
                 <div key={idx} className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
                   {product.image?.thumbnailLink && (
