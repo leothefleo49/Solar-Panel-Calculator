@@ -8,6 +8,20 @@ export default [
   { ignores: ['dist', 'node_modules', 'temp-app', 'android', 'ios', 'src-tauri'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  // Node scripts (e.g., release tools) use Node globals like `console`
+  {
+    files: ['scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-console': 'off',
+    },
+  },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
