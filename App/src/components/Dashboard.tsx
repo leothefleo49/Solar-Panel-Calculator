@@ -17,6 +17,7 @@ import type { SolarStoreState } from '../state/solarStore'
 import SolarApiIntegration from './SolarApiIntegration'
 import ApisTab from './ApisTab.tsx'
 import ShoppingCart from './ShoppingCart'
+import ApiUsageTab from './ApiUsageTab'
 import {
   buildModelSnapshot,
   formatCurrency,
@@ -32,6 +33,7 @@ const TAB_DEFINITION = [
   { id: 'battery', label: 'Battery & Outage Simulation' },
   { id: 'shopping', label: 'Shopping Cart' },
   { id: 'apis', label: 'APIs' },
+  { id: 'api-usage', label: 'API Usage' },
   { id: 'solarIntegration', label: 'Google Solar Integration' },
   { id: 'datasheet', label: '25-Year Data Sheet' },
   { id: 'aiOverview', label: 'AI Overview' },
@@ -141,6 +143,7 @@ const Dashboard = () => {
         )}
         {activeTab === 'shopping' && <ShoppingCart />}
         {activeTab === 'apis' && <ApisTab />}
+        {activeTab === 'api-usage' && <ApiUsageTab />}
         {activeTab === 'solarIntegration' && <SolarIntegrationTab />}
         {activeTab === 'datasheet' && <DataSheetTab rows={snapshot.projection} />}
         {activeTab === 'aiOverview' && <AIOverviewTab snapshot={snapshot} config={config} />}

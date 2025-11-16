@@ -1,6 +1,8 @@
 // Utility functions for calling different AI providers without exposing keys directly.
 // Keys should be supplied at runtime via UI or environment variables.
 
+import { useApiUsageStore } from '../state/apiUsageStore';
+
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant'
   content: string
@@ -28,6 +30,11 @@ export async function callOpenAI(apiKey: string, model: string, messages: AIMess
     }
     const data = await res.json()
     const answer = data.choices?.[0]?.message?.content?.trim() || 'No response.'
+    
+    // Track usage with token count
+    const tokens = data.usage?.total_tokens || 0
+    useApiUsageStore.getState().trackUsage('openai', 1, tokens, model)
+    
     return { ok: true, content: answer }
   } catch (e: any) {
     return { ok: false, content: '', error: e.message }
@@ -50,6 +57,11 @@ export async function callGrok(apiKey: string, model: string, messages: AIMessag
     }
     const data = await res.json()
     const answer = data.choices?.[0]?.message?.content?.trim() || 'No response.'
+    
+    // Track usage with token count
+    const tokens = data.usage?.total_tokens || 0
+    useApiUsageStore.getState().trackUsage('grok', 1, tokens, model)
+    
     return { ok: true, content: answer }
   } catch (e: any) {
     return { ok: false, content: '', error: e.message }
@@ -87,6 +99,11 @@ export async function callGeminiFlash(
     }
     const data = await res.json()
     const answer = data.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('\n')?.trim() || 'No response.'
+    
+    // Track usage with token count (Gemini may not always provide usage metadata)
+    const tokens = data.usageMetadata?.totalTokenCount || 0
+    useApiUsageStore.getState().trackUsage('google-gemini', 1, tokens, model)
+    
     return { ok: true, content: answer }
   } catch (e: any) {
     return { ok: false, content: '', error: e.message }
@@ -123,6 +140,11 @@ export async function callClaude(apiKey: string, model: string, messages: AIMess
     }
     const data = await res.json()
     const answer = data.content?.[0]?.text?.trim() || 'No response.'
+    
+    // Track usage with token count
+    const tokens = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
+    useApiUsageStore.getState().trackUsage('anthropic', 1, tokens, model)
+    
     return { ok: true, content: answer }
   } catch (e: any) {
     return { ok: false, content: '', error: e.message }

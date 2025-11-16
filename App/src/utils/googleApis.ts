@@ -4,6 +4,7 @@
  */
 
 import type { GoogleApiKeys, SolarPotential, GeocodingResult, SolarPotentialRequest } from '../types/google-apis';
+import { useApiUsageStore } from '../state/apiUsageStore';
 
 const SOLAR_API_BASE = 'https://solar.googleapis.com/v1';
 const GEOCODING_API_BASE = 'https://maps.googleapis.com/maps/api/geocode';
@@ -54,6 +55,10 @@ export async function geocodeAddress(
     }
     
     const result = data.results[0];
+    
+    // Track usage
+    useApiUsageStore.getState().trackUsage('google-maps', 1);
+    
     return {
       lat: result.geometry.location.lat,
       lng: result.geometry.location.lng,
@@ -90,6 +95,10 @@ export async function getBuildingInsights(
     }
     
     const data = await response.json();
+    
+    // Track usage
+    useApiUsageStore.getState().trackUsage('google-solar', 1);
+    
     return data;
   } catch (error) {
     console.error('Building insights error:', error);
@@ -143,6 +152,9 @@ export async function getSolarPotential(
     }
     
     const data = await response.json();
+    
+    // Track usage
+    useApiUsageStore.getState().trackUsage('google-solar', 1);
     
     // Also fetch building insights for complete data
     const buildingInsights = await getBuildingInsights(latitude, longitude, apiKeys);

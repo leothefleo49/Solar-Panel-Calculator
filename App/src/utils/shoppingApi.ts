@@ -6,6 +6,7 @@
  */
 
 import { useGoogleApiStore } from '../state/googleApiStore';
+import { useApiUsageStore } from '../state/apiUsageStore';
 import type { GoogleShoppingResponse, GoogleShoppingProduct } from '../types/shopping';
 
 const SHOPPING_API_BASE = 'https://www.googleapis.com/customsearch/v1';
@@ -45,6 +46,10 @@ export async function searchProducts(query: string, options?: {
   }
 
   const data: GoogleShoppingResponse = await response.json();
+  
+  // Track usage
+  useApiUsageStore.getState().trackUsage('google-shopping', 1);
+  
   return data.items || [];
 }
 
