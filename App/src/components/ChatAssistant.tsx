@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import type { MouseEvent } from 'react'
 import { useChatStore } from '../state/chatStore'
 import { buildModelSnapshot } from '../utils/calculations'
@@ -10,7 +10,6 @@ const ChatAssistant = () => {
   const snapshot = buildModelSnapshot(config)
   const {
     apiKey,
-    setApiKey,
     clearApiKey,
     loading,
     setLoading,
@@ -27,12 +26,16 @@ const ChatAssistant = () => {
   } = useChatStore()
 
   const activeConv = conversations.find((c) => c.id === activeConversationId) || conversations[0]
-  const messages = activeConv?.messages ?? []
+  const messages = useMemo(() => activeConv?.messages ?? [], [activeConv])
 
   const [input, setInput] = useState('')
-  const [keyInput, setKeyInput] = useState('')
+  // Removed local key input; keys now managed in APIs tab
   const [images, setImages] = useState<File[]>([])
   const [collapsed, setCollapsed] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [recognitionSupported, setRecognitionSupported] = useState(false)
+  const [ttsSupported, setTtsSupported] = useState(false)
+  const lastAssistantRef = useRef<string>('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -43,22 +46,9 @@ const ChatAssistant = () => {
     textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeightPx)}px`
   }, [input])
 
-  const envVars = import.meta.env as Record<string, string | undefined>
-  const googleEnvKey = envVars.VITE_GOOGLE_API_KEY
-  const openAIEnvKey = envVars.VITE_OPENAI_API_KEY
-  const anthropicEnvKey = envVars.VITE_ANTHROPIC_API_KEY
-  const grokEnvKey = envVars.VITE_GROK_API_KEY
+  // Environment keys (if any) are now surfaced in the APIs tab; not referenced directly here.
 
-  const providerEnvKey =
-    provider === 'google'
-      ? googleEnvKey
-      : provider === 'anthropic'
-        ? anthropicEnvKey
-        : provider === 'grok'
-          ? grokEnvKey
-          : openAIEnvKey
-
-  const showEnvNotice = !apiKey && !!providerEnvKey
+  // Provider env key management moved to APIs tab
 
   const handleDeleteConversation = (id: string, e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -149,14 +139,85 @@ const ChatAssistant = () => {
     }
   }
 
+  useEffect(() => {
+    // Insert preset guidance message once if no API key present
+    if (!apiKey) {
+      const already = messages.some(m => m.role === 'assistant' && m.content.includes('Configure your API key'))
+      if (!already) {
+        addMessage('assistant', 'Configure your API key(s) in the APIs tab for chat & analysis. Use Unified Google key or any AI provider key. Click "Configure APIs" button if needed.')
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    // Panel collapse broadcast
+    window.dispatchEvent(new CustomEvent('panel-collapsed', { detail: { side: 'right', collapsed } }))
+  }, [collapsed])
+
+  useEffect(() => {
+    // Track last assistant message for TTS
+    const lastAssistant = [...messages].reverse().find(m => m.role === 'assistant')
+    if (lastAssistant) lastAssistantRef.current = lastAssistant.content
+  }, [messages])
+
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (SpeechRecognition) setRecognitionSupported(true)
+    if ('speechSynthesis' in window) setTtsSupported(true)
+  }, [])
+
+  const startListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) return
+    const rec = new SpeechRecognition()
+    rec.continuous = true
+    rec.interimResults = true
+    rec.lang = 'en-US'
+    rec.onresult = (e: any) => {
+      let interim = ''
+      for (let i = e.resultIndex; i < e.results.length; i += 1) {
+        const transcript = e.results[i][0].transcript
+        if (e.results[i].isFinal) {
+          setInput(prev => (prev ? prev + ' ' : '') + transcript.trim())
+        } else {
+          interim += transcript
+        }
+      }
+      if (textareaRef.current) textareaRef.current.placeholder = interim ? `Speaking: ${interim}` : 'Ask a question...'
+    }
+    rec.onerror = () => setListening(false)
+    rec.onend = () => setListening(false)
+    rec.start()
+    ;(window as any).__activeRecognition = rec
+    setListening(true)
+  }
+
+  const stopListening = () => {
+    const rec = (window as any).__activeRecognition
+    if (rec) rec.stop()
+    setListening(false)
+    if (textareaRef.current) textareaRef.current.placeholder = 'Ask a question about system sizing, ROI, production...'
+  }
+
+  const speakLastAssistant = () => {
+    if (!ttsSupported || !lastAssistantRef.current) return
+    window.speechSynthesis.cancel()
+    const utter = new SpeechSynthesisUtterance(lastAssistantRef.current.slice(0, 1200))
+    utter.rate = 1
+    utter.pitch = 1
+    utter.volume = 1
+    window.speechSynthesis.speak(utter)
+  }
+
   if (collapsed) {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="glass-panel fixed right-0 top-1/2 z-20 -translate-y-1/2 rounded-l-[28px] p-3 text-white hover:bg-white/10 transition"
+        className="glass-panel fixed right-0 top-1/2 z-20 -translate-y-1/2 rounded-l-[28px] p-2 text-white hover:bg-white/10 transition"
         title="Expand Chat Assistant"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
@@ -172,10 +233,10 @@ const ChatAssistant = () => {
         </div>
         <button
           onClick={() => setCollapsed(true)}
-          className="rounded-lg p-2 hover:bg-white/10 transition ml-2"
+          className="rounded-lg p-1.5 hover:bg-white/10 transition ml-2"
           title="Minimize Chat Assistant"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -285,31 +346,13 @@ const ChatAssistant = () => {
             )}
           </select>
 
-          {!apiKey && (
-            <input
-              type="password"
-              placeholder={
-                provider === 'google'
-                  ? 'Google API Key'
-                  : provider === 'anthropic'
-                    ? 'Anthropic API Key'
-                    : provider === 'grok'
-                      ? 'Grok API Key'
-                      : 'OpenAI API Key'
-              }
-              value={keyInput}
-              onChange={(e) => setKeyInput(e.target.value)}
-              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs focus:border-accent focus:ring-accent"
-            />
-          )}
-
           {!apiKey ? (
             <button
               type="button"
-              onClick={() => setApiKey(keyInput || providerEnvKey || '')}
+              onClick={() => window.dispatchEvent(new CustomEvent('open-dashboard-tab', { detail: { tab: 'apis' } }))}
               className="rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-slate-950 transition hover:brightness-110"
             >
-              Use Key
+              Configure APIs
             </button>
           ) : (
             <button
@@ -322,9 +365,6 @@ const ChatAssistant = () => {
             </button>
           )}
         </div>
-        {showEnvNotice && (
-          <p className="text-[10px] text-slate-400">Provider key detected in env; click “Use Key” or paste a different one.</p>
-        )}
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 modern-scroll">
@@ -364,10 +404,39 @@ const ChatAssistant = () => {
             type="button"
             onClick={handleSend}
             disabled={loading}
-            className="h-12 rounded-xl bg-accent px-5 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:opacity-40"
+            className="h-12 rounded-xl bg-accent px-4 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:opacity-40"
+            style={{ minWidth: '90px' }}
           >
             Send
           </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300">
+          {recognitionSupported ? (
+            listening ? (
+              <button
+                type="button"
+                onClick={stopListening}
+                className="rounded-lg border border-rose-500/40 bg-rose-500/20 px-3 py-1.5 font-semibold text-rose-200 hover:bg-rose-500/30"
+              >Stop Voice</button>
+            ) : (
+              <button
+                type="button"
+                onClick={startListening}
+                className="rounded-lg border border-accent/50 bg-accent/20 px-3 py-1.5 font-semibold text-accent hover:bg-accent/30"
+              >Start Voice</button>
+            )
+          ) : (
+            <span className="text-[10px] text-slate-500">Voice input unsupported in this browser.</span>
+          )}
+          {ttsSupported && (
+            <button
+              type="button"
+              onClick={speakLastAssistant}
+              disabled={!lastAssistantRef.current}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-semibold text-white/80 hover:border-accent hover:text-white disabled:opacity-40"
+            >Play Last Reply</button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
@@ -375,7 +444,11 @@ const ChatAssistant = () => {
             type="file"
             multiple
             accept="image/*"
-            onChange={(e) => setImages(Array.from(e.target.files || []))}
+            onChange={(e) => {
+              const next = Array.from(e.target.files || [])
+              if (next.length === 0) return
+              setImages((prev) => [...prev, ...next])
+            }}
             className="hidden"
             id="chat-image-input"
           />
@@ -394,7 +467,7 @@ const ChatAssistant = () => {
         </div>
       </div>
 
-      <p className="mt-3 text-[10px] text-slate-400">Keys live only in memory. For production, route requests through a secure backend and add rate limiting.</p>
+      <p className="mt-3 text-[10px] text-slate-400">Keys live only in memory. For production, route requests through a secure backend and add rate limiting. Voice features use browser SpeechRecognition & speechSynthesis APIs.</p>
     </div>
   )
 }

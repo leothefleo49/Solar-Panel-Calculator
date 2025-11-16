@@ -18,12 +18,52 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            // Enable shrinking/optimization; keep rules minimal to avoid stripping Capacitor/Tauri bridges.
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Deterministic output for CI reproducibility
+            zipAlignEnabled true
         }
     }
+            // Explicitly disable shrinking in debug for faster iteration
+            minifyEnabled false
 }
 
+
+    // Enforce Java 17 toolchain for AGP 8.7.x
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packagingOptions {
+        // Avoid duplicate META-INF entries that can cause build failures
+        resources {
+            excludes += [
+                'META-INF/DEPENDENCIES',
+                'META-INF/LICENSE',
+                'META-INF/LICENSE.txt',
+                'META-INF/license.txt',
+                'META-INF/NOTICE',
+                'META-INF/NOTICE.txt',
+                'META-INF/notice.txt',
+                'META-INF/ASL2.0'
+            ]
+        }
+    }
+
+    // Workaround for potential permission issues on CI (gradlew exit code 126)
+    tasks.whenTaskAdded { task ->
+        if (task.name == 'preBuild') {
+            task.doFirst {
+                def gradlew = new File(rootProject.rootDir, 'gradlew')
+                if (gradlew.exists()) {
+                    gradlew.setExecutable(true)
+                }
+            }
+        }
+    }
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'

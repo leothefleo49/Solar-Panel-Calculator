@@ -1,4 +1,4 @@
-import { type ChangeEvent, useState } from 'react'
+import { type ChangeEvent, useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { CONFIG_SECTIONS, type ConfigField } from '../constants/configSchema'
 import { useSolarStore } from '../state/solarStore'
@@ -14,6 +14,10 @@ const Configurator = () => {
   const setValue = useSolarStore((state) => state.setConfigValue)
   const [usageMode, setUsageMode] = useState<'monthly' | 'yearly'>('monthly')
   const [collapsed, setCollapsed] = useState(false)
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('panel-collapsed', { detail: { side: 'left', collapsed } }))
+  }, [collapsed])
 
   const handleToggleChange = (key: ConfigField['key']) => () => {
     const current = config[key]
@@ -290,10 +294,10 @@ const Configurator = () => {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="glass-panel fixed left-0 top-1/2 z-20 -translate-y-1/2 rounded-r-[28px] p-3 text-white hover:bg-white/10 transition"
+        className="glass-panel fixed left-0 top-1/2 z-20 -translate-y-1/2 rounded-r-[28px] p-2 text-white hover:bg-white/10 transition"
         title="Expand Configurator"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </button>
@@ -313,19 +317,20 @@ const Configurator = () => {
         </div>
         <button
           onClick={() => setCollapsed(true)}
-          className="rounded-lg p-2 hover:bg-white/10 transition"
+          className="rounded-lg p-1.5 hover:bg-white/10 transition"
           title="Minimize Configurator"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
       </div>
       <div className="modern-scroll flex-1 space-y-4 overflow-y-auto pr-1">
         {CONFIG_SECTIONS.map((section) => (
-          <details key={section.id} open>
-            <summary className="summary-trigger mb-3 cursor-pointer select-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base font-semibold text-white hover:bg-white/10">
-              {section.title}
+          <details key={section.id} className="section-details">
+            <summary className="summary-trigger mb-3 cursor-pointer select-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base font-semibold text-white hover:bg-white/10 flex items-center gap-3">
+              <span className="caret-icon" aria-hidden="true" />
+              <span>{section.title}</span>
             </summary>
             <div className="mb-6 space-y-4 px-1">
               <p className="text-xs text-slate-400">{section.description}</p>

@@ -42,7 +42,7 @@ const InfoTooltip = ({ content }: InfoTooltipProps) => {
         className="ml-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/40 bg-white/5 text-white/90 transition hover:border-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         aria-label={content}
       >
-        <span className="font-bold text-xs leading-[0] tracking-wide">i</span>
+        <span className="font-bold text-sm leading-[0] tracking-wide">i</span>
       </button>
       {open &&
         createPortal(

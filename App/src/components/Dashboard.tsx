@@ -1,4 +1,4 @@
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useMemo, useState, useEffect } from 'react'
 import {
   Bar,
   BarChart,
@@ -15,6 +15,7 @@ import clsx from 'clsx'
 import { useSolarStore } from '../state/solarStore'
 import type { SolarStoreState } from '../state/solarStore'
 import SolarApiIntegration from './SolarApiIntegration'
+import ApisTab from './ApisTab.tsx'
 import {
   buildModelSnapshot,
   formatCurrency,
@@ -28,7 +29,8 @@ const TAB_DEFINITION = [
   { id: 'financial', label: 'Financial Summary' },
   { id: 'production', label: 'Production & Performance' },
   { id: 'battery', label: 'Battery & Outage Simulation' },
-  { id: 'solarApi', label: 'Google Solar API' },
+  { id: 'apis', label: 'APIs' },
+  { id: 'solarIntegration', label: 'Google Solar Integration' },
   { id: 'datasheet', label: '25-Year Data Sheet' },
   { id: 'aiOverview', label: 'AI Overview' },
 ] as const
@@ -40,6 +42,18 @@ const Dashboard = () => {
   const simulation = useSolarStore((state) => state.simulation)
   const setSimulationValue = useSolarStore((state) => state.setSimulationValue)
   const [activeTab, setActiveTab] = useState<TabId>('financial')
+
+  // Listen for global UI events (e.g., ChatAssistant requesting APIs tab)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<{ tab?: TabId }>
+      if (custom.detail?.tab && TAB_DEFINITION.some(t => t.id === custom.detail.tab)) {
+        setActiveTab(custom.detail.tab)
+      }
+    }
+    window.addEventListener('open-dashboard-tab', handler)
+    return () => window.removeEventListener('open-dashboard-tab', handler)
+  }, [])
 
   const snapshot = useMemo(() => buildModelSnapshot(config), [config])
   const batteryResult = useMemo(() => runBatterySimulation(config, simulation, snapshot), [config, simulation, snapshot])
@@ -123,7 +137,8 @@ const Dashboard = () => {
             netMetering={config.netMetering}
           />
         )}
-        {activeTab === 'solarApi' && <SolarApiTab />}
+        {activeTab === 'apis' && <ApisTab />}
+        {activeTab === 'solarIntegration' && <SolarIntegrationTab />}
         {activeTab === 'datasheet' && <DataSheetTab rows={snapshot.projection} />}
         {activeTab === 'aiOverview' && <AIOverviewTab snapshot={snapshot} config={config} />}
       </div>
@@ -331,7 +346,7 @@ const ProductionTab = ({ panelChartData, monthlyData }: ProductionTabProps) => (
   </div>
 )
 
-const SolarApiTab = () => <SolarApiIntegration />
+const SolarIntegrationTab = () => <SolarApiIntegration />
 
 type BatteryTabProps = {
   simulation: SolarStoreState['simulation']

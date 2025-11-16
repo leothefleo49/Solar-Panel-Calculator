@@ -12,12 +12,16 @@
 **Run locally on your PC, Android, or iOS device—no internet required after installation!**
 
 1. **Go to [Releases](https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest)**
-2. **Download for your platform:**
-   - 🪟 **Windows**: `.msi` installer (recommended) or `.exe`
-   - 🍎 **macOS**: `.dmg` (Intel/Apple Silicon auto-detected)
-   - 🐧 **Linux**: `.AppImage`, `.deb`, or `.rpm`
-   - 📱 **Android**: `.apk` (enable "Install from Unknown Sources")
-   - 🍏 **iOS**: `.ipa` (requires Xcode/TestFlight for installation)
+2. **Download the correctly labeled asset:**
+  - 🪟 **Windows**: `SolarPanelCalculator-Setup-x64.msi` (installer) or `SolarPanelCalculator-x64.exe` (portable)
+  - 🍎 **macOS (Apple Silicon)**: `SolarPanelCalculator-arm64.dmg`  | **macOS (Intel)**: `SolarPanelCalculator-x64.dmg`
+  - 🐧 **Linux (Universal)**: `SolarPanelCalculator-x86_64.AppImage` (make executable)  
+    **Debian/Ubuntu**: `solar-panel-calculator_<version>_amd64.deb`  
+    **Fedora/RHEL**: `solar-panel-calculator-<version>.x86_64.rpm`
+  - 📱 **Android**: `solar-panel-calculator-release.apk` (enable "Install from Unknown Sources")
+  - 🍏 **iOS**: `SolarPanelCalculator.ipa` (install via TestFlight or Xcode – signing required)
+
+> If you see multiple assets: choose the one matching your OS & architecture (x64, arm64). **Do not download source archives for installation.**
 
 3. **Install & launch—all calculations run locally!**
 
@@ -207,21 +211,46 @@ For production deployments, route AI API requests through a secure backend proxy
 
 ## 📦 Distribution
 
-### Automated Releases
-Push a git tag to trigger multi-platform builds:
+### Automated Releases (CI)
+Push a semantic git tag (e.g. `v3.0.1`) to trigger the CI matrix build:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-GitHub Actions builds:
-- Windows (x64)
-- macOS (Intel + Apple Silicon)
-- Linux (AppImage, deb, rpm)
-- Android APK
+GitHub Actions produces clearly named artifacts:
+- `SolarPanelCalculator-Setup-x64.msi` / `SolarPanelCalculator-x64.exe`
+- `SolarPanelCalculator-arm64.dmg` / `SolarPanelCalculator-x64.dmg`
+- `SolarPanelCalculator-x86_64.AppImage`
+- `solar-panel-calculator_<version>_amd64.deb`
+- `solar-panel-calculator-<version>.x86_64.rpm`
+- `solar-panel-calculator-release.apk`
+- (Planned) `SolarPanelCalculator.ipa` (after iOS pipeline added)
 
-Artifacts are automatically attached to the [Releases](https://github.com/leothefleo49/Solar-Panel-Calculator/releases) page.
+Each release also includes a checksum file `SHA256SUMS.txt` for integrity verification.
+
+#### Integrity Verification
+```bash
+sha256sum -c SHA256SUMS.txt --ignore-missing
+```
+Matches = file is authentic. Mismatch = re-download.
+
+#### Portable vs Installer (Windows)
+- Use `.msi` for start menu shortcuts & automatic uninstall.
+- Use standalone `.exe` if running from USB or without admin rights.
+
+#### Linux AppImage Usage
+```bash
+chmod +x SolarPanelCalculator-x86_64.AppImage
+./SolarPanelCalculator-x86_64.AppImage
+```
+
+#### macOS Gatekeeper
+If blocked, right-click → Open (first run) or:
+```bash
+xattr -dr com.apple.quarantine "SolarPanelCalculator-arm64.dmg"
+```
 
 ### Manual Build
 See [RELEASE_INSTRUCTIONS.md](./RELEASE_INSTRUCTIONS.md) for detailed build instructions, signing, and troubleshooting.
@@ -236,11 +265,20 @@ See [RELEASE_INSTRUCTIONS.md](./RELEASE_INSTRUCTIONS.md) for detailed build inst
 - **Linux**: `sudo apt install libwebkit2gtk-4.1-dev`
 
 ### Android Issues
-- **Build fails**: Check Android SDK version (must be 33+)
-- **App crashes**: Run `npx cap sync android` to refresh
-- **APK won't install**: Enable "Install from Unknown Sources" in Android settings
+- **Build fails (exit code 1/126)**: Ensure executable gradlew permissions (`chmod +x android/gradlew` on Unix CI), verify JDK 17 and Android Gradle Plugin 8.7+, run `npm run cap:sync` before building.
+- **Dependency resolution errors**: Clear Gradle cache `rm -rf ~/.gradle/caches` (Unix) or use Android Studio *Invalidate Caches*.
+- **Resource merge failures**: Run `./gradlew clean` then rebuild.
+- **App crashes on launch**: Confirm `minSdkVersion` (23) device compatibility; run `adb logcat` to inspect.
+- **APK won't install**: Enable "Install from Unknown Sources"; verify architecture (x86 emulator cannot run arm64-only builds).
 
 ### CORS Errors
+### iOS (Pending Pipeline)
+- Use `npm run cap:ios` to open Xcode after adding iOS platform.
+- Set signing team: Xcode → Project Settings → Signing & Capabilities.
+- Increment build number each release.
+- Export via *Archive* → *Distribute App* (TestFlight or Ad Hoc).
+
+Planned CI will produce a signed `.ipa` once Apple credentials & notarization flow are added.
 Desktop/Android handle CORS automatically. Web deployment requires backend proxy for AI APIs.
 
 ---
