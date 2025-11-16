@@ -89,6 +89,13 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Ensure Gradle wrapper is executable
+        run: |
+          chmod +x App/android/gradlew
+
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
@@ -98,21 +105,77 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build Android APK
-        working-directory: android
-        run: ./gradlew assembleRelease
+      - name: Build Android APK (release)
+        working-directory: App/android
+        run: ./gradlew --no-daemon --stacktrace clean :app:assembleRelease
+
+      - name: Detect signing secrets
+        id: detect_signing
+        shell: bash
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ALIAS_PW: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
+        run: |
+          if [[ -n "${KS_B64}" && -n "${KS_PW}" && -n "${ALIAS}" && -n "${ALIAS_PW}" ]]; then
+            echo "has_signing=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_signing=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Decode keystore
+        if: steps.detect_signing.outputs.has_signing == 'true'
+        shell: bash
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "Decoding Android keystore"
+          mkdir -p App/android/app/keystore
+          echo "${KS_B64}" | base64 -d > App/android/app/keystore/release.keystore
+
+      - name: Zipalign and Sign APK
+        if: steps.detect_signing.outputs.has_signing == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK_DIR="App/android/app/build/outputs/apk/release"
+          UNSIGNED_APK="$APK_DIR/app-release-unsigned.apk"
+          ALIGNED_APK="$APK_DIR/app-release-aligned.apk"
+          SIGNED_APK="$APK_DIR/app-release-signed.apk"
+
+          # Find latest build-tools
+          BT_DIR=$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -n1)
+          echo "Using build-tools in $BT_DIR"
+
+          "$BT_DIR/zipalign" -f -v 4 "$UNSIGNED_APK" "$ALIGNED_APK"
+          "$BT_DIR/apksigner" sign \
+            --ks App/android/app/keystore/release.keystore \
+            --ks-key-alias "${ALIAS}" \
+            --ks-pass env:KS_PASS \
+            --key-pass env:KEY_PASS \
+            --out "$SIGNED_APK" \
+            "$ALIGNED_APK"
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
+          ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: App/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          path: |
+            App/android/app/build/outputs/apk/release/app-release-signed.apk
+            App/android/app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Create Release (Android)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: App/android/app/build/outputs/apk/release/app-release-unsigned.apk
+          files: |
+            App/android/app/build/outputs/apk/release/app-release-signed.apk
+            App/android/app/build/outputs/apk/release/app-release-unsigned.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
