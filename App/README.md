@@ -1,15 +1,15 @@
 # Solar Panel Calculator - Desktop & Mobile App
 
-> 🌞 **Professional solar PV financial & technical analysis dashboard** with glassmorphism UI, high-precision modeling, and AI-powered assistance.
+> 🌞 **Professional solar PV financial & technical analysis dashboard** with glassmorphism UI, high-precision modeling, AI-powered assistance, and **Google Solar API integration**.
 
 [![Download Latest Release](https://img.shields.io/github/v/release/leothefleo49/Solar-Panel-Calculator?style=for-the-badge&logo=github)](https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest)
-[![Platform Support](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-blue?style=for-the-badge)](#)
+[![Platform Support](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS-blue?style=for-the-badge)](#)
 
 ---
 
 ## 📥 Quick Download (For Users)
 
-**Run locally on your PC or Android device—no internet required after installation!**
+**Run locally on your PC, Android, or iOS device—no internet required after installation!**
 
 1. **Go to [Releases](https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest)**
 2. **Download for your platform:**
@@ -17,6 +17,7 @@
    - 🍎 **macOS**: `.dmg` (Intel/Apple Silicon auto-detected)
    - 🐧 **Linux**: `.AppImage`, `.deb`, or `.rpm`
    - 📱 **Android**: `.apk` (enable "Install from Unknown Sources")
+   - 🍏 **iOS**: `.ipa` (requires Xcode/TestFlight for installation)
 
 3. **Install & launch—all calculations run locally!**
 
@@ -25,12 +26,20 @@
 ## ✨ Features
 
 ### Core Capabilities
+- **🌍 Google Solar API Integration** (NEW in v1.2.0):
+  - Analyze any property address with real-world roof data from Google's Solar API
+  - Automatic geocoding and coordinate lookup
+  - Detailed roof segment analysis (pitch, azimuth, area, sun exposure)
+  - AI-powered recommendations using actual roof geometry
+  - Financial projections based on real sun exposure data
+  - Flexible API key management (unified or separate keys)
+  - Optional - app works fully without Google APIs
 - **Comprehensive Configurator**: Collapsible sections for utility costs, incentives, solar hardware, battery storage, and soft costs with contextual tooltips
 - **High-Precision Modeling**: Decimal.js engine simulates 25-year production, degradation, inflation-adjusted utility spend, net-metering cash flow, ROI, and break-even timing
 - **Interactive Visualizations**: Multi-line crossover charts, degradation trends, monthly production vs. consumption bars, and battery/outage simulator
 - **Data Studio**: Sortable amortization table with optional monthly expansion (up to 250 rows) for deep financial analysis
-- **AI Chat Assistant**: Multi-provider support (Google Gemini, OpenAI GPT, Anthropic Claude, xAI Grok) with up to 5 concurrent conversation threads
-- **Modern UX**: Dark-mode glassmorphism panels, responsive layout, accessible tooltips, auto-expanding chat input
+- **AI Chat Assistant**: Multi-provider support (Google Gemini, OpenAI GPT, Anthropic Claude, xAI Grok) with up to 5 concurrent conversation threads and Solar API context integration
+- **Modern UX**: Dark-mode glassmorphism panels, responsive layout, accessible tooltips, auto-expanding chat input, fullscreen mode
 
 ### Desktop App Benefits
 ✅ Runs completely offline after installation  
@@ -39,12 +48,14 @@
 ✅ Faster performance vs. browser  
 ✅ Auto-update checker  
 ✅ No tracking or telemetry  
+✅ Fullscreen mode support  
 
 ### Mobile App Benefits
 📱 Full feature parity with desktop  
 📱 Touch-optimized UI  
 📱 Works offline after first load  
-📱 Install directly from APK (no Play Store required)  
+📱 Install directly from APK/IPA (no app store required)  
+📱 Persistent chat history and API keys  
 
 ---
 

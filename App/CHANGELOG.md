@@ -5,7 +5,55 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.2.0] - 2025-11-16
+
+### Added
+- **🌞 Google Solar API Integration**: Complete integration with Google's Solar API for real-world roof analysis
+  - Address-based solar potential lookup using Google Maps Geocoding
+  - Detailed roof segment analysis (pitch, azimuth, area, sun exposure)
+  - Building insights with imagery dates and quality scores
+  - Solar panel configuration recommendations from Google
+  - Financial analysis with cash purchase, financed, and leasing options
+  - Carbon offset calculations
+  - Maximum sunshine hours and energy production estimates
+- **🤖 AI-Powered Solar Recommendations**: Solar API data is automatically sent to AI for intelligent analysis
+  - AI receives comprehensive roof analysis, panel specs, and financial data
+  - Provides panel placement recommendations based on real roof geometry
+  - Suggests optimizations for energy production
+  - Analyzes cost-benefit and ROI with real-world data
+  - Identifies potential issues and structural considerations
+- **🔑 Flexible API Key Management**: 
+  - Unified Google Cloud API key option (one key for Solar, Maps, and Gemini)
+  - Separate key option for independent service management
+  - Optional usage - app works fully without Google APIs
+  - Secure local storage with show/hide password fields
+  - Clear individual keys or all at once
+- **📱 iOS Build Pipeline**: Added complete iOS build support in GitHub Actions
+  - Automated IPA generation via Xcode
+  - CocoaPods dependency management
+  - Capacitor iOS platform sync
+  - Release artifact uploads
+- **New Dashboard Tab**: "Google Solar API" tab for analyzing any property address
+
+### Changed
+- **Enhanced Chat Assistant**: Now automatically receives Solar API context for property-specific recommendations
+- **Improved AI Context**: Solar data formatted into comprehensive prompts with roof specs, panel configs, and financial projections
+- **Build System**: Android workflow now skips system dependency checks in CI environment (prevents false positives)
+
+### Fixed
+- **Android CI Build**: Postinstall dependency check now detects CI environment and skips premature system package validation
+- **iOS Platform Configuration**: Added proper iOS setup with app ID, bundle ID, and platform-specific settings
+
+### Technical
+- Created `google-apis.ts` types with comprehensive Solar API response interfaces
+- Implemented `googleApis.ts` utilities for Solar API, Maps Geocoding, and data formatting
+- Added `googleApiStore.ts` Zustand store with persist middleware for API key management
+- Created `SolarApiIntegration.tsx` component with address input and real-time analysis
+- Enhanced `chatStore.ts` with `sendMessage` method for programmatic AI queries
+- Updated GitHub Actions workflow with iOS job (Xcode build, export, artifact upload)
+- Modified `check-deps.cjs` to skip validation when `CI` or `GITHUB_ACTIONS` env vars are set
+
+## [1.1.0] - 2025-11-16
 
 ### Added
 - **Monthly/Yearly Input Toggle**: Users can now input monthly usage and costs as either monthly or yearly values. Toggle buttons allow easy switching between input modes.
