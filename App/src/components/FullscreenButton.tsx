@@ -19,14 +19,25 @@ const FullscreenButton = () => {
   const toggleFullscreen = async () => {
     try {
       if (platform === 'web') {
-        // Force dark background before any transition
-        document.documentElement.style.backgroundColor = '#020617'
-        document.body.style.backgroundColor = '#020617'
+        // Force dark background on ALL elements before transition
+        const darkBg = '#020617'
+        document.documentElement.style.setProperty('background-color', darkBg, 'important')
+        document.documentElement.style.setProperty('background', darkBg, 'important')
+        document.body.style.setProperty('background-color', darkBg, 'important')
+        document.body.style.setProperty('background', darkBg, 'important')
         const root = document.getElementById('root')
-        if (root) root.style.backgroundColor = '#020617'
+        if (root) {
+          root.style.setProperty('background-color', darkBg, 'important')
+          root.style.setProperty('background', darkBg, 'important')
+        }
         
-        // Small delay to ensure background is painted
-        await new Promise(resolve => setTimeout(resolve, 10))
+        // Add a temporary overlay to prevent any white flashes
+        const overlay = document.createElement('div')
+        overlay.style.cssText = `position:fixed;inset:0;background:${darkBg};z-index:99999;pointer-events:none;`
+        document.body.appendChild(overlay)
+        
+        // Small delay to ensure styles are applied
+        await new Promise(resolve => setTimeout(resolve, 20))
         
         // Check if running in Tauri
         if (window.__TAURI__) {
@@ -46,6 +57,11 @@ const FullscreenButton = () => {
             setIsFullscreen(false)
           }
         }
+        
+        // Remove overlay after transition completes
+        setTimeout(() => {
+          document.body.removeChild(overlay)
+        }, 150)
       }
       // Mobile platforms don't typically support programmatic fullscreen
     } catch (error) {

@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#020617" />
+    <meta name="msapplication-navbutton-color" content="#020617" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Solar System Financial & Technical Analysis Dashboard</title>
     <meta
       name="description"
@@ -12,12 +15,18 @@
     <style>
       /* Prevent white flash during fullscreen transition */
       html, body {
-        background-color: #020617;
+        background-color: #020617 !important;
+        background: #020617 !important;
         margin: 0;
         padding: 0;
       }
       #root {
-        background-color: #020617;
+        background-color: #020617 !important;
+        background: #020617 !important;
+      }
+      /* Ensure no white flashes anywhere */
+      * {
+        background-color: inherit;
       }
     </style>
   </head>

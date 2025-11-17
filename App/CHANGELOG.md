@@ -5,6 +5,22 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.7] - 2025-11-16
+
+### Fixed
+- **External Links (Windows & All Platforms)**: Fixed external link opening to properly use system default browser. Updated `openExternal.ts` to correctly import and use `@tauri-apps/plugin-shell` at the top level instead of dynamic import, ensuring reliable opening in default browser on Windows and other desktop platforms.
+- **Fullscreen White Flash**: Completely eliminated white flicker during fullscreen transitions by:
+  - Using `!important` CSS declarations on all background colors in `index.html`
+  - Adding theme-color meta tags for better browser behavior
+  - Creating a temporary dark overlay during transition in `FullscreenButton.tsx`
+  - Enforcing dark backgrounds with `setProperty(..., 'important')` before fullscreen toggle
+  - Extended transition delay to 20ms for proper style application
+
+### Changed
+- Enhanced `openExternalUrl()` with static imports for better reliability and console logging
+- Added meta theme-color tags (`#020617`) to HTML head for smoother platform integration
+- Improved fullscreen button implementation with overlay technique to prevent any white flashes
+
 ## [1.4.6] - 2025-11-17
 
 ### Fixed

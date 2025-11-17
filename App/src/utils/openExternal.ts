@@ -1,5 +1,6 @@
 import { Browser } from '@capacitor/browser'
 import { Capacitor } from '@capacitor/core'
+import { open } from '@tauri-apps/plugin-shell'
 
 /**
  * Opens a URL in the appropriate way depending on the platform:
@@ -14,13 +15,14 @@ export const openExternalUrl = async (url: string): Promise<void> => {
     if (platform === 'web') {
       const isTauri = !!(window.__TAURI__)
       if (isTauri) {
-        // Use Tauri v2 shell plugin
+        // Use Tauri v2 shell plugin - opens in system default browser
         try {
-          const { open } = await import('@tauri-apps/plugin-shell')
           await open(url)
+          console.log('Opened URL in system browser:', url)
           return
         } catch (err) {
-          console.error('Tauri shell plugin failed, trying fallback:', err)
+          console.error('Tauri shell plugin failed:', err)
+          // Fallback to window.open
         }
       }
       // Fallback for regular web
