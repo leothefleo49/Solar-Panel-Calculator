@@ -1,50 +1,37 @@
 import { Browser } from '@capacitor/browser'
 import { Capacitor } from '@capacitor/core'
 
-// Lazy dynamic import for Tauri shell (ESM-friendly)
-let tauriShellOpen: ((url: string) => Promise<void>) | null = null
-const loadTauriShell = async (): Promise<void> => {
-  if (tauriShellOpen) return
-  try {
-    const api = await import('@tauri-apps/api')
-    const maybeShell = (api as any).shell
-    if (maybeShell?.open) tauriShellOpen = maybeShell.open
-  } catch {
-    // Tauri API not available (non-desktop build)
-  }
-}
-
 /**
  * Opens a URL in the appropriate way depending on the platform:
  * - Web: Opens in a new tab
  * - Mobile (iOS/Android): Opens in Capacitor Browser
- * - Desktop (Tauri): Opens in the system browser
+ * - Desktop (Tauri): Opens in the system browser via shell plugin
  */
 export const openExternalUrl = async (url: string): Promise<void> => {
   try {
     const platform = Capacitor.getPlatform()
     
     if (platform === 'web') {
-      const isTauri = !!(window.__TAURI__ || navigator.userAgent.includes('Tauri'))
+      const isTauri = !!(window.__TAURI__)
       if (isTauri) {
-        await loadTauriShell()
-        if (tauriShellOpen) {
-          await tauriShellOpen(url)
+        // Use Tauri v2 shell plugin
+        try {
+          const { open } = await import('@tauri-apps/plugin-shell')
+          await open(url)
           return
-        }
-        if (window.__TAURI__?.shell?.open) {
-          await window.__TAURI__.shell.open(url)
-          return
+        } catch (err) {
+          console.error('Tauri shell plugin failed, trying fallback:', err)
         }
       }
+      // Fallback for regular web
       window.open(url, '_blank', 'noopener,noreferrer')
     } else {
-      // iOS or Android - use Capacitor Browser (in-app overlay) with consistent options
+      // iOS or Android - use Capacitor Browser (in-app overlay)
       await Browser.open({ url, windowName: '_blank', toolbarColor: '#0ea5e9' })
     }
   } catch (error) {
     console.error('Failed to open external URL:', error)
-    // Fallback to window.open
+    // Final fallback
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 }

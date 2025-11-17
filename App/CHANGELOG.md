@@ -5,6 +5,17 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.6] - 2025-11-17
+
+### Fixed
+- **External Links**: Windows (and all platforms) now properly open external links in default browser using Tauri shell plugin (`@tauri-apps/plugin-shell`)
+- **Fullscreen Flicker**: Eliminated white flash during fullscreen transitions by enforcing dark background with small delay before transition
+- Added `shell:allow-open` permission to Tauri capabilities for proper link handling
+
+### Changed
+- Replaced legacy Tauri API imports with official v2 shell plugin
+- Enhanced fullscreen background persistence across root element
+
 ## [1.4.5] - 2025-11-17
 
 ### Fixed

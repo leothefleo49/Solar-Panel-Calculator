@@ -19,25 +19,26 @@ const FullscreenButton = () => {
   const toggleFullscreen = async () => {
     try {
       if (platform === 'web') {
+        // Force dark background before any transition
+        document.documentElement.style.backgroundColor = '#020617'
+        document.body.style.backgroundColor = '#020617'
+        const root = document.getElementById('root')
+        if (root) root.style.backgroundColor = '#020617'
+        
+        // Small delay to ensure background is painted
+        await new Promise(resolve => setTimeout(resolve, 10))
+        
         // Check if running in Tauri
         if (window.__TAURI__) {
           const { window: tauriWindow } = window.__TAURI__
           const currentWindow = tauriWindow.getCurrent()
           const isCurrentlyFullscreen = await currentWindow.isFullscreen()
           
-          // Pre-set background to prevent flash
-          document.documentElement.style.backgroundColor = '#020617'
-          document.body.style.backgroundColor = '#020617'
-          
           await currentWindow.setFullscreen(!isCurrentlyFullscreen)
           setIsFullscreen(!isCurrentlyFullscreen)
         } else {
           // Regular web browser
           if (!document.fullscreenElement) {
-            // Pre-set background to prevent flash
-            document.documentElement.style.backgroundColor = '#020617'
-            document.body.style.backgroundColor = '#020617'
-            
             await document.documentElement.requestFullscreen()
             setIsFullscreen(true)
           } else {
