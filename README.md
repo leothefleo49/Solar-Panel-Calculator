@@ -26,26 +26,43 @@ Click your operating system to download the latest installer directly:
 - 🍏 iOS (Simulator App – for developers):
   https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/Solar-Panel-Calculator-iOS-Simulator.zip
 
-Notes:
+**Important for Desktop Users:**
+- 🔄 **Auto-updater requires v1.4.10+**: Download and install this version manually to enable automatic updates for future releases!
+- Once installed, the app will notify you of new versions and offer one-click updates
+
+**Platform Notes:**
 - Windows: Use the MSI if unsure. The EXE is a portable run-and-go.
 - macOS: If blocked, right‑click the app → Open (first run).
 - Linux AppImage: Right‑click file → Properties → make executable.
-- Android: Enable “Install unknown apps” in your device settings.
-- iOS: A signed .ipa requires Apple credentials; the simulator app is for developers.
+- Android: Enable "Install unknown apps" in your device settings.
+- iOS: See iOS Deployment Options below for web/PWA/self-build instructions.
 
 ---
 
 ## ✨ Features
 
 ### Core Capabilities
-- **🌍 Google Solar API Integration** (NEW in v1.2.0):
+- **🌍 Google Solar API Integration** (Enhanced in v1.4.8+):
   - Analyze any property address with real-world roof data from Google's Solar API
   - Automatic geocoding and coordinate lookup
   - Detailed roof segment analysis (pitch, azimuth, area, sun exposure)
   - AI-powered recommendations using actual roof geometry
   - Financial projections based on real sun exposure data
-  - Flexible API key management (unified or separate keys)
+  - **Enhanced Setup Wizard**: 3 recommended paths (easiest, most free, best quality)
+  - **Instant Config Updates**: Save Changes button applies settings without restart
+  - **API Validation** (v1.4.10): Pre-save key testing with detailed error messages
+  - **Quota Monitoring** (v1.4.10): Real-time usage tracking with visual indicators
+  - Flexible key management (unified or separate for Solar/Maps/Shopping)
   - Optional - app works fully without Google APIs
+- **🛒 Shopping Cart with AI Search** (Enhanced in v1.4.10):
+- **🛒 Shopping Cart with AI Search** (Enhanced in v1.4.10):
+  - Smart product search supporting names, model numbers, UPC, ASIN, brand names
+  - AI-powered query enhancement for better results
+  - Multi-site fallbacks with source attribution (Amazon, Walmart, Home Depot, Lowes, eBay)
+  - Category filtering and intelligent result ranking
+  - Automatic product spec extraction and compatibility checking
+  - Integration with Google Shopping API for real-time pricing
+  - Repetition-aware error reporting with timestamps
 - **Comprehensive Configurator**: Collapsible sections for utility costs, incentives, solar hardware, battery storage, and soft costs with contextual tooltips
 - **High-Precision Modeling**: Decimal.js engine simulates 25-year production, degradation, inflation-adjusted utility spend, net-metering cash flow, ROI, and break-even timing
 - **Interactive Visualizations**: Multi-line crossover charts, degradation trends, monthly production vs. consumption bars, and battery/outage simulator
@@ -55,10 +72,10 @@ Notes:
 
 ### Desktop App Benefits
 ✅ Runs completely offline after installation  
+✅ **Automatic updates** (v1.4.10+) – Get new features without manual downloads  
 ✅ Secure encrypted API key storage  
 ✅ Native OS integration (taskbar, notifications)  
 ✅ Faster performance vs. browser  
-✅ Auto-update checker  
 ✅ No tracking or telemetry  
 ✅ Fullscreen mode support  
 

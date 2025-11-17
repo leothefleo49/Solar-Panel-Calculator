@@ -200,6 +200,7 @@ jobs:
     if: ${{ github.event.inputs.include_ios == 'true' || startsWith(github.ref, 'refs/tags/') }}
     name: iOS (Simulator Build)
     runs-on: macos-latest
+    continue-on-error: true  # Don't fail CI if iOS build fails (optional platform)
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node

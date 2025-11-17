@@ -10,6 +10,20 @@
 
 ## 🎉 What's New in v1.4.10
 
+**🔄 Auto-Updater (Desktop):** Windows, macOS, and Linux apps now check for updates automatically and can install with one click!  
+**✅ API Validation:** Pre-save validation for Google API keys (Solar/Maps/Shopping) and AI provider keys with detailed error messages and suggested fixes.  
+**📊 Quota Tracking:** Real-time monitoring of Google API usage with visual quota displays and automatic refresh.  
+**🌐 Universal Product Search:** Multi-site fallback queries (Amazon, Walmart, Home Depot, Lowes, eBay) with source attribution badges.  
+**🧪 Enhanced Google API Setup:** New wizard with 3 recommended paths (easiest, most free, best quality) and instant config updates via Save Changes button.  
+**🚨 Improved Error Feedback:** Repeated failures show attempt count + timestamp; better diagnostic info for API issues.  
+**🎨 UI Polish:** Refined glassmorphism effects, better form controls, and cleaner visual hierarchy.  
+
+[View Full Changelog](./CHANGELOG.md)
+
+---
+
+## 🎉 What's New in v1.4.10
+
 **🌐 Universal Product Search:** Multi-site fallback queries (Amazon, Walmart, Home Depot, Lowes, eBay) increase hit rate when first search is sparse.  
 **🔖 Source Labels:** Every product now shows its origin (e.g., Amazon, Walmart, Exact Match) for instant trust & filtering.  
 **🧪 Smarter Identifiers:** ASIN, UPC, EAN, and model numbers prioritized as literal queries before any AI enhancement.  
@@ -78,10 +92,10 @@ Notes:
 
 ### Desktop App Benefits
 ✅ Runs completely offline after installation  
+✅ **Automatic updates** (v1.4.10+) – Get new features without manual downloads  
 ✅ Secure encrypted API key storage  
 ✅ Native OS integration (taskbar, notifications)  
 ✅ Faster performance vs. browser  
-✅ Auto-update checker  
 ✅ No tracking or telemetry  
 ✅ Fullscreen mode support  
 
