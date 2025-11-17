@@ -5,6 +5,7 @@ import { useSolarStore } from '../state/solarStore'
 import InfoTooltip from './InfoTooltip'
 import { openExternalUrl } from '../utils/openExternal'
 import { estimateLoanRate } from '../utils/calculations'
+import { exportInputs, importInputsFromFile } from '../utils/exportData'
 
 const formatValue = (value: number) =>
   Number.isFinite(value) ? value : 0
@@ -320,6 +321,36 @@ const Configurator = () => {
             Every input below ties directly into the financial and technical model. Hover the info icons to learn
             what typical values look like.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+            <button
+              type="button"
+              onClick={() => exportInputs()}
+              className="rounded-lg bg-accent/80 px-3 py-1 font-medium text-slate-900 hover:bg-accent"
+              title="Download current input configuration as JSON"
+            >
+              Download Inputs
+            </button>
+            <label className="rounded-lg border border-white/20 px-3 py-1 font-medium text-white hover:bg-white/10 cursor-pointer" title="Upload a previously downloaded inputs JSON file">
+              Upload Inputs
+              <input
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  try {
+                    const { applied, skipped } = await importInputsFromFile(file)
+                    alert(`Imported ${applied} fields. Skipped: ${skipped.length ? skipped.join(', ') : 'None'}`)
+                  } catch (err: any) {
+                    alert(err.message || 'Import failed')
+                  } finally {
+                    e.target.value = ''
+                  }
+                }}
+              />
+            </label>
+          </div>
         </div>
         <button
           onClick={() => setCollapsed(true)}

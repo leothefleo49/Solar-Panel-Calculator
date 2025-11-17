@@ -18,6 +18,7 @@ import SolarApiIntegration from './SolarApiIntegration'
 import ApisTab from './ApisTab.tsx'
 import ShoppingCart from './ShoppingCart'
 import ApiUsageTab from './ApiUsageTab'
+import { exportSnapshot } from '../utils/exportData'
 import {
   buildModelSnapshot,
   formatCurrency,
@@ -124,6 +125,14 @@ const Dashboard = () => {
             {tab.label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => exportSnapshot()}
+          className="tab-pill--idle tab-pill text-sm border-accent/50 hover:border-accent hover:bg-accent/10"
+          title="Download current config + computed 25-year analysis as JSON"
+        >
+          Download Analysis
+        </button>
       </nav>
 
       <div className="mt-6">
