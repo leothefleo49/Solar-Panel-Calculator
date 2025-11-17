@@ -55,7 +55,6 @@ Click your operating system to download the latest installer directly:
   - Flexible key management (unified or separate for Solar/Maps/Shopping)
   - Optional - app works fully without Google APIs
 - **🛒 Shopping Cart with AI Search** (Enhanced in v1.4.10):
-- **🛒 Shopping Cart with AI Search** (Enhanced in v1.4.10):
   - Smart product search supporting names, model numbers, UPC, ASIN, brand names
   - AI-powered query enhancement for better results
   - Multi-site fallbacks with source attribution (Amazon, Walmart, Home Depot, Lowes, eBay)
@@ -337,8 +336,9 @@ MIT License - See [LICENSE](./LICENSE) file for details.
 
 - **Issues**: [GitHub Issues](https://github.com/leothefleo49/Solar-Panel-Calculator/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/leothefleo49/Solar-Panel-Calculator/discussions)
+- **Email**: [leothefleo49@gmail.com](mailto:leothefleo49@gmail.com)
 - **Documentation**: [RELEASE_INSTRUCTIONS.md](./RELEASE_INSTRUCTIONS.md)
 
 ---
 
-Made with ☀️ by [leothefleo49](https://github.com/leothefleo49)
+Made with ❤️ by [leothefleo49](https://github.com/leothefleo49)

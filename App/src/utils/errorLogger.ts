@@ -83,7 +83,7 @@ class ErrorLogger {
     this.config = {
       mode: 'beta', // Change to 'production' when ready
       emailEndpoint: 'https://your-backend-endpoint.com/api/error-logs', // Replace with your endpoint
-      emailTo: 'your-email@example.com', // Replace with your email
+      emailTo: 'leothefleo49@gmail.com',
       enableConsoleLogging: true,
       maxLogsStored: 1000,
       ...config,

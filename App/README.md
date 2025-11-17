@@ -389,8 +389,9 @@ MIT License - See [LICENSE](./LICENSE) file for details.
 
 - **Issues**: [GitHub Issues](https://github.com/leothefleo49/Solar-Panel-Calculator/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/leothefleo49/Solar-Panel-Calculator/discussions)
+- **Email**: [leothefleo49@gmail.com](mailto:leothefleo49@gmail.com)
 - **Documentation**: [RELEASE_INSTRUCTIONS.md](./RELEASE_INSTRUCTIONS.md)
 
 ---
 
-Made with ☀️ by [leothefleo49](https://github.com/leothefleo49)
+Made with ❤️ by [leothefleo49](https://github.com/leothefleo49)
