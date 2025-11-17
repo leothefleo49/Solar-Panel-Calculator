@@ -15,16 +15,37 @@ export interface AIProviderResult {
   error?: string
 }
 
+export interface FileUpload {
+  name: string
+  type: string
+  size: number
+  data: string
+}
+
+const includeAttachmentMessages = (messages: AIMessage[], attachments?: FileUpload[]): AIMessage[] => {
+  if (!attachments || attachments.length === 0) return messages
+  const attachmentNotes = attachments.map((file) => {
+    const mimeType = file.type || 'application/octet-stream'
+    const sizeKb = Math.max(1, Math.round(file.size / 1024))
+    return {
+      role: 'system' as const,
+      content: `Attached file: ${file.name} (${mimeType}, ${sizeKb} KB)\nBase64 data: data:${mimeType};base64,${file.data}`,
+    }
+  })
+  return [...messages, ...attachmentNotes]
+}
+
 // OpenAI chat completion wrapper (non-streaming)
-export async function callOpenAI(apiKey: string, model: string, messages: AIMessage[]): Promise<AIProviderResult> {
+export async function callOpenAI(apiKey: string, model: string, messages: AIMessage[], attachments?: FileUpload[]): Promise<AIProviderResult> {
   try {
+    const finalMessages = includeAttachmentMessages(messages, attachments)
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 800 }),
+      body: JSON.stringify({ model, messages: finalMessages, temperature: 0.3, max_tokens: 800 }),
     })
     
     if (!res.ok) {
@@ -77,15 +98,16 @@ export async function callOpenAI(apiKey: string, model: string, messages: AIMess
 }
 
 // xAI Grok chat completion wrapper (OpenAI-compatible schema)
-export async function callGrok(apiKey: string, model: string, messages: AIMessage[]): Promise<AIProviderResult> {
+export async function callGrok(apiKey: string, model: string, messages: AIMessage[], attachments?: FileUpload[]): Promise<AIProviderResult> {
   try {
+    const finalMessages = includeAttachmentMessages(messages, attachments)
     const res = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 800 }),
+      body: JSON.stringify({ model, messages: finalMessages, temperature: 0.3, max_tokens: 800 }),
     })
     
     if (!res.ok) {
@@ -141,11 +163,13 @@ export async function callGeminiFlash(
   model: string,
   messages: AIMessage[],
   images: Array<{ mimeType: string; data: string }> = [],
+  attachments?: FileUpload[],
 ): Promise<AIProviderResult> {
   try {
+    const finalMessages = includeAttachmentMessages(messages, attachments)
     // Convert chat-style messages to Gemini parts.
     type GeminiPart = { text: string } | { inline_data: { mime_type: string; data: string } }
-    const contents = messages.map((m) => ({
+    const contents = finalMessages.map((m) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }] as GeminiPart[],
     }))
@@ -223,11 +247,12 @@ export async function callGeminiFlash(
 }
 
 // Anthropic Claude wrapper (Messages API)
-export async function callClaude(apiKey: string, model: string, messages: AIMessage[]): Promise<AIProviderResult> {
+export async function callClaude(apiKey: string, model: string, messages: AIMessage[], attachments?: FileUpload[]): Promise<AIProviderResult> {
   try {
     // Separate system messages from user/assistant
-    const systemMessages = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n\n')
-    const conversationMessages = messages.filter((m) => m.role !== 'system').map((m) => ({
+    const finalMessages = includeAttachmentMessages(messages, attachments)
+    const systemMessages = finalMessages.filter((m) => m.role === 'system').map((m) => m.content).join('\n\n')
+    const conversationMessages = finalMessages.filter((m) => m.role !== 'system').map((m) => ({
       role: m.role === 'assistant' ? 'assistant' : 'user',
       content: m.content,
     }))

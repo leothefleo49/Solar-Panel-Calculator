@@ -6,6 +6,7 @@ import { useSolarStore } from '../state/solarStore'
 import { useCartStore } from '../state/cartStore'
 import { useGoogleApiStore } from '../state/googleApiStore'
 import { callOpenAI, callGeminiFlash, callClaude, callGrok } from '../utils/aiProviders'
+import type { FileUpload } from '../utils/aiProviders'
 
 const ChatAssistant = () => {
   const config = useSolarStore((s) => s.config)
@@ -22,6 +23,8 @@ const ChatAssistant = () => {
     provider,
     setProvider,
     model,
+    preferredVoice,
+    setPreferredVoice,
     setModel,
     conversations,
     activeConversationId,
@@ -42,6 +45,7 @@ const ChatAssistant = () => {
   const [listening, setListening] = useState(false)
   const [recognitionSupported, setRecognitionSupported] = useState(false)
   const [ttsSupported, setTtsSupported] = useState(false)
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
   const lastAssistantRef = useRef<string>('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -97,12 +101,28 @@ const ChatAssistant = () => {
     }
 
     if (!apiKey) {
-      addMessage('assistant', `Please configure your ${provider === 'google' ? 'Google/Gemini' : provider === 'openai' ? 'OpenAI' : provider === 'anthropic' ? 'Anthropic' : 'xAI'} API key in the APIs tab.`)
+      addMessage(
+        'assistant',
+        `Please configure your ${
+          provider === 'google'
+            ? 'Google/Gemini'
+            : provider === 'openai'
+            ? 'OpenAI'
+            : provider === 'anthropic'
+            ? 'Anthropic'
+            : 'xAI'
+        } API key in the APIs tab.`,
+      )
       return
     }
 
     setLoading(true)
+    let attachments: FileUpload[] = []
     try {
+      if (images.length > 0) {
+        attachments = await readFileUploads(images)
+      }
+
       const contextBlob = `System Summary:\nArray Size: ${snapshot.systemSizeKw.toFixed(2)} kWdc\nAnnual Production: ${snapshot.annualProduction.toFixed(0)} kWh\nBreak-Even Year: ${snapshot.summary.breakEvenYear ?? 'Not reached'}\n25-Year Savings: $${snapshot.summary.totalSavings.toFixed(0)}\nNet Upfront Cost: $${snapshot.summary.netUpfrontCost.toFixed(0)}\nAverage Monthly Production: ${snapshot.averageMonthlyProduction.toFixed(0)} kWh\nNet Metering: ${config.netMetering ? 'Enabled' : 'Disabled'}\n`
       
       // Shopping cart context
@@ -142,26 +162,17 @@ const ChatAssistant = () => {
 
       let result
       if (provider === 'google') {
-        const imagePayload = await Promise.all(
-          images.map(
-            (file) =>
-              new Promise<{ mimeType: string; data: string }>((resolve) => {
-                const reader = new FileReader()
-                reader.onload = () => {
-                  const base64 = (reader.result as string).split(',')[1]
-                  resolve({ mimeType: file.type || 'image/png', data: base64 })
-                }
-                reader.readAsDataURL(file)
-              }),
-          ),
-        )
-        result = await callGeminiFlash(apiKey, model, chatMessages, imagePayload)
+        const imagePayload = attachments.map((file) => ({
+          mimeType: file.type || 'image/png',
+          data: file.data,
+        }))
+        result = await callGeminiFlash(apiKey, model, chatMessages, imagePayload, attachments)
       } else if (provider === 'anthropic') {
-        result = await callClaude(apiKey, model, chatMessages)
+        result = await callClaude(apiKey, model, chatMessages, attachments)
       } else if (provider === 'grok') {
-        result = await callGrok(apiKey, model, chatMessages)
+        result = await callGrok(apiKey, model, chatMessages, attachments)
       } else {
-        result = await callOpenAI(apiKey, model, chatMessages)
+        result = await callOpenAI(apiKey, model, chatMessages, attachments)
       }
 
       if (!result.ok) {
@@ -204,6 +215,43 @@ const ChatAssistant = () => {
     if ('speechSynthesis' in window) setTtsSupported(true)
   }, [])
 
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return undefined
+    const synth = window.speechSynthesis
+    const refreshVoices = () => setAvailableVoices(synth.getVoices())
+    refreshVoices()
+    synth.addEventListener('voiceschanged', refreshVoices)
+    return () => synth.removeEventListener('voiceschanged', refreshVoices)
+  }, [])
+
+  const readFileUploads = (files: File[]): Promise<FileUpload[]> =>
+    Promise.all(
+      files.map((file) =>
+        new Promise<FileUpload>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => {
+            const dataUrl = (reader.result as string) || ''
+            const payload = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl
+            resolve({
+              name: file.name,
+              type: file.type || 'application/octet-stream',
+              size: file.size,
+              data: payload,
+            })
+          }
+          reader.onerror = () => {
+            resolve({
+              name: file.name,
+              type: file.type || 'application/octet-stream',
+              size: file.size,
+              data: '',
+            })
+          }
+          reader.readAsDataURL(file)
+        }),
+      ),
+    )
+
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) return
@@ -241,6 +289,12 @@ const ChatAssistant = () => {
     if (!ttsSupported || !lastAssistantRef.current) return
     window.speechSynthesis.cancel()
     const utter = new SpeechSynthesisUtterance(lastAssistantRef.current.slice(0, 1200))
+    if (preferredVoice) {
+      const matching = availableVoices.find((voice) => voice.voiceURI === preferredVoice || voice.name === preferredVoice)
+      if (matching) {
+        utter.voice = matching
+      }
+    }
     utter.rate = 1
     utter.pitch = 1
     utter.volume = 1
@@ -493,6 +547,24 @@ const ChatAssistant = () => {
               className="inline-flex h-9 items-center rounded-lg border border-white/10 bg-white/5 px-3 font-semibold text-white/80 hover:border-accent hover:text-white disabled:opacity-40"
             >Play Last Reply</button>
           )}
+          {ttsSupported && availableVoices.length > 0 && (
+            <div className="flex items-center gap-1 text-[10px] text-slate-300">
+              <label htmlFor="preferred-voice" className="whitespace-nowrap text-[10px] text-slate-400">Voice</label>
+              <select
+                id="preferred-voice"
+                value={preferredVoice || ''}
+                onChange={(e) => setPreferredVoice(e.target.value || null)}
+                className="rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/80 focus:border-accent focus:ring-accent"
+              >
+                <option value="">Browser default</option>
+                {availableVoices.map((voice) => (
+                  <option key={voice.voiceURI} value={voice.voiceURI}>
+                    {voice.name} ({voice.lang})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <input
             type="file"
             multiple
@@ -513,9 +585,10 @@ const ChatAssistant = () => {
             <span className="text-base">+</span>
             Upload Files
           </button>
-          {images.length > 0 && <span className="text-accent/80">{images.length} image(s) attached</span>}
-          {provider !== 'google' && images.length > 0 && (
-            <span className="text-[10px] text-slate-400">Image analysis currently available only with Gemini models.</span>
+          {images.length > 0 && (
+            <span className="text-[10px] text-slate-200">
+              {images.length} file(s) attached — Gemini uploads inline, while other providers receive base64 summaries for richer context.
+            </span>
           )}
         </div>
       </div>

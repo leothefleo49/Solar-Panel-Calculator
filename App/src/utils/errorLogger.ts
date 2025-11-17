@@ -73,17 +73,25 @@ interface ErrorLoggerConfig {
   emailTo?: string;
   enableConsoleLogging: boolean;
   maxLogsStored: number;
+  // Optional remote config URL to control reporting interval
+  remoteConfigUrl?: string;
+  // Optional static default reporting interval
+  reportingInterval?: 'every_run' | 'hourly' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'disabled';
 }
 
 class ErrorLogger {
   private logs: ErrorLog[] = [];
   private config: ErrorLoggerConfig;
+  private reportTimer: any = null;
+  private currentRemoteConfig: { reportingInterval?: string } | null = null;
   
   constructor(config: Partial<ErrorLoggerConfig> = {}) {
     this.config = {
       mode: 'beta', // Change to 'production' when ready
-      emailEndpoint: 'https://your-backend-endpoint.com/api/error-logs', // Replace with your endpoint
-      emailTo: 'leothefleo49@gmail.com',
+      emailEndpoint: import.meta.env.VITE_ERROR_LOG_ENDPOINT || 'https://your-backend-endpoint.com/api/error-logs', // Replace with your endpoint
+      emailTo: import.meta.env.VITE_ERROR_LOG_EMAIL || 'leothefleo49@gmail.com',
+      // Optional: remote config URL that returns JSON { reportingInterval: 'daily' }
+      remoteConfigUrl: import.meta.env.VITE_ERROR_LOG_CONFIG_URL,
       enableConsoleLogging: true,
       maxLogsStored: 1000,
       ...config,
@@ -92,6 +100,14 @@ class ErrorLogger {
     this.loadLogsFromStorage();
     this.setupGlobalErrorHandlers();
     this.scheduleEmailReports();
+
+    // If a remote config URL is provided, poll it periodically and adjust reporting interval
+    if ((this.config as any).remoteConfigUrl) {
+      // initial fetch
+      void this.fetchRemoteConfig();
+      // poll every 5 minutes for changes
+      setInterval(() => void this.fetchRemoteConfig(), 5 * 60 * 1000);
+    }
   }
   
   /**
@@ -446,45 +462,92 @@ class ErrorLogger {
    * Schedule email reports based on mode
    */
   private scheduleEmailReports(): void {
-    if (this.config.mode === 'production') {
-      // Send every Monday at 2 AM
-      const scheduleNext = () => {
-        const now = new Date();
-        const nextMonday = new Date();
-        
-        // Find next Monday
-        const daysUntilMonday = (8 - now.getDay()) % 7 || 7;
-        nextMonday.setDate(now.getDate() + daysUntilMonday);
-        nextMonday.setHours(2, 0, 0, 0);
-        
-        // If Monday 2 AM has passed this week, schedule for next week
-        if (nextMonday.getTime() < now.getTime()) {
-          nextMonday.setDate(nextMonday.getDate() + 7);
-        }
-        
-        const msUntilMonday = nextMonday.getTime() - now.getTime();
-        
-        setTimeout(() => {
-          this.sendWeeklyReport();
-          scheduleNext(); // Schedule next Monday
-        }, msUntilMonday);
-      };
-      
-      scheduleNext();
+    // Determine scheduling strategy from config.reportingInterval (supports remote override)
+    const intervalMinutes = this.getIntervalMinutesFromConfig();
+    if (intervalMinutes <= 0) return; // disabled or handled as immediate
+
+    // Clear existing timer if set
+    if (this.reportTimer) {
+      clearInterval(this.reportTimer as any);
+    }
+
+    // Run immediately once, then on the configured interval
+    void this.sendEmailReport(this.logs.slice(-100));
+    this.reportTimer = setInterval(() => void this.sendEmailReport(this.logs.slice(-100)), intervalMinutes * 60 * 1000);
+  }
+
+  /**
+   * Map configured interval to minutes.
+   */
+  private getIntervalMinutesFromConfig(): number {
+    // Priority: remote config override -> build-time config -> default
+    const remoteInterval = this.currentRemoteConfig?.reportingInterval as
+      | 'every_run'
+      | 'hourly'
+      | 'daily'
+      | 'weekly'
+      | 'biweekly'
+      | 'monthly'
+      | 'disabled'
+      | undefined;
+
+    const cfgInterval = (this.config as any).reportingInterval as
+      | 'every_run'
+      | 'hourly'
+      | 'daily'
+      | 'weekly'
+      | 'biweekly'
+      | 'monthly'
+      | 'disabled'
+      | undefined;
+
+    const interval = remoteInterval || cfgInterval || (this.config.mode === 'beta' ? 'every_run' : 'weekly');
+
+    switch (interval) {
+      case 'every_run':
+        return 0; // handled as immediate
+      case 'hourly':
+        return 60;
+      case 'daily':
+        return 24 * 60;
+      case 'weekly':
+        return 7 * 24 * 60;
+      case 'biweekly':
+        return 14 * 24 * 60;
+      case 'monthly':
+        return 30 * 24 * 60;
+      case 'disabled':
+        return -1;
+      default:
+        return this.config.mode === 'beta' ? 0 : 7 * 24 * 60;
+    }
+  }
+
+  /**
+   * Fetch remote config JSON from configured URL and apply it.
+   */
+  private async fetchRemoteConfig(): Promise<void> {
+    try {
+      const url = (this.config as any).remoteConfigUrl;
+      if (!url) return;
+
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) return;
+
+      const json = await res.json();
+      if (json && json.reportingInterval) {
+        // normalize
+        this.currentRemoteConfig = { reportingInterval: String(json.reportingInterval) };
+        // Reschedule with new interval
+        this.scheduleEmailReports();
+      }
+    } catch (e) {
+      // Ignore transient errors
+      if (this.config.enableConsoleLogging) console.debug('Remote config fetch failed', e);
     }
   }
   
-  /**
-   * Send weekly report (production mode)
-   */
-  private async sendWeeklyReport(): Promise<void> {
-    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    const recentLogs = this.getLogs({ since: oneWeekAgo });
-    
-    if (recentLogs.length > 0) {
-      await this.sendEmailReport(recentLogs);
-    }
-  }
+  
   
   /**
    * Send error report via email
@@ -498,6 +561,11 @@ class ErrorLogger {
     try {
       const report = this.generateEmailReport(logs);
       
+      // Add reply instructions so recipients can reply with commands to change reporting interval
+      const replyInstructions = `\n\nReply with one of the following commands (in subject or body) to change the reporting interval:\n` +
+        `- interval: every_run\n- interval: hourly\n- interval: daily\n- interval: weekly\n- interval: biweekly\n- interval: monthly\n` +
+        `\nOr configure the remote controller (if available) at: ${(this.config as any).remoteConfigUrl || 'not configured'}`;
+
       const response = await fetch(this.config.emailEndpoint, {
         method: 'POST',
         headers: {
@@ -506,7 +574,7 @@ class ErrorLogger {
         body: JSON.stringify({
           to: this.config.emailTo,
           subject: `Solar Panel Calculator - Error Report (${logs.length} issues)`,
-          body: report,
+          body: report + replyInstructions,
           logs: logs,
         }),
       });

@@ -1,0 +1,14 @@
+{
+  "name": "solar-error-email-control",
+  "version": "0.1.0",
+  "description": "Small server to accept inbound email webhooks and update remote config for the Solar Panel Calculator error logger.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5"
+  }
+}

@@ -4,19 +4,17 @@
 
 [![Download Latest Release](https://img.shields.io/github/v/release/leothefleo49/Solar-Panel-Calculator?style=for-the-badge&logo=github)](https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest)
 [![Platform Support](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS-blue?style=for-the-badge)](#)
-[![Version](https://img.shields.io/badge/Version-1.4.10-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-1.4.11-green?style=for-the-badge)](#)
 
 ---
 
-## 🎉 What's New in v1.4.10
+## 🎉 What's New in v1.4.11
 
-**🔄 Auto-Updater (Desktop):** Windows, macOS, and Linux apps now check for updates automatically and can install with one click!  
-**✅ API Validation:** Pre-save validation for Google API keys (Solar/Maps/Shopping) and AI provider keys with detailed error messages and suggested fixes.  
-**📊 Quota Tracking:** Real-time monitoring of Google API usage with visual quota displays and automatic refresh.  
-**🌐 Universal Product Search:** Multi-site fallback queries (Amazon, Walmart, Home Depot, Lowes, eBay) with source attribution badges.  
-**🧪 Enhanced Google API Setup:** New wizard with 3 recommended paths (easiest, most free, best quality) and instant config updates via Save Changes button.  
-**🚨 Improved Error Feedback:** Repeated failures show attempt count + timestamp; better diagnostic info for API issues.  
-**🎨 UI Polish:** Refined glassmorphism effects, better form controls, and cleaner visual hierarchy.  
+**🤖 Expanded AI coverage:** OpenAI now surfaces GPT-4o Mini, GPT-4o Mini TTS, GPT-4o, GPT-5, GPT-4-turbo, and GPT-3.5 Turbo while Anthropic adds Claude 3.5 Sonnet/Haiku, Claude Instant, and Claude 3 Opus, xAI lists Grok-2 and Grok-2 Mini, and Gemini exposes 2.5 Flash plus Flash Mini for faster, lower-cost runs.  
+**📎 Universal file uploads:** Every model receives attached photos or docs—Gemini ingests inline attachments while OpenAI, Claude, and Grok get base64 summaries so files stay part of the conversation regardless of the chosen provider.  
+**🎙️ Persistent voice:** The voice dropdown now saves your preferred speech synthesis voice and applies it to every TTS reply so the assistant keeps the same tone.  
+**⚡ Cheaper + faster options:** Mini/low-latency variants are highlighted in the model picker so you can balance responsiveness versus quality for any question.  
+**📦 Release v1.4.11:** Package metadata and documentation now call out the new tag so auto-updates and download links stay in sync with these AI improvements.  
 
 [View Full Changelog](./CHANGELOG.md)
 
@@ -207,6 +205,8 @@ VITE_GOOGLE_API_KEY=AIza...
 VITE_OPENAI_API_KEY=sk-...
 VITE_ANTHROPIC_API_KEY=sk-ant-...
 VITE_GROK_API_KEY=xai-...
+# Optional: remote config URL for the error logger (see tools/email-control-server)
+VITE_ERROR_LOG_CONFIG_URL=http://localhost:3002/config
 ```
 
 **⚠️ Never commit this file to git!**

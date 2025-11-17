@@ -40,6 +40,7 @@ interface ChatState {
   providerKeys: ProviderKeys
   provider: Provider
   model: string
+  preferredVoice: string | null
   loading: boolean
   conversations: Conversation[]
   activeConversationId: string
@@ -55,6 +56,7 @@ interface ChatState {
   // Common methods
   setProvider: (p: Provider) => void
   setModel: (m: string) => void
+  setPreferredVoice: (voice: string | null) => void
   addMessage: (role: ChatMessage['role'], content: string) => void
   sendMessage: (content: string) => Promise<void>
   setLoading: (value: boolean) => void
@@ -79,6 +81,7 @@ export const useChatStore = create<ChatState>()(
       providerKeys: {},
       provider: 'google',
       model: defaultModelByProvider.google,
+      preferredVoice: null,
       loading: false,
       conversations: [createNewConversation()],
       activeConversationId: '',
@@ -137,6 +140,7 @@ export const useChatStore = create<ChatState>()(
         })
       },
       setModel: (m) => set({ model: m }),
+      setPreferredVoice: (voice) => set({ preferredVoice: voice || null }),
       addMessage: (role, content) =>
         set((state) => {
           const activeId = state.activeConversationId || state.conversations[0]?.id
@@ -233,6 +237,7 @@ export const useChatStore = create<ChatState>()(
         model: state.model,
         conversations: state.conversations,
         activeConversationId: state.activeConversationId,
+        preferredVoice: state.preferredVoice,
       }),
     }
   )

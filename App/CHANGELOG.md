@@ -4,6 +4,16 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.4.11] - 2025-11-17
+
+### Added
+- **AI model refresh**: OpenAI now exposes GPT-4o Mini, GPT-4o Mini TTS, and GPT-4o alongside GPT-5 and GPT-3.5 Turbo; Anthropic adds Claude 3.5 Sonnet/Haiku, Claude Instant, and Claude 3 Opus; xAI Grok lists Grok-2 Mini and Grok-2 for smaller/cheaper routes; Gemini includes the latest 2.5 Flash + Flash Mini options.
+- **Voice preference**: The Solar Chat Assistant persists your preferred speech synthesis voice and reuses it when reading responses (desktop/web only).
+- **Universal file uploads**: Attach any supported image or document and every model receives the data—Gemini ingests inline attachments while OpenAI/Claude/Grok get base64 summaries detailed in the prompt.
+
+### Changed
+- **File handling**: Attachments are read once per send, referenced in every provider request, and the UI now explains that all models can see uploaded files together with voice/chat prompts.
+- **Model discovery UI**: The assistant’s model picker lists the new fast/low-cost variants and highlights that each model supports uploads + voice chat, clarifying the choice between quality and responsiveness.
 ## [1.4.9] - 2025-11-16
 ## [1.4.10] - 2025-11-16
 
@@ -56,7 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [1.4.8] - 2025-11-16
-
 ### Added
 - **Save Changes Button**: APIs tab now has a "Save Changes" button that applies configuration updates without requiring app restart
   - Visual feedback shows "Saving...", then "✓ Changes Saved!" with green confirmation
