@@ -1,0 +1,23 @@
+{
+  "name": "client-error-reporter",
+  "version": "1.0.0",
+  "description": "Webhook server to receive client error reports and email them",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": [
+    "error-reporting",
+    "webhook",
+    "email"
+  ],
+  "author": "leothefleo49",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "nodemailer": "^6.9.7"
+  }
+}
