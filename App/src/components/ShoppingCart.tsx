@@ -3,7 +3,7 @@
  * Manage solar equipment purchases with compatibility checks and NEC compliance
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import clsx from 'clsx';
 import { useCartStore, syncCartToConfigurator } from '../state/cartStore';
 import { searchProducts, extractProductSpecs } from '../utils/shoppingApi';
@@ -31,6 +31,8 @@ export default function ShoppingCart() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [errorMeta, setErrorMeta] = useState<{ message: string; count: number; lastAt: number } | null>(null);
+  const lastErrorRef = useRef<string | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
 
   // Manual entry form state
@@ -48,18 +50,27 @@ export default function ShoppingCart() {
     
     setIsSearching(true);
     setSearchError(null);
+    // Reset temporal error styling
     
     try {
       const results = await searchProducts(searchQuery, { 
-        maxResults: 10,
-        category: searchCategory || undefined
+        maxResults: 12,
+        category: searchCategory || undefined,
+        multiSite: true,
       });
       setSearchResults(results);
       if (results.length === 0) {
         setSearchError('No products found. Try a different search term or check your API configuration.');
       }
     } catch (error: any) {
-      setSearchError(error.message);
+      const msg = error.message || 'Unknown error';
+      setSearchError(msg);
+      if (lastErrorRef.current === msg && errorMeta) {
+        setErrorMeta({ message: msg, count: errorMeta.count + 1, lastAt: Date.now() });
+      } else {
+        lastErrorRef.current = msg;
+        setErrorMeta({ message: msg, count: 1, lastAt: Date.now() });
+      }
       setSearchResults([]);
     } finally {
       setIsSearching(false);
@@ -265,8 +276,13 @@ export default function ShoppingCart() {
             </div>
 
             {searchError && (
-              <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">
+              <div className="relative rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300 animate-fadeIn">
                 <strong>Error:</strong> {searchError}
+                {errorMeta && (
+                  <div className="mt-1 text-[10px] text-red-400">
+                    {errorMeta.count > 1 ? `Repeated ${errorMeta.count}× — last at ${new Date(errorMeta.lastAt).toLocaleTimeString()}` : `First occurrence at ${new Date(errorMeta.lastAt).toLocaleTimeString()}`}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -293,6 +309,9 @@ export default function ShoppingCart() {
                     <p className="mt-1 text-xs text-slate-400 line-clamp-2">{product.snippet}</p>
                     {product.product?.price && (
                       <p className="mt-1 text-sm font-semibold text-accent">{product.product.price}</p>
+                    )}
+                    {product._sourceQuery && (
+                      <p className="mt-1 text-[10px] text-accent/70">Source: {formatSourceLabel(product._sourceQuery)}</p>
                     )}
                   </div>
                   <button
@@ -463,4 +482,15 @@ export default function ShoppingCart() {
       )}
     </div>
   );
+}
+
+function formatSourceLabel(q: string): string {
+  if (/site:amazon/.test(q)) return 'Amazon';
+  if (/site:walmart/.test(q)) return 'Walmart';
+  if (/site:homedepot/.test(q)) return 'Home Depot';
+  if (/site:lowes/.test(q)) return 'Lowes';
+  if (/site:ebay/.test(q)) return 'eBay';
+  if (/price/.test(q)) return 'Broad Pricing Search';
+  if (/".*"/.test(q)) return 'Exact Match';
+  return 'General';
 }

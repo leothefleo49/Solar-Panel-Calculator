@@ -5,6 +5,29 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [1.4.9] - 2025-11-16
+## [1.4.10] - 2025-11-16
+
+### Added
+- **Universal Multi-Site Product Search**: Shopping Cart now performs intelligent fallback queries across major retailers when initial results are sparse.
+  - Automatic site filtering for identifiers: ASIN → `site:amazon.com`, UPC/EAN → Amazon, Walmart, Home Depot, Lowes.
+  - Broader pricing context fallback (`price` enriched query) when no direct matches.
+  - Source labeling on each result (Amazon, Walmart, Home Depot, etc.) for instant provenance clarity.
+- **Result Source Visibility**: Each product now shows a compact source badge based on the query variant that returned it.
+- **Repeated Error Differentiation**: Search errors display occurrence count and last timestamp (e.g., "Repeated 3× — last at 14:32:05").
+
+### Changed
+- **Adaptive Query Strategy**: Identifier-specific queries use literal forms first; enhancement only applied to vague inputs. Added exact quoted variant for model numbers.
+- **Usage Tracking**: API usage now counts each fallback request to reflect actual quota consumption.
+- **Tab Highlight Softening**: Reduced tab pill border/shadow intensity to eliminate unneeded highlighted appearance.
+
+### Fixed
+- **Ambiguous Failed Fetch Feedback**: Consecutive identical errors now clearly show repetition metadata so user can distinguish new vs. repeat failures.
+- **Low Amazon Product Hit Rate**: ASIN searches now prioritize literal code and targeted site filters for more reliable retrieval.
+
+### Notes
+- Fallback multi-site requests only trigger when initial query returns few/no results (performance-friendly design).
+- Future roadmap: optional direct page parsing for richer specs if CORS-permitted.
+
 
 ### Fixed
 - **Product Search Accuracy**: Dramatically improved shopping cart search to use literal queries for specific product identifiers

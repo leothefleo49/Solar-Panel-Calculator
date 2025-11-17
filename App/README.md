@@ -4,17 +4,17 @@
 
 [![Download Latest Release](https://img.shields.io/github/v/release/leothefleo49/Solar-Panel-Calculator?style=for-the-badge&logo=github)](https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest)
 [![Platform Support](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS-blue?style=for-the-badge)](#)
-[![Version](https://img.shields.io/badge/Version-1.4.9-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-1.4.10-green?style=for-the-badge)](#)
 
 ---
 
-## 🎉 What's New in v1.4.9
+## 🎉 What's New in v1.4.10
 
-**🎯 Accurate Product Search:** Fixed shopping to use literal searches for UPC, ASIN, EAN, and model numbers - finds the exact product you want  
-**💰 Real Pricing Info:** Updated API costs with current actual rates and free tier limits (adapts to your region and account)  
-**🎨 Styled Dropdowns:** Category filter now matches the premium app theme with smooth transitions  
-**🔍 Smart vs Literal:** Search intelligently knows when to enhance queries vs. use exact matches  
-**📊 Rate Limit Clarity:** Added explanations for RPM, TPM, RPD and how they vary by provider  
+**🌐 Universal Product Search:** Multi-site fallback queries (Amazon, Walmart, Home Depot, Lowes, eBay) increase hit rate when first search is sparse.  
+**🔖 Source Labels:** Every product now shows its origin (e.g., Amazon, Walmart, Exact Match) for instant trust & filtering.  
+**🧪 Smarter Identifiers:** ASIN, UPC, EAN, and model numbers prioritized as literal queries before any AI enhancement.  
+**🚨 Clear Error Feedback:** Repeated fetch failures show attempt count + last timestamp (no more wondering if it’s new).  
+**🎨 Subtle UI Polish:** Reduced pill highlight/border intensity and softened active shadows for cleaner visual hierarchy.  
 
 [View Full Changelog](./CHANGELOG.md)
 
@@ -61,12 +61,14 @@ Notes:
   - **NEW in v1.4.8:** Enhanced setup wizard with 3 recommended paths (easiest, most free, best quality)
   - Flexible API key management (unified or separate keys)
   - Optional - app works fully without Google APIs
-- **🛒 Shopping Cart with AI Search** (Enhanced in v1.4.8):
+- **🛒 Shopping Cart with AI Search** (Enhanced in v1.4.10):
   - Smart product search supporting product names, model numbers, UPC codes, ASIN, and brand names
   - AI-powered query enhancement for better search results
   - Category filtering and intelligent result ranking
   - Automatic product spec extraction and compatibility checking
   - Integration with Google Shopping API for real-time pricing
+  - Multi-site fallbacks + source attribution badges (Amazon, Walmart, Home Depot, Lowes, eBay)
+  - Repetition-aware error reporting with timestamps
 - **Comprehensive Configurator**: Collapsible sections for utility costs, incentives, solar hardware, battery storage, and soft costs with contextual tooltips
 - **High-Precision Modeling**: Decimal.js engine simulates 25-year production, degradation, inflation-adjusted utility spend, net-metering cash flow, ROI, and break-even timing
 - **Interactive Visualizations**: Multi-line crossover charts, degradation trends, monthly production vs. consumption bars, and battery/outage simulator

@@ -320,14 +320,14 @@ details[open] > .summary-trigger .caret-icon {
 
 .tab-pill {
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 0.4rem 1.4rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   transition: all 200ms ease;
-  background: rgba(148, 163, 184, 0.12);
+  background: rgba(148, 163, 184, 0.09);
   color: #f8fafc;
-  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.4);
+  box-shadow: none;
 }
 
 .tab-pill--idle {
@@ -337,7 +337,7 @@ details[open] > .summary-trigger .caret-icon {
 .tab-pill--active {
   background: linear-gradient(120deg, #38bdf8, #0ea5e9);
   color: #04121f;
-  box-shadow: 0 12px 35px rgba(56, 189, 248, 0.35);
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.25);
   border-color: transparent;
 }
 
@@ -355,4 +355,40 @@ input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* Remove aggressive default focus outlines, replace with subtle glow only on keyboard navigation */
+button:focus,
+button:active,
+select:focus,
+input:focus,
+textarea:focus,
+a:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.6);
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+/* Optional utility to force no highlight on elements that still appear outlined */
+.no-highlight,
+.no-highlight:focus,
+.no-highlight:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: rgba(255,255,255,0.04) !important;
+}
+
+/* Lighten selection background (previous global user-select removal sometimes left artifacts) */
+::selection {
+  background: rgba(56, 189, 248, 0.25);
+  color: #f8fafc;
 }

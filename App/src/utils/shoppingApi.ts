@@ -20,6 +20,7 @@ export async function searchProducts(query: string, options?: {
   maxResults?: number;
   country?: string;
   category?: string;
+  multiSite?: boolean; // attempt site-filtered fallbacks if first query yields no results
 }): Promise<GoogleShoppingProduct[]> {
   const { apiKeys } = useGoogleApiStore.getState();
   const apiKey = apiKeys.shopping || apiKeys.unified;
@@ -36,30 +37,61 @@ export async function searchProducts(query: string, options?: {
   // Use AI to enhance the search query if available
   const enhancedQuery = await enhanceSearchQuery(query, options?.category);
 
-  const params = new URLSearchParams({
-    key: apiKey,
-    cx: cx,
-    q: enhancedQuery,
-    num: String(options?.maxResults || 10),
-    ...(options?.country && { gl: options.country }),
-  });
+  // Build query variants (fallbacks) if first query empty
+  const variants = buildQueryVariants(query.trim(), enhancedQuery.trim());
 
-  const response = await fetch(`${SHOPPING_API_BASE}?${params}`);
+  const aggregated: GoogleShoppingProduct[] = [];
+  const seenLinks = new Set<string>();
+  let performedRequests = 0;
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
-    throw new Error(error.error?.message || `Shopping API request failed: ${response.status}`);
+  for (let i = 0; i < variants.length; i++) {
+    const q = variants[i];
+    const params = new URLSearchParams({
+      key: apiKey,
+      cx,
+      q,
+      num: String(options?.maxResults || 10),
+      ...(options?.country && { gl: options.country }),
+    });
+    const response = await fetch(`${SHOPPING_API_BASE}?${params}`);
+    performedRequests++;
+
+    if (!response.ok) {
+      // If first query fails—throw; otherwise continue to next fallback
+      if (aggregated.length === 0) {
+        const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+        throw new Error(error.error?.message || `Shopping API request failed: ${response.status}`);
+      } else {
+        continue;
+      }
+    }
+
+    const data: GoogleShoppingResponse = await response.json();
+    const items = data.items || [];
+    for (const item of items) {
+      if (item.link && !seenLinks.has(item.link)) {
+        seenLinks.add(item.link);
+        // Annotate which query produced this result for UI context
+        (item as any)._sourceQuery = q;
+        aggregated.push(item);
+      }
+    }
+
+    // If we got some results on primary query and multiSite disabled, break
+    if (i === 0 && aggregated.length > 0 && options?.multiSite === false) break;
+    // If primary query returned results and they exceed threshold, no need for fallbacks
+    if (i === 0 && aggregated.length >= Math.min(options?.maxResults || 10, 6)) break;
+    // If we have enough results overall, stop
+    if (aggregated.length >= (options?.maxResults || 10)) break;
   }
 
-  const data: GoogleShoppingResponse = await response.json();
-  
-  // Track usage
-  useApiUsageStore.getState().trackUsage('google-shopping', 1);
-  
-  const results = data.items || [];
-  
-  // Use AI to filter and rank results for better relevance
-  return await rankProductResults(results, query, options?.category);
+  // Track usage for each performed request
+  if (performedRequests > 0) {
+    useApiUsageStore.getState().trackUsage('google-shopping', performedRequests);
+  }
+
+  // Rank aggregated results
+  return await rankProductResults(aggregated, query, options?.category);
 }
 
 /**
@@ -83,7 +115,7 @@ async function enhanceSearchQuery(query: string, category?: string): Promise<str
     return trimmedQuery;
   }
   if (isASIN) {
-    // ASIN searches work best with just the code
+    // ASIN searches work best with just the code; we'll add site filters as fallbacks later
     return trimmedQuery;
   }
   
@@ -136,6 +168,41 @@ async function enhanceSearchQuery(query: string, category?: string): Promise<str
   }
 
   return `${query} solar equipment`;
+}
+
+/**
+ * Build query variants for multi-site/fallback searching.
+ * Order matters: primary enhanced query first, then targeted site filters for identifiers.
+ */
+function buildQueryVariants(original: string, enhanced: string): string[] {
+  const variants: string[] = [enhanced];
+
+  const isUPC = /^\d{12,14}$/.test(original);
+  const isEAN = /^\d{8,13}$/.test(original);
+  const isASIN = /^B[0-9A-Z]{9}$/i.test(original);
+
+  // Identifier-specific site targeting (Amazon/Walmart/HomeDepot/etc.)
+  if (isASIN) {
+    variants.push(`${original} site:amazon.com`);
+    variants.push(`${original} site:amazon.co.uk`);
+    variants.push(`${original} site:ebay.com`);
+  } else if (isUPC || isEAN) {
+    variants.push(`${original} site:amazon.com`);
+    variants.push(`${original} site:walmart.com`);
+    variants.push(`${original} site:homedepot.com`);
+    variants.push(`${original} site:lowes.com`);
+  }
+
+  // If user supplied brand + model style (two tokens with letters+digits) add quoted exact match
+  if (/\b[A-Z]{2,}[- ]?\d{2,}[A-Z0-9-]*\b/.test(original)) {
+    variants.push(`"${original}"`);
+  }
+
+  // Generic fallback with broader e-commerce context if still empty later
+  variants.push(`${original} solar product price`);
+
+  // Deduplicate preserving order
+  return Array.from(new Set(variants));
 }
 
 /**
