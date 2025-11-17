@@ -12,6 +12,7 @@ import {
 } from '../utils/googleApis';
 import type { SolarAnalysisResult } from '../types/google-apis';
 import InfoTooltip from './InfoTooltip';
+import { openExternalUrl } from '../utils/openExternal';
 
 export default function SolarApiIntegration() {
   const { apiKeys, hasAnySolarAccess, hasMapsAccess } = useGoogleApiStore();
@@ -156,12 +157,12 @@ export default function SolarApiIntegration() {
           <li>AI assistant automatically receives all data for intelligent recommendations</li>
         </ol>
         <p className="text-xs text-slate-500 mt-3">
-          Need API keys? Visit <a
-            href="https://console.cloud.google.com/"
-            target="_blank"
-            rel="noopener noreferrer"
+          Need API keys? Visit{' '}
+          <button
+            type="button"
+            onClick={() => openExternalUrl('https://console.cloud.google.com/')}
             className="text-emerald-400 hover:underline"
-          >Google Cloud Console</a> and enable Solar API + Maps API.
+          >Google Cloud Console</button> and enable Solar API + Maps API.
         </p>
       </div>
     </div>

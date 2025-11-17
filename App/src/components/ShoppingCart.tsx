@@ -10,6 +10,7 @@ import { searchProducts, extractProductSpecs } from '../utils/shoppingApi';
 import type { ProductCategory, CartItem } from '../types/shopping';
 import { formatCurrency } from '../utils/calculations';
 import InfoTooltip from './InfoTooltip';
+import { openExternalUrl } from '../utils/openExternal';
 
 const CATEGORIES: { value: ProductCategory; label: string }[] = [
   { value: 'solar-panel', label: 'Solar Panel' },
@@ -384,14 +385,13 @@ export default function ShoppingCart() {
                       {item.price && <span className="font-semibold text-white">{formatCurrency(item.price * item.quantity)}</span>}
                     </div>
                     {item.url && (
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-block text-xs text-accent hover:underline"
+                      <button
+                        type="button"
+                        onClick={() => openExternalUrl(item.url!)}
+                        className="mt-2 inline-block text-left text-xs text-accent hover:underline"
                       >
                         View Product →
-                      </a>
+                      </button>
                     )}
                   </div>
                   <button

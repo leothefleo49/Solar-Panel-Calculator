@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useGoogleApiStore } from '../state/googleApiStore'
 import { useChatStore } from '../state/chatStore'
 import InfoTooltip from './InfoTooltip'
+import { openExternalUrl } from '../utils/openExternal'
 
 const ApisTab = () => {
   const {
@@ -26,6 +27,12 @@ const ApisTab = () => {
       <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
         <h3 className="text-lg font-semibold flex items-center gap-2">Google APIs Configuration <InfoTooltip content="Manage keys for Solar, Maps/Geocoding, Shopping. Use a unified key (enable all APIs on one key) OR separate keys per service." /></h3>
         <p className="text-sm text-slate-300 mt-1">Configure Google Cloud APIs for solar analysis, address lookup, and product search.</p>
+        <div className="mt-3 text-[11px] text-slate-300 space-y-1">
+          <p className="font-semibold text-white/90">Quick Start (fastest way to chat):</p>
+          <p>1) Select <span className="text-accent font-semibold">Unified Key</span>. Paste your Google Cloud key (enable Solar, Geocoding, and Custom Search APIs).</p>
+          <p>2) Click <span className="text-accent font-semibold">Use Unified Google Key</span> under Gemini.</p>
+          <p>3) Open the Chat Assistant and ask for help. You can add other providers later.</p>
+        </div>
         <div className="mt-4 flex flex-wrap gap-3 items-center">
           <button
             type="button"
@@ -124,6 +131,13 @@ const ApisTab = () => {
               placeholder="Gemini API key"
               className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
             />
+            {(!providerKeys.google && apiKeys.unified) && (
+              <button
+                type="button"
+                onClick={() => setProviderKey('google', apiKeys.unified!)}
+                className="mt-2 rounded-xl border border-accent/50 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent hover:bg-accent/20"
+              >Use Unified Google Key</button>
+            )}
             {providerKeys.google && <button type="button" onClick={() => clearProviderKey('google')} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
           </div>
           <div>
@@ -168,10 +182,10 @@ const ApisTab = () => {
           <div>
             <p className="font-semibold text-accent mb-1">Google Cloud APIs:</p>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Create project at <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Google Cloud Console</a></li>
+              <li>Create project at <button type="button" onClick={() => openExternalUrl('https://console.cloud.google.com/')} className="text-accent hover:underline">Google Cloud Console</button></li>
               <li>Enable: Solar API, Maps JavaScript API, Geocoding API, Custom Search API</li>
               <li>Generate restricted API key (HTTP referrers / bundle id / package name)</li>
-              <li>For Shopping: visit <a href="https://programmablesearchengine.google.com" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">programmablesearchengine.google.com</a>, create engine, enable "Search the entire web", copy CX</li>
+              <li>For Shopping: visit <button type="button" onClick={() => openExternalUrl('https://programmablesearchengine.google.com')} className="text-accent hover:underline">programmablesearchengine.google.com</button>, create engine, enable "Search the entire web", copy CX</li>
               <li>Unified mode: same key for all. Separate mode: individual keys per API</li>
             </ol>
           </div>
@@ -179,8 +193,8 @@ const ApisTab = () => {
             <p className="font-semibold text-accent mb-1">AI Provider Keys:</p>
             <ul className="list-disc list-inside space-y-1">
               <li><strong>Gemini:</strong> Can use unified Google key OR separate Gemini key from AI Studio</li>
-              <li><strong>OpenAI:</strong> Get from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">platform.openai.com</a></li>
-              <li><strong>Claude:</strong> Get from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">console.anthropic.com</a></li>
+              <li><strong>OpenAI:</strong> Get from <button type="button" onClick={() => openExternalUrl('https://platform.openai.com/api-keys')} className="text-accent hover:underline">platform.openai.com</button></li>
+              <li><strong>Claude:</strong> Get from <button type="button" onClick={() => openExternalUrl('https://console.anthropic.com/')} className="text-accent hover:underline">console.anthropic.com</button></li>
               <li><strong>Grok:</strong> Get from xAI portal</li>
               <li>Only providers with configured keys will appear in chat assistant</li>
             </ul>
