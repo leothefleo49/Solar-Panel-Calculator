@@ -70,19 +70,40 @@ export async function searchProducts(query: string, options?: {
  *  - UPC/ASIN detection -> add appropriate search terms
  */
 async function enhanceSearchQuery(query: string, category?: string): Promise<string> {
-  // Detect if query is a product identifier
-  const isUPC = /^\d{12,14}$/.test(query.trim());
-  const isASIN = /^B[0-9A-Z]{9}$/.test(query.trim());
-  const isModelNumber = /^[A-Z]{2,}\d{3,}[A-Z0-9-]*$/.test(query.trim());
-
-  if (isUPC) {
-    return `UPC ${query} solar equipment`;
+  const trimmedQuery = query.trim();
+  
+  // Detect if query is a product identifier - use EXACT match, no enhancement
+  const isUPC = /^\d{12,14}$/.test(trimmedQuery);
+  const isASIN = /^B[0-9A-Z]{9}$/i.test(trimmedQuery);
+  const isEAN = /^\d{8,13}$/.test(trimmedQuery);
+  
+  // If it looks like a specific product code, search literally
+  if (isUPC || isEAN) {
+    // Just use the exact code - don't add extra terms that might dilute results
+    return trimmedQuery;
   }
   if (isASIN) {
-    return `ASIN ${query} solar`;
+    // ASIN searches work best with just the code
+    return trimmedQuery;
   }
+  
+  // Detect model numbers - search more literally
+  const isModelNumber = /^[A-Z]{2,}[-\s]?\d{2,}[A-Z0-9-]*$/i.test(trimmedQuery);
   if (isModelNumber) {
-    return `${query} model number solar ${category || 'equipment'}`;
+    // Model numbers should be searched with minimal modification
+    return `"${trimmedQuery}" solar ${category || 'equipment'}`;
+  }
+  
+  // If query has quotes, user wants exact match - respect that
+  if (trimmedQuery.startsWith('"') && trimmedQuery.endsWith('"')) {
+    return trimmedQuery;
+  }
+  
+  // If query is already specific and long (>25 chars), don't enhance too much
+  if (trimmedQuery.length > 25) {
+    // Just add solar context if not already present
+    const hasContext = /solar|panel|inverter|battery|pv|photovoltaic/i.test(trimmedQuery);
+    return hasContext ? trimmedQuery : `${trimmedQuery} solar`;
   }
 
   // Try to use AI for query enhancement if available

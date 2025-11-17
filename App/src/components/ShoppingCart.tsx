@@ -241,11 +241,11 @@ export default function ShoppingCart() {
               <select
                 value={searchCategory}
                 onChange={(e) => setSearchCategory(e.target.value as ProductCategory | '')}
-                className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none"
+                className="premium-select rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none hover:border-accent/60 transition-colors"
               >
-                <option value="">All Categories</option>
+                <option value="" className="bg-slate-900 text-white">All Categories</option>
                 {CATEGORIES.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
+                  <option key={cat.value} value={cat.value} className="bg-slate-900 text-white">
                     {cat.label}
                   </option>
                 ))}

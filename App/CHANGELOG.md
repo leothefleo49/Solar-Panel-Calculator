@@ -4,6 +4,33 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.4.9] - 2025-11-16
+
+### Fixed
+- **Product Search Accuracy**: Dramatically improved shopping cart search to use literal queries for specific product identifiers
+  - UPC codes (12-14 digits) now search exactly as entered without extra terms
+  - ASIN codes (Amazon product IDs) search with the exact code for accurate results
+  - EAN codes (8-13 digits) supported for international products
+  - Model numbers (e.g., "RNG-400D") now use quoted exact match with minimal modification
+  - Respects user-quoted searches for exact matches
+  - Long queries (>25 chars) treated as already specific and minimally enhanced
+  - Short/vague queries still get AI enhancement for better results
+- **Category Dropdown Styling**: Applied `premium-select` class with theme-matching colors
+  - Styled with accent color on hover and focus
+  - Dark background options for better contrast
+  - Smooth transitions matching app theme
+
+### Changed
+- **Adaptive API Pricing Information**: Updated all API cost details to reflect current actual rates
+  - Google Cloud Console: $300 free trial for 90 days (new accounts, was $200)
+  - Google AI Studio: 15 RPM / 1M TPM / 1500 RPD for Gemini Flash (free forever)
+  - OpenAI: $0.15-$15 per 1M tokens depending on model (GPT-5, GPT-4o, o1)
+  - Anthropic Claude 3.5 Sonnet: $3 input / $15 output per 1M tokens
+  - Added explanations for rate limit abbreviations (RPM, TPM, RPD)
+  - Added note about regional variations and account-specific offers
+  - Clarified that AI Studio is separate from Cloud Console
+- Search query enhancement now intelligently decides when to modify vs. use literal search
+
 
 ## [1.4.8] - 2025-11-16
 

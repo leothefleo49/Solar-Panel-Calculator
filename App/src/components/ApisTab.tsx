@@ -83,12 +83,12 @@ const ApisTab = () => {
               <p className="font-semibold text-blue-400 mb-1.5">⚡ Option 2: Separate Keys (More Control)</p>
               <ol className="list-decimal list-inside space-y-1 ml-2">
                 <li>Create separate API keys for Solar, Maps, Shopping in Cloud Console</li>
-                <li>Get dedicated Gemini key from <button type="button" onClick={() => openExternalUrl('https://aistudio.google.com/apikey')} className="text-accent hover:underline font-medium">Google AI Studio</button> (different from Cloud)</li>
+                <li>Get dedicated Gemini key from <button type="button" onClick={() => openExternalUrl('https://aistudio.google.com/apikey')} className="text-accent hover:underline font-medium">Google AI Studio</button> (separate from Cloud Console)</li>
                 <li>Switch to "Separate Keys" mode and paste each key</li>
                 <li>Click Save Changes above</li>
               </ol>
               <p className="text-blue-300 mt-2 text-[10px]">💡 Best for: Tracking usage per service, separate billing</p>
-              <p className="text-blue-300 text-[10px]">💰 Cost: Cloud Console (pay-as-you-go), AI Studio (free tier: 1500 requests/day for Gemini)</p>
+              <p className="text-blue-300 text-[10px]">💰 Cost: Cloud Console (pay-as-you-go + $300 free trial for 90 days if new), AI Studio (free tier: 15 RPM / 1M TPM / 1500 RPD for Gemini Flash)</p>
             </div>
 
             <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-3">
@@ -102,7 +102,7 @@ const ApisTab = () => {
                 <li>Click Save Changes above</li>
               </ol>
               <p className="text-purple-300 mt-2 text-[10px]">💡 Best for: Access to best models, redundancy, comparing AI outputs</p>
-              <p className="text-purple-300 text-[10px]">💰 Cost: Varies by provider - Claude/GPT-5 offer best quality, Gemini offers most free tier</p>
+              <p className="text-purple-300 text-[10px]">💰 Cost: OpenAI ($5 min, pay-per-token), Anthropic ($5 min, pay-per-token), Gemini (see Option 2), Grok (pay-per-token)</p>
             </div>
           </div>
 
@@ -110,10 +110,11 @@ const ApisTab = () => {
             <p className="font-semibold text-white/90 text-xs mb-1">🎓 Recommendation Matrix:</p>
             <ul className="space-y-1 text-[10px] text-slate-300">
               <li><span className="text-green-400 font-semibold">• Easiest Setup:</span> Option 1 (Unified Key from Cloud Console)</li>
-              <li><span className="text-blue-400 font-semibold">• Most Free Credits:</span> Option 2 Gemini via AI Studio (1500/day) + Cloud Console ($200 initial credit)</li>
-              <li><span className="text-purple-400 font-semibold">• Best AI Quality:</span> Option 3 with Claude 3.5 Sonnet or GPT-5</li>
+              <li><span className="text-blue-400 font-semibold">• Most Free Usage:</span> Option 2 Gemini via AI Studio (15 RPM free forever) + Cloud Console ($300 trial for new accounts)</li>
+              <li><span className="text-purple-400 font-semibold">• Best AI Quality:</span> Option 3 with Claude 3.5 Sonnet (best reasoning) or GPT-5 (multimodal)</li>
               <li><span className="text-amber-400 font-semibold">• Best Value Long-Term:</span> Option 1 Unified Key (consolidated billing, easier tracking)</li>
             </ul>
+                      <p className="text-[9px] text-slate-400 mt-2 italic">Note: Free tiers and credits vary by region and account status. Check provider websites for current offers. RPM = Requests Per Minute, TPM = Tokens Per Minute, RPD = Requests Per Day.</p>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-3 items-center">
@@ -287,16 +288,17 @@ const ApisTab = () => {
             <ul className="list-disc list-inside space-y-1">
               <li>Visit <button type="button" onClick={() => openExternalUrl('https://aistudio.google.com/apikey')} className="text-accent hover:underline">aistudio.google.com/apikey</button></li>
               <li>Create API key (separate from Cloud Console)</li>
-              <li>Free tier: 1500 requests/day for Gemini models</li>
+              <li>Free tier: 15 requests/min, 1M tokens/min, 1500 requests/day for Gemini 2.0 Flash</li>
+              <li>Paid tier (if you exceed free): $0.075 per 1M input tokens, $0.30 per 1M output tokens</li>
               <li>Cannot be used for Solar/Maps/Shopping APIs (Cloud Console only)</li>
             </ul>
           </div>
           <div>
             <p className="font-semibold text-accent mb-1">Other AI Provider Keys:</p>
             <ul className="list-disc list-inside space-y-1">
-              <li><strong>OpenAI:</strong> <button type="button" onClick={() => openExternalUrl('https://platform.openai.com/api-keys')} className="text-accent hover:underline">platform.openai.com/api-keys</button> - Pay-as-you-go, GPT-5/GPT-4o models</li>
-              <li><strong>Anthropic:</strong> <button type="button" onClick={() => openExternalUrl('https://console.anthropic.com/')} className="text-accent hover:underline">console.anthropic.com</button> - Claude 3.5 Sonnet (best for complex analysis)</li>
-              <li><strong>xAI Grok:</strong> Contact xAI for API access</li>
+              <li><strong>OpenAI:</strong> <button type="button" onClick={() => openExternalUrl('https://platform.openai.com/api-keys')} className="text-accent hover:underline">platform.openai.com/api-keys</button> - $5 minimum credit, ~$0.15-$15 per 1M tokens depending on model (GPT-5, GPT-4o, o1)</li>
+              <li><strong>Anthropic:</strong> <button type="button" onClick={() => openExternalUrl('https://console.anthropic.com/')} className="text-accent hover:underline">console.anthropic.com</button> - $5 minimum credit, $3 per 1M input tokens, $15 per 1M output (Claude 3.5 Sonnet)</li>
+              <li><strong>xAI Grok:</strong> API access via xAI - pricing varies, check xAI console for current rates</li>
               <li>Only configured providers appear in Chat Assistant dropdown</li>
             </ul>
           </div>

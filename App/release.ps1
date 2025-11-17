@@ -1,4 +1,4 @@
-# Solar Panel Calculator v1.4.8 - Quick Release Script
+# Solar Panel Calculator v1.4.9 - Quick Release Script
 # Run this after reviewing all changes
 
 param(
@@ -7,7 +7,7 @@ param(
     [switch]$Help
 )
 
-$VERSION = "1.4.8"
+$VERSION = "1.4.9"
 $ErrorActionPreference = "Stop"
 
 function Write-Step {
@@ -136,7 +136,7 @@ if (-not $DryRun) {
 
 # Step 6: Commit
 Write-Step "Committing changes..."
-$commitMessage = "chore(release): v$VERSION - API save button, enhanced instructions & AI shopping search`n`n- Added Save Changes button to APIs tab (no app restart needed)`n- Enhanced API setup instructions with 3 options: easiest, most credits, best quality`n- Fixed scrollbar transparency in fullscreen mode`n- Improved Shopping Cart with AI-enhanced search (UPC, ASIN, model, brand support)`n- Better product search ranking and categorization"
+$commitMessage = "chore(release): v$VERSION - accurate product search & adaptive API pricing`n`n- Fixed product search to use literal queries for UPC, ASIN, EAN, model numbers`n- Styled category dropdown to match app theme`n- Updated API pricing info to reflect actual current rates and free tiers`n- Added explanations for RPM, TPM, RPD limits and regional variations`n- Improved search accuracy by respecting exact matches and product codes"
 
 try {
     if ($DryRun) {
