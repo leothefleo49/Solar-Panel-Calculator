@@ -504,8 +504,9 @@ class ErrorLogger {
     // Handle Tauri app close
     if (typeof window !== 'undefined' && (window as any).__TAURI__) {
       // Tauri apps: send report when window closes
-      import('@tauri-apps/api/window').then(({ appWindow }) => {
-        appWindow.onCloseRequested(() => {
+      import('@tauri-apps/api/window').then(({ getCurrentWindow }) => {
+        const win = getCurrentWindow();
+        win.onCloseRequested(() => {
           sendReportOnClose();
         });
       }).catch(() => {

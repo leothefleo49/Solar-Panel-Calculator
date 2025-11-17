@@ -5,7 +5,6 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  checkForUpdates, 
   installUpdate, 
   openDownloadPage, 
   dismissUpdateReminder,
