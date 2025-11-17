@@ -1,0 +1,89 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Version Sync on Push
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-versions:
+    name: Sync versions across all files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Get latest version from tags or package.json
+        id: version
+        run: |
+          # Try to get version from latest git tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [[ -n "$LATEST_TAG" ]]; then
+            VERSION=${LATEST_TAG#v}
+          else
+            # Fallback to package.json
+            VERSION=$(node -p "require('./App/package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
+      
+      - name: Sync versions in all config files
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const version = process.env.VERSION;
+            
+            // Update tauri.conf.json
+            const tauriPath = "App/src-tauri/tauri.conf.json";
+            const tauriConf = JSON.parse(fs.readFileSync(tauriPath));
+            tauriConf.version = version;
+            fs.writeFileSync(tauriPath, JSON.stringify(tauriConf, null, 2) + "\n");
+            
+            // Update package.json
+            const pkgPath = "App/package.json";
+            const pkg = JSON.parse(fs.readFileSync(pkgPath));
+            pkg.version = version;
+            fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
+            
+            // Update Cargo.toml version
+            const cargoPath = "App/src-tauri/Cargo.toml";
+            let cargo = fs.readFileSync(cargoPath, "utf8");
+            cargo = cargo.replace(/^version = ".*"$/m, `version = "${version}"`);
+            fs.writeFileSync(cargoPath, cargo);
+            
+            console.log("✅ Synced all versions to:", version);
+          '
+      
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No version changes needed"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Version files updated"
+          fi
+      
+      - name: Commit and push version sync
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add App/src-tauri/tauri.conf.json App/package.json App/src-tauri/Cargo.toml
+          git commit -m "chore: sync versions to ${{ steps.version.outputs.version }} [skip ci]"
+          git push

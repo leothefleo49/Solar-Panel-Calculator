@@ -44,7 +44,7 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Set version from tag (tauri.conf.json + package.json)
+      - name: Set version from tag (tauri.conf.json + package.json + Cargo.toml)
         shell: bash
         env:
           TAG_NAME: ${{ github.ref_name }}
@@ -53,15 +53,26 @@ jobs:
           node -e '
             const fs = require("fs");
             const tag = (process.env.TAG_NAME || "").replace(/^v/, "");
+            
+            // Update tauri.conf.json
             const p1 = "App/src-tauri/tauri.conf.json";
-            const p2 = "App/package.json";
             const j1 = JSON.parse(fs.readFileSync(p1));
-            const j2 = JSON.parse(fs.readFileSync(p2));
             j1.version = tag;
+            fs.writeFileSync(p1, JSON.stringify(j1, null, 2) + "\n");
+            
+            // Update package.json
+            const p2 = "App/package.json";
+            const j2 = JSON.parse(fs.readFileSync(p2));
             j2.version = tag;
-            fs.writeFileSync(p1, JSON.stringify(j1, null, 2));
-            fs.writeFileSync(p2, JSON.stringify(j2, null, 2));
-            console.log("Set app versions to", tag);
+            fs.writeFileSync(p2, JSON.stringify(j2, null, 2) + "\n");
+            
+            // Update Cargo.toml
+            const p3 = "App/src-tauri/Cargo.toml";
+            let cargo = fs.readFileSync(p3, "utf8");
+            cargo = cargo.replace(/^version = ".*"$/m, `version = "${tag}"`);
+            fs.writeFileSync(p3, cargo);
+            
+            console.log("✅ Set all versions to", tag);
           '
       
       - name: Setup Rust
