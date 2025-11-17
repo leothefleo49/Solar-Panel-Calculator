@@ -78,7 +78,7 @@ const FullscreenButton = () => {
     <button
       type="button"
       onClick={toggleFullscreen}
-      className="fixed top-2 right-2 z-50 rounded-lg border border-white/10 bg-slate-900/80 p-1 text-white backdrop-blur-sm transition hover:border-accent hover:bg-slate-800/90"
+      className="fixed top-2 right-2 z-50 rounded-xl border border-white/10 bg-slate-900/80 p-1.5 text-white backdrop-blur-sm transition hover:border-accent hover:bg-slate-800/90"
       title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
     >
       {isFullscreen ? (
@@ -88,7 +88,7 @@ const FullscreenButton = () => {
           viewBox="0 0 24 24"
           strokeWidth={2}
           stroke="currentColor"
-          className="h-3.5 w-3.5"
+          className="h-4 w-4"
         >
           <path
             strokeLinecap="round"
@@ -103,7 +103,7 @@ const FullscreenButton = () => {
           viewBox="0 0 24 24"
           strokeWidth={2}
           stroke="currentColor"
-          className="h-3.5 w-3.5"
+          className="h-4 w-4"
         >
           <path
             strokeLinecap="round"
