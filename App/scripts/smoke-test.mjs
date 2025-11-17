@@ -69,7 +69,6 @@ async function main() {
 
   const byName = Object.fromEntries(assets.map(a => [a.name, a.browser_download_url]))
 
-  const missing = want.filter(w => !byName[w])
   const missingRequired = required.filter(w => !byName[w])
   const missingOptional = optional.filter(w => !byName[w])
   
