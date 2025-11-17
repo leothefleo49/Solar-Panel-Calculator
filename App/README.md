@@ -4,17 +4,17 @@
 
 [![Download Latest Release](https://img.shields.io/github/v/release/leothefleo49/Solar-Panel-Calculator?style=for-the-badge&logo=github)](https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest)
 [![Platform Support](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS-blue?style=for-the-badge)](#)
-[![Version](https://img.shields.io/badge/Version-1.4.8-green?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-1.4.9-green?style=for-the-badge)](#)
 
 ---
 
-## 🎉 What's New in v1.4.8
+## 🎉 What's New in v1.4.9
 
-**📌 No More Restarts!** API configuration changes now apply instantly with the new Save Changes button  
-**📚 Enhanced Setup Guide:** 3 clear paths - easiest setup, most free credits, or best AI quality  
-**🛒 Smarter Shopping:** AI-powered product search now supports UPC, ASIN, model numbers, and brand names  
-**🎨 Perfect Scrollbars:** Fixed white backgrounds in fullscreen mode across all platforms  
-**🔗 Reliable Links:** External links always open in your default browser (Windows & all platforms)  
+**🎯 Accurate Product Search:** Fixed shopping to use literal searches for UPC, ASIN, EAN, and model numbers - finds the exact product you want  
+**💰 Real Pricing Info:** Updated API costs with current actual rates and free tier limits (adapts to your region and account)  
+**🎨 Styled Dropdowns:** Category filter now matches the premium app theme with smooth transitions  
+**🔍 Smart vs Literal:** Search intelligently knows when to enhance queries vs. use exact matches  
+**📊 Rate Limit Clarity:** Added explanations for RPM, TPM, RPD and how they vary by provider  
 
 [View Full Changelog](./CHANGELOG.md)
 
