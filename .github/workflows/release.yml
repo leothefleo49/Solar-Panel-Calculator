@@ -44,6 +44,26 @@ jobs:
         with:
           node-version: '20'
       
+      - name: Set version from tag (tauri.conf.json + package.json)
+        shell: bash
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -e
+          node -e '
+            const fs = require("fs");
+            const tag = (process.env.TAG_NAME || "").replace(/^v/, "");
+            const p1 = "App/src-tauri/tauri.conf.json";
+            const p2 = "App/package.json";
+            const j1 = JSON.parse(fs.readFileSync(p1));
+            const j2 = JSON.parse(fs.readFileSync(p2));
+            j1.version = tag;
+            j2.version = tag;
+            fs.writeFileSync(p1, JSON.stringify(j1, null, 2));
+            fs.writeFileSync(p2, JSON.stringify(j2, null, 2));
+            console.log("Set app versions to", tag);
+          '
+      
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       
@@ -336,3 +356,36 @@ jobs:
             App/latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  validate-downloads:
+    name: Validate Quick Download links
+    needs: [release-attach]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check latest download URLs exist
+        shell: bash
+        run: |
+          set -e
+          base="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download"
+          urls=(
+            "$base/Solar-Panel-Calculator-Windows.msi"
+            "$base/Solar-Panel-Calculator-Windows.exe"
+            "$base/Solar-Panel-Calculator-macOS.dmg"
+            "$base/Solar-Panel-Calculator-Linux.AppImage"
+            "$base/Solar-Panel-Calculator-Linux.deb"
+            "$base/Solar-Panel-Calculator-Android-Unsigned.apk"
+          )
+          for u in "${urls[@]}"; do
+            echo "Checking: $u"
+            for i in 1 2 3; do
+              code=$(curl -sSIL -o /dev/null -w "%{http_code}" "$u" || true)
+              if [[ "$code" == "200" || "$code" == "302" || "$code" == "301" ]]; then
+                echo "OK ($code): $u"; break
+              else
+                echo "Attempt $i failed ($code) for $u; retrying in 3s..."; sleep 3
+              fi
+              if [[ $i -eq 3 ]]; then
+                echo "ERROR: $u not available (HTTP $code)"; exit 1
+              fi
+            done
+          done
