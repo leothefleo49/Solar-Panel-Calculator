@@ -25,10 +25,15 @@ const App = () => {
     return () => window.removeEventListener('panel-collapsed', handler)
   }, [])
 
-  // Initialize auto-updater
+  // Initialize auto-updater - check immediately on startup, then periodically
   useEffect(() => {
-    initializeAutoUpdater(60) // Check every 60 minutes
-      .catch(err => console.error('Failed to initialize auto-updater:', err))
+    // Check for updates 10 seconds after app loads (gives time for UI to render)
+    const startupCheck = setTimeout(() => {
+      initializeAutoUpdater(60) // Check immediately, then every 60 minutes
+        .catch(err => console.error('Failed to initialize auto-updater:', err))
+    }, 10000)
+    
+    return () => clearTimeout(startupCheck)
   }, [])
 
   // Persist widths

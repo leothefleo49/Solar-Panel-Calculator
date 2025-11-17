@@ -211,8 +211,12 @@ body::-webkit-scrollbar-corner {
 :-moz-full-screen,
 :-moz-full-screen *,
 :-moz-full-screen body,
-:-moz-full-screen html {
+:-moz-full-screen html,
+:fullscreen::backdrop,
+:-webkit-full-screen::backdrop,
+:-moz-full-screen::backdrop {
   scrollbar-color: rgba(56, 189, 248, 0.8) transparent !important;
+  background-color: #020617 !important;
 }
 
 :fullscreen *::-webkit-scrollbar,
@@ -224,6 +228,8 @@ body::-webkit-scrollbar-corner {
 :-moz-full-screen *::-webkit-scrollbar,
 :-moz-full-screen body::-webkit-scrollbar,
 :-moz-full-screen html::-webkit-scrollbar {
+  width: 10px !important;
+  height: 10px !important;
   background: transparent !important;
   background-color: transparent !important;
 }
@@ -239,6 +245,7 @@ body::-webkit-scrollbar-corner {
 :-moz-full-screen html::-webkit-scrollbar-track {
   background: transparent !important;
   background-color: transparent !important;
+  border: none !important;
 }
 
 :fullscreen *::-webkit-scrollbar-track-piece,
@@ -252,6 +259,21 @@ body::-webkit-scrollbar-corner {
 :-moz-full-screen html::-webkit-scrollbar-track-piece {
   background: transparent !important;
   background-color: transparent !important;
+  border: none !important;
+}
+
+:fullscreen *::-webkit-scrollbar-thumb,
+:fullscreen body::-webkit-scrollbar-thumb,
+:fullscreen html::-webkit-scrollbar-thumb,
+:-webkit-full-screen *::-webkit-scrollbar-thumb,
+:-webkit-full-screen body::-webkit-scrollbar-thumb,
+:-webkit-full-screen html::-webkit-scrollbar-thumb,
+:-moz-full-screen *::-webkit-scrollbar-thumb,
+:-moz-full-screen body::-webkit-scrollbar-thumb,
+:-moz-full-screen html::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.75)) !important;
+  border-radius: 999px !important;
+  border: none !important;
 }
 
 /* Ensure scrollbar corners are always transparent */
