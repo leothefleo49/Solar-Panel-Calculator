@@ -180,10 +180,38 @@ body::-webkit-scrollbar-corner {
 }
 
 *::-webkit-scrollbar-corner {
-  background: transparent;
+  background: transparent !important;
 }
 
 /* Fullscreen-specific scrollbar overrides to prevent white backgrounds */
+:fullscreen,
+:fullscreen *,
+:fullscreen body,
+:fullscreen html,
+:-webkit-full-screen,
+:-webkit-full-screen *,
+:-webkit-full-screen body,
+:-webkit-full-screen html,
+:-moz-full-screen,
+:-moz-full-screen *,
+:-moz-full-screen body,
+:-moz-full-screen html {
+  scrollbar-color: rgba(56, 189, 248, 0.8) transparent !important;
+}
+
+:fullscreen *::-webkit-scrollbar,
+:fullscreen body::-webkit-scrollbar,
+:fullscreen html::-webkit-scrollbar,
+:-webkit-full-screen *::-webkit-scrollbar,
+:-webkit-full-screen body::-webkit-scrollbar,
+:-webkit-full-screen html::-webkit-scrollbar,
+:-moz-full-screen *::-webkit-scrollbar,
+:-moz-full-screen body::-webkit-scrollbar,
+:-moz-full-screen html::-webkit-scrollbar {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
 :fullscreen *::-webkit-scrollbar-track,
 :fullscreen body::-webkit-scrollbar-track,
 :fullscreen html::-webkit-scrollbar-track,
@@ -197,24 +225,58 @@ body::-webkit-scrollbar-corner {
   background-color: transparent !important;
 }
 
-:fullscreen,
-:-webkit-full-screen,
-:-moz-full-screen {
-  scrollbar-color: rgba(56, 189, 248, 0.8) transparent !important;
-}
-
-:fullscreen *,
-:-webkit-full-screen *,
-:-moz-full-screen * {
-  scrollbar-color: rgba(56, 189, 248, 0.8) transparent !important;
+:fullscreen *::-webkit-scrollbar-track-piece,
+:fullscreen body::-webkit-scrollbar-track-piece,
+:fullscreen html::-webkit-scrollbar-track-piece,
+:-webkit-full-screen *::-webkit-scrollbar-track-piece,
+:-webkit-full-screen body::-webkit-scrollbar-track-piece,
+:-webkit-full-screen html::-webkit-scrollbar-track-piece,
+:-moz-full-screen *::-webkit-scrollbar-track-piece,
+:-moz-full-screen body::-webkit-scrollbar-track-piece,
+:-moz-full-screen html::-webkit-scrollbar-track-piece {
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 /* Ensure scrollbar corners are always transparent */
 *::-webkit-scrollbar-corner,
 body::-webkit-scrollbar-corner,
-html::-webkit-scrollbar-corner {
+html::-webkit-scrollbar-corner,
+:fullscreen *::-webkit-scrollbar-corner,
+:fullscreen body::-webkit-scrollbar-corner,
+:fullscreen html::-webkit-scrollbar-corner {
   background: transparent !important;
   background-color: transparent !important;
+}
+
+/* Prevent unwanted text selection highlighting across the app */
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow text selection in input fields, textareas, and contenteditable */
+input,
+textarea,
+[contenteditable="true"],
+.selectable {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+
+/* Allow selection in specific UI elements where it makes sense */
+code,
+pre,
+.tooltip-content,
+p,
+span,
+li {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
 }
 
 /* Reworked summary trigger with caret icon on right side */
