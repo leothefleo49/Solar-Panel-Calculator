@@ -1,0 +1,109 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Email Notifications
+
+on:
+  workflow_run:
+    workflows: 
+      - "CI - Build & Test"
+      - "Release Build Matrix"
+      - "iOS Simulator Build on Push"
+      - "Version Sync on Push"
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  notify:
+    name: Send Email Digest
+    runs-on: ubuntu-latest
+    if: ${{ vars.EMAIL_NOTIFICATIONS != 'disabled' }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get workflow details
+        id: workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+          WORKFLOW_STATUS="${{ github.event.workflow_run.conclusion }}"
+          WORKFLOW_URL="${{ github.event.workflow_run.html_url }}"
+          COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
+          COMMIT_MSG=$(git log --format=%B -n 1 $COMMIT_SHA | head -n 1)
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          
+          echo "workflow_name=$WORKFLOW_NAME" >> $GITHUB_OUTPUT
+          echo "status=$WORKFLOW_STATUS" >> $GITHUB_OUTPUT
+          echo "url=$WORKFLOW_URL" >> $GITHUB_OUTPUT
+          echo "commit_sha=${COMMIT_SHA:0:7}" >> $GITHUB_OUTPUT
+          echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          
+          # Set emoji based on status
+          if [ "$WORKFLOW_STATUS" = "success" ]; then
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+            echo "status_text=Success" >> $GITHUB_OUTPUT
+          elif [ "$WORKFLOW_STATUS" = "failure" ]; then
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+            echo "status_text=Failed" >> $GITHUB_OUTPUT
+          else
+            echo "emoji=⚠️" >> $GITHUB_OUTPUT
+            echo "status_text=Cancelled/Skipped" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Send email via GitHub API (using email control server)
+        env:
+          RECIPIENT_EMAIL: ${{ secrets.NOTIFICATION_EMAIL || 'leothefleo49@gmail.com' }}
+          EMAIL_THREAD_ID: ${{ vars.EMAIL_THREAD_ID || 'solar-panel-ci' }}
+        run: |
+          # Check notification mode
+          MODE="${{ vars.EMAIL_NOTIFICATION_MODE || 'all' }}"
+          STATUS="${{ steps.workflow.outputs.status }}"
+          
+          # Skip if mode is 'failures-only' and status is success
+          if [ "$MODE" = "failures-only" ] && [ "$STATUS" = "success" ]; then
+            echo "Skipping notification: failures-only mode and build succeeded"
+            exit 0
+          fi
+          
+          # Build email content
+          SUBJECT="[${{ steps.workflow.outputs.emoji }}] Solar Panel Calculator - ${{ steps.workflow.outputs.workflow_name }}"
+          
+          BODY="Workflow: ${{ steps.workflow.outputs.workflow_name }}
+          Status: ${{ steps.workflow.outputs.status_text }} ${{ steps.workflow.outputs.emoji }}
+          Branch: ${{ steps.workflow.outputs.branch }}
+          Commit: ${{ steps.workflow.outputs.commit_sha }} - ${{ steps.workflow.outputs.commit_msg }}
+          
+          View Details: ${{ steps.workflow.outputs.url }}
+          
+          ---
+          Repository: ${{ github.repository }}
+          Triggered by: ${{ github.event.workflow_run.actor.login }}
+          Time: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          
+          💡 To change notification settings:
+          - Disable: Set EMAIL_NOTIFICATIONS variable to 'disabled'
+          - Failures only: Set EMAIL_NOTIFICATION_MODE to 'failures-only'
+          - All builds: Set EMAIL_NOTIFICATION_MODE to 'all' (default)"
+          
+          # Send via curl to email control server (if available) or log
+          if [ -n "${{ secrets.EMAIL_WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.EMAIL_WEBHOOK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"to\": \"$RECIPIENT_EMAIL\",
+                \"subject\": \"$SUBJECT\",
+                \"body\": \"$BODY\",
+                \"thread_id\": \"$EMAIL_THREAD_ID\",
+                \"in_reply_to\": \"$EMAIL_THREAD_ID@solar-panel-calculator.local\"
+              }" || echo "Failed to send email notification"
+          else
+            echo "📧 Email notification (webhook not configured, logging instead):"
+            echo "To: $RECIPIENT_EMAIL"
+            echo "Subject: $SUBJECT"
+            echo ""
+            echo "$BODY"
+          fi
