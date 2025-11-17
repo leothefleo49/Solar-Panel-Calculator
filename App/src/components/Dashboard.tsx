@@ -475,7 +475,7 @@ const DataSheetTab = ({ rows }: { rows: TableRow[] }) => {
           </button>
         </div>
       </div>
-      <div className="overflow-auto rounded-3xl border border-white/10">
+      <div className="modern-scroll overflow-auto pr-1 rounded-3xl border border-white/10">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="bg-white/5 text-xs uppercase tracking-widest text-slate-300">
             <tr>

@@ -39,9 +39,15 @@ const Configurator = () => {
 
   const renderField = (field: ConfigField) => {
     const disabled = field.disabled?.(config) ?? false
+    const computedLabel = (() => {
+      if (field.key === 'peakSunHours') {
+        return config.sunHoursMode === 'yearly' ? 'Total Yearly Sun Hours' : 'Peak Daily Sun Hours'
+      }
+      return field.label
+    })()
     const label = (
       <div className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-200">
-        <span>{field.label}</span>
+        <span>{computedLabel}</span>
         <InfoTooltip content={field.info} />
       </div>
     )

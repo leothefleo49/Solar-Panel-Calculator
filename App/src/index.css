@@ -148,6 +148,41 @@ body::-webkit-scrollbar-corner {
   width: 0;
 }
 
+/* Global fallback: ensure ALL scrollbars are themed consistently */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.8) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.9), rgba(14, 165, 233, 0.75));
+  border-radius: 999px;
+  border: none;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 1), rgba(14, 165, 233, 0.9));
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Reworked summary trigger with caret icon on right side */
 .summary-trigger {
   position: relative;
