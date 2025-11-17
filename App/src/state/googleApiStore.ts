@@ -9,6 +9,8 @@ import type { GoogleApiKeys } from '../types/google-apis';
 
 interface GoogleApiState {
   apiKeys: GoogleApiKeys;
+  keyMode: 'unified' | 'separate';
+  setKeyMode: (mode: 'unified' | 'separate') => void;
   setUnifiedKey: (key: string) => void;
   setSolarKey: (key: string) => void;
   setMapsKey: (key: string) => void;
@@ -25,12 +27,17 @@ interface GoogleApiState {
   hasAnySolarAccess: () => boolean;
   hasMapsAccess: () => boolean;
   hasShoppingAccess: () => boolean;
+  getEffectiveKey: (apiType: 'solar' | 'maps' | 'shopping' | 'gemini') => string | null;
 }
 
 export const useGoogleApiStore = create<GoogleApiState>()(
   persist(
     (set, get) => ({
       apiKeys: {},
+      keyMode: 'unified',
+
+      setKeyMode: (mode: 'unified' | 'separate') =>
+        set({ keyMode: mode }),
 
       setUnifiedKey: (key: string) =>
         set((state) => ({
@@ -120,10 +127,36 @@ export const useGoogleApiStore = create<GoogleApiState>()(
         const keys = get().apiKeys;
         return !!((keys.unified || keys.shopping) && keys.shoppingCx);
       },
+
+      // Get the effective API key based on current mode
+      getEffectiveKey: (apiType: 'solar' | 'maps' | 'shopping' | 'gemini') => {
+        const { apiKeys, keyMode } = get();
+        
+        if (keyMode === 'unified' && apiKeys.unified) {
+          return apiKeys.unified;
+        }
+        
+        // Use specific key
+        switch (apiType) {
+          case 'solar':
+            return apiKeys.solar || null;
+          case 'maps':
+            return apiKeys.maps || null;
+          case 'shopping':
+            return apiKeys.shopping || null;
+          case 'gemini':
+            return apiKeys.gemini || null;
+          default:
+            return null;
+        }
+      },
     }),
     {
       name: 'google-api-storage',
-      partialize: (state) => ({ apiKeys: state.apiKeys }),
+      partialize: (state) => ({ 
+        apiKeys: state.apiKeys,
+        keyMode: state.keyMode 
+      }),
     }
   )
 );

@@ -21,6 +21,7 @@ export async function searchProducts(query: string, options?: {
   country?: string;
   category?: string;
   multiSite?: boolean; // attempt site-filtered fallbacks if first query yields no results
+  useAI?: boolean; // Enable AI query enhancement (default: true)
 }): Promise<GoogleShoppingProduct[]> {
   const { apiKeys } = useGoogleApiStore.getState();
   const apiKey = apiKeys.shopping || apiKeys.unified;
@@ -34,8 +35,10 @@ export async function searchProducts(query: string, options?: {
     throw new Error('Custom Search Engine ID (CX) not configured. See APIs tab for setup instructions.');
   }
 
-  // Use AI to enhance the search query if available
-  const enhancedQuery = await enhanceSearchQuery(query, options?.category);
+  // Use AI to enhance the search query if available (unless disabled)
+  const enhancedQuery = (options?.useAI !== false) 
+    ? await enhanceSearchQuery(query, options?.category)
+    : query;
 
   // Build query variants (fallbacks) if first query empty
   const variants = buildQueryVariants(query.trim(), enhancedQuery.trim());
@@ -286,9 +289,9 @@ async function rankProductResults(
 
 /**
  * Extract product specs from Shopping API result and page content
- * Uses AI to parse specs if available, otherwise manual extraction
+ * Uses AI to parse specs if available and enabled, otherwise manual extraction
  */
-export async function extractProductSpecs(product: GoogleShoppingProduct): Promise<{
+export async function extractProductSpecs(product: GoogleShoppingProduct, useAI: boolean = true): Promise<{
   manufacturer?: string;
   model?: string;
   power?: number;

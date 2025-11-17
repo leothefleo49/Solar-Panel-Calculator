@@ -2,6 +2,7 @@
 // Keys should be supplied at runtime via UI or environment variables.
 
 import { useApiUsageStore } from '../state/apiUsageStore';
+import { logError, logWarning } from './errorLogger';
 
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant'
@@ -23,11 +24,33 @@ export async function callOpenAI(apiKey: string, model: string, messages: AIMess
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, messages, temperature: 0.3 }),
+      body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 800 }),
     })
+    
     if (!res.ok) {
-      return { ok: false, content: '', error: `${res.status} ${res.statusText}` }
+      const data = await res.json().catch(() => ({}))
+      const errorMsg = data.error?.message || res.statusText
+      const detailedError = `OpenAI API Error (${res.status}): ${errorMsg}`
+      
+      await logError(
+        detailedError,
+        undefined,
+        'api',
+        `OpenAI API call to ${model}`
+      )
+      
+      // Provide user-friendly error messages
+      if (res.status === 401) {
+        return { ok: false, content: '', error: 'Invalid API key. Please check your OpenAI key in Settings > APIs.' }
+      } else if (res.status === 429) {
+        return { ok: false, content: '', error: 'Rate limit exceeded. Please wait a moment and try again.' }
+      } else if (res.status === 400 && errorMsg.includes('model')) {
+        return { ok: false, content: '', error: `Model "${model}" not available. Check your OpenAI account.` }
+      }
+      
+      return { ok: false, content: '', error: detailedError }
     }
+    
     const data = await res.json()
     const answer = data.choices?.[0]?.message?.content?.trim() || 'No response.'
     
@@ -37,7 +60,19 @@ export async function callOpenAI(apiKey: string, model: string, messages: AIMess
     
     return { ok: true, content: answer }
   } catch (e: any) {
-    return { ok: false, content: '', error: e.message }
+    const errorMsg = e.message || 'Unknown network error'
+    await logError(
+      `OpenAI network error: ${errorMsg}`,
+      e,
+      'network',
+      `OpenAI API call to ${model}`
+    )
+    
+    if (errorMsg.includes('Failed to fetch')) {
+      return { ok: false, content: '', error: 'Network error: Could not connect to OpenAI. Check your internet connection.' }
+    }
+    
+    return { ok: false, content: '', error: `Request failed: ${errorMsg}` }
   }
 }
 
@@ -50,11 +85,30 @@ export async function callGrok(apiKey: string, model: string, messages: AIMessag
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, messages, temperature: 0.3 }),
+      body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 800 }),
     })
+    
     if (!res.ok) {
-      return { ok: false, content: '', error: `${res.status} ${res.statusText}` }
+      const data = await res.json().catch(() => ({}))
+      const errorMsg = data.error?.message || res.statusText
+      const detailedError = `Grok API Error (${res.status}): ${errorMsg}`
+      
+      await logError(
+        detailedError,
+        undefined,
+        'api',
+        `Grok API call to ${model}`
+      )
+      
+      if (res.status === 401) {
+        return { ok: false, content: '', error: 'Invalid API key. Please check your xAI key in Settings > APIs.' }
+      } else if (res.status === 429) {
+        return { ok: false, content: '', error: 'Rate limit exceeded. Please wait a moment and try again.' }
+      }
+      
+      return { ok: false, content: '', error: detailedError }
     }
+    
     const data = await res.json()
     const answer = data.choices?.[0]?.message?.content?.trim() || 'No response.'
     
@@ -64,7 +118,19 @@ export async function callGrok(apiKey: string, model: string, messages: AIMessag
     
     return { ok: true, content: answer }
   } catch (e: any) {
-    return { ok: false, content: '', error: e.message }
+    const errorMsg = e.message || 'Unknown network error'
+    await logError(
+      `Grok network error: ${errorMsg}`,
+      e,
+      'network',
+      `Grok API call to ${model}`
+    )
+    
+    if (errorMsg.includes('Failed to fetch')) {
+      return { ok: false, content: '', error: 'Network error: Could not connect to xAI. Check your internet connection.' }
+    }
+    
+    return { ok: false, content: '', error: `Request failed: ${errorMsg}` }
   }
 }
 
@@ -92,12 +158,46 @@ export async function callGeminiFlash(
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents, generationConfig: { temperature: 0.3 } }),
+      body: JSON.stringify({ 
+        contents, 
+        generationConfig: { 
+          temperature: 0.3,
+          maxOutputTokens: 800
+        } 
+      }),
     })
+    
     if (!res.ok) {
-      return { ok: false, content: '', error: `${res.status} ${res.statusText}` }
+      const data = await res.json().catch(() => ({}))
+      const errorMsg = data.error?.message || res.statusText
+      const detailedError = `Gemini API Error (${res.status}): ${errorMsg}`
+      
+      await logError(
+        detailedError,
+        undefined,
+        'api',
+        `Gemini API call to ${model}`
+      )
+      
+      if (res.status === 400 && errorMsg.includes('API_KEY')) {
+        return { ok: false, content: '', error: 'Invalid API key. Please check your Gemini key in Settings > APIs.' }
+      } else if (res.status === 429) {
+        return { ok: false, content: '', error: 'Rate limit exceeded. Free tier: 15 requests/min. Please wait and try again.' }
+      } else if (res.status === 400 && errorMsg.includes('model')) {
+        return { ok: false, content: '', error: `Model "${model}" not available. Try gemini-2.0-flash-exp instead.` }
+      }
+      
+      return { ok: false, content: '', error: detailedError }
     }
+    
     const data = await res.json()
+    
+    // Check for safety blocks
+    if (data.candidates?.[0]?.finishReason === 'SAFETY') {
+      await logWarning('Gemini response blocked by safety filters', 'api')
+      return { ok: false, content: '', error: 'Response blocked by safety filters. Try rephrasing your question.' }
+    }
+    
     const answer = data.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('\n')?.trim() || 'No response.'
     
     // Track usage with token count (Gemini may not always provide usage metadata)
@@ -106,7 +206,19 @@ export async function callGeminiFlash(
     
     return { ok: true, content: answer }
   } catch (e: any) {
-    return { ok: false, content: '', error: e.message }
+    const errorMsg = e.message || 'Unknown network error'
+    await logError(
+      `Gemini network error: ${errorMsg}`,
+      e,
+      'network',
+      `Gemini API call to ${model}`
+    )
+    
+    if (errorMsg.includes('Failed to fetch')) {
+      return { ok: false, content: '', error: 'Network error: Could not connect to Gemini. Check your internet connection.' }
+    }
+    
+    return { ok: false, content: '', error: `Request failed: ${errorMsg}` }
   }
 }
 
@@ -129,15 +241,36 @@ export async function callClaude(apiKey: string, model: string, messages: AIMess
       },
       body: JSON.stringify({
         model,
-        max_tokens: 2048,
+        max_tokens: 800,
         temperature: 0.3,
         system: systemMessages || undefined,
         messages: conversationMessages,
       }),
     })
+    
     if (!res.ok) {
-      return { ok: false, content: '', error: `${res.status} ${res.statusText}` }
+      const data = await res.json().catch(() => ({}))
+      const errorMsg = data.error?.message || res.statusText
+      const detailedError = `Claude API Error (${res.status}): ${errorMsg}`
+      
+      await logError(
+        detailedError,
+        undefined,
+        'api',
+        `Claude API call to ${model}`
+      )
+      
+      if (res.status === 401) {
+        return { ok: false, content: '', error: 'Invalid API key. Please check your Anthropic key in Settings > APIs.' }
+      } else if (res.status === 429) {
+        return { ok: false, content: '', error: 'Rate limit exceeded. Please wait a moment and try again.' }
+      } else if (res.status === 400 && errorMsg.includes('credit')) {
+        return { ok: false, content: '', error: 'Insufficient credits. Please add credits to your Anthropic account.' }
+      }
+      
+      return { ok: false, content: '', error: detailedError }
     }
+    
     const data = await res.json()
     const answer = data.content?.[0]?.text?.trim() || 'No response.'
     
@@ -147,6 +280,18 @@ export async function callClaude(apiKey: string, model: string, messages: AIMess
     
     return { ok: true, content: answer }
   } catch (e: any) {
-    return { ok: false, content: '', error: e.message }
+    const errorMsg = e.message || 'Unknown network error'
+    await logError(
+      `Claude network error: ${errorMsg}`,
+      e,
+      'network',
+      `Claude API call to ${model}`
+    )
+    
+    if (errorMsg.includes('Failed to fetch')) {
+      return { ok: false, content: '', error: 'Network error: Could not connect to Anthropic. Check your internet connection.' }
+    }
+    
+    return { ok: false, content: '', error: `Request failed: ${errorMsg}` }
   }
 }

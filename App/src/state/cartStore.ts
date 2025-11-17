@@ -8,6 +8,11 @@ import { persist } from 'zustand/middleware';
 import type { CartItem, CompatibilityCheck, ShoppingCartState } from '../types/shopping';
 import { useSolarStore } from './solarStore';
 
+interface CartStoreState extends ShoppingCartState {
+  useAIAssistance: boolean;
+  setUseAIAssistance: (use: boolean) => void;
+}
+
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
@@ -129,10 +134,13 @@ function getMissingComponents(items: CartItem[]): string[] {
   return missing;
 }
 
-export const useCartStore = create<ShoppingCartState>()(
+export const useCartStore = create<CartStoreState>()(
   persist(
     (set, get) => ({
       items: [],
+      useAIAssistance: true,
+
+      setUseAIAssistance: (use) => set({ useAIAssistance: use }),
 
       addItem: (itemData) => {
         const newItem: CartItem = {

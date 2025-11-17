@@ -4,10 +4,13 @@ import { useGoogleApiStore } from '../state/googleApiStore'
 import { useChatStore } from '../state/chatStore'
 import InfoTooltip from './InfoTooltip'
 import { openExternalUrl } from '../utils/openExternal'
+import { validateGoogleApiKey, validateGeminiKey, validateOpenAIKey, validateAnthropicKey, validateGrokKey, type ValidationResult } from '../utils/apiValidator'
 
 const ApisTab = () => {
   const {
     apiKeys,
+    keyMode,
+    setKeyMode,
     setUnifiedKey,
     setSolarKey,
     setMapsKey,
@@ -21,18 +24,88 @@ const ApisTab = () => {
   } = useGoogleApiStore()
   const { setProviderKey, clearProviderKey, providerKeys } = useChatStore()
   const [showKeys, setShowKeys] = useState(false)
-  const [mode, setMode] = useState<'unified' | 'separate'>(apiKeys.unified ? 'unified' : 'separate')
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [mode, setMode] = useState<'unified' | 'separate'>(keyMode)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'validating'>('idle')
+  const [validationResults, setValidationResults] = useState<Record<string, ValidationResult | null>>({})
+  const [showValidationModal, setShowValidationModal] = useState(false)
 
-  const handleSaveChanges = () => {
-    setSaveStatus('saving')
-    // Force a re-render by triggering state updates
-    setTimeout(() => {
-      setSaveStatus('saved')
-      // Trigger any components that depend on API keys to refresh
-      window.dispatchEvent(new Event('apiKeysUpdated'))
-      setTimeout(() => setSaveStatus('idle'), 2000)
-    }, 300)
+  // Update mode in store when it changes
+  const handleModeChange = (newMode: 'unified' | 'separate') => {
+    setMode(newMode)
+    setKeyMode(newMode)
+  }
+
+  const handleSaveChanges = async () => {
+    setSaveStatus('validating')
+    const results: Record<string, ValidationResult | null> = {}
+    let hasErrors = false
+
+    try {
+      // Validate Google keys based on mode
+      if (mode === 'unified' && apiKeys.unified) {
+        const unifiedResult = await validateGoogleApiKey(apiKeys.unified, 'unified')
+        results['google-unified'] = unifiedResult
+        if (!unifiedResult.valid) hasErrors = true
+      } else if (mode === 'separate') {
+        if (apiKeys.solar) {
+          const solarResult = await validateGoogleApiKey(apiKeys.solar, 'solar')
+          results['google-solar'] = solarResult
+          if (!solarResult.valid) hasErrors = true
+        }
+        if (apiKeys.maps) {
+          const mapsResult = await validateGoogleApiKey(apiKeys.maps, 'maps')
+          results['google-maps'] = mapsResult
+          if (!mapsResult.valid) hasErrors = true
+        }
+        if (apiKeys.shopping) {
+          const shoppingResult = await validateGoogleApiKey(apiKeys.shopping, 'shopping')
+          results['google-shopping'] = shoppingResult
+          if (!shoppingResult.valid) hasErrors = true
+        }
+      }
+
+      // Validate AI provider keys
+      if (providerKeys.gemini) {
+        const geminiResult = await validateGeminiKey(providerKeys.gemini)
+        results['gemini'] = geminiResult
+        if (!geminiResult.valid) hasErrors = true
+      }
+      if (providerKeys.openai) {
+        const openaiResult = await validateOpenAIKey(providerKeys.openai)
+        results['openai'] = openaiResult
+        if (!openaiResult.valid) hasErrors = true
+      }
+      if (providerKeys.anthropic) {
+        const anthropicResult = await validateAnthropicKey(providerKeys.anthropic)
+        results['anthropic'] = anthropicResult
+        if (!anthropicResult.valid) hasErrors = true
+      }
+      if (providerKeys.grok) {
+        const grokResult = await validateGrokKey(providerKeys.grok)
+        results['grok'] = grokResult
+        if (!grokResult.valid) hasErrors = true
+      }
+
+      setValidationResults(results)
+
+      if (hasErrors) {
+        setSaveStatus('idle')
+        setShowValidationModal(true)
+        return
+      }
+
+      // All valid - proceed with save
+      setSaveStatus('saving')
+      setTimeout(() => {
+        setSaveStatus('saved')
+        window.dispatchEvent(new Event('apiKeysUpdated'))
+        setTimeout(() => setSaveStatus('idle'), 2000)
+      }, 300)
+    } catch (error) {
+      console.error('Validation error:', error)
+      setSaveStatus('idle')
+      alert('Failed to validate API keys. Check your internet connection and try again.')
+    }
   }
 
   return (
@@ -42,17 +115,17 @@ const ApisTab = () => {
         <button
           type="button"
           onClick={handleSaveChanges}
-          disabled={saveStatus === 'saving'}
+          disabled={saveStatus === 'saving' || saveStatus === 'validating'}
           className={clsx(
             'rounded-xl px-6 py-2.5 text-sm font-semibold transition-all',
             saveStatus === 'saved'
               ? 'bg-green-500/90 text-white'
-              : saveStatus === 'saving'
+              : saveStatus === 'saving' || saveStatus === 'validating'
               ? 'bg-accent/50 text-white cursor-wait'
               : 'bg-accent text-slate-900 hover:bg-accent/90 hover:shadow-lg hover:shadow-accent/30'
           )}
         >
-          {saveStatus === 'saved' ? '✓ Changes Saved!' : saveStatus === 'saving' ? 'Saving...' : '💾 Save Changes'}
+          {saveStatus === 'saved' ? '✓ Changes Saved!' : saveStatus === 'validating' ? '🔍 Validating Keys...' : saveStatus === 'saving' ? 'Saving...' : '💾 Save Changes'}
         </button>
       </div>
 
@@ -120,12 +193,12 @@ const ApisTab = () => {
         <div className="mt-4 flex flex-wrap gap-3 items-center">
           <button
             type="button"
-            onClick={() => setMode('unified')}
+            onClick={() => handleModeChange('unified')}
             className={mode === 'unified' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
           >Unified Key</button>
           <button
             type="button"
-            onClick={() => setMode('separate')}
+            onClick={() => handleModeChange('separate')}
             className={mode === 'separate' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
           >Separate Keys</button>
           <button
@@ -310,6 +383,74 @@ const ApisTab = () => {
           </p>
         </div>
       </div>
+
+      {/* Validation Results Modal */}
+      {showValidationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="max-w-2xl w-full rounded-3xl border border-white/10 bg-slate-900 p-6 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-white mb-4">⚠️ API Key Validation Results</h3>
+            <div className="space-y-3 mb-6">
+              {Object.entries(validationResults).map(([key, result]) => {
+                if (!result) return null;
+                const statusIcon = result.valid ? '✅' : '❌';
+                const statusColor = result.valid ? 'text-green-400' : 'text-red-400';
+                return (
+                  <div key={key} className={clsx('rounded-lg border p-3', result.valid ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/10')}>
+                    <div className="flex items-start gap-2">
+                      <span className="text-xl">{statusIcon}</span>
+                      <div className="flex-1">
+                        <p className={clsx('font-semibold', statusColor)}>{key.replace('google-', 'Google ').replace(/-/g, ' ').toUpperCase()}</p>
+                        <p className="text-sm text-slate-300 mt-1">{result.message}</p>
+                        {result.errorType && (
+                          <p className="text-xs text-slate-400 mt-1">Error Type: {result.errorType}</p>
+                        )}
+                        {result.statusCode && (
+                          <p className="text-xs text-slate-400">Status Code: {result.statusCode}</p>
+                        )}
+                        {result.suggestedFix && (
+                          <div className="mt-2 rounded-lg border border-blue-500/30 bg-blue-500/5 p-2">
+                            <p className="text-xs text-blue-300 font-semibold">💡 Suggested Fix:</p>
+                            <p className="text-xs text-blue-200 mt-1">{result.suggestedFix}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowValidationModal(false)}
+                className="flex-1 rounded-xl bg-white/10 px-4 py-2 font-semibold text-white hover:bg-white/20"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setShowValidationModal(false);
+                  // Clear invalid keys
+                  Object.entries(validationResults).forEach(([key, result]) => {
+                    if (result && !result.valid) {
+                      if (key.includes('google-unified')) clearUnifiedKey();
+                      else if (key.includes('google-solar')) clearSolarKey();
+                      else if (key.includes('google-maps')) clearMapsKey();
+                      else if (key.includes('google-shopping')) clearShoppingKey();
+                      else if (key === 'gemini') clearProviderKey('gemini');
+                      else if (key === 'openai') clearProviderKey('openai');
+                      else if (key === 'anthropic') clearProviderKey('anthropic');
+                      else if (key === 'grok') clearProviderKey('grok');
+                    }
+                  });
+                }}
+                className="flex-1 rounded-xl bg-red-500/90 px-4 py-2 font-semibold text-white hover:bg-red-500"
+              >
+                Clear Invalid Keys
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

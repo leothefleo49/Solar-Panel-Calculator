@@ -126,13 +126,13 @@ const ChatAssistant = () => {
         cartContext = '\nShopping Cart: Empty. User can search products in Shopping Cart tab or manually add items.\n'
       }
 
-      const knowledge = 'Core Concepts: PV module efficiency, degradation (~0.5%/yr typical), inverter lifetime, BOS cost drivers, capacity factor, peak sun hours, utility escalation, ROI, break-even, battery autonomy hours. Provide practical guidance and warn when assumptions look out of band. For shopping assistance: help validate product specs match system requirements, check NEC compliance (690/705/706), suggest compatible components, warn about voltage/ampacity mismatches. You can guide users to the Shopping Cart tab to add products or adjust configurator values based on cart items.'
+      const knowledge = 'Solar Concepts: PV efficiency, degradation (~0.5%/yr), inverter life, BOS costs, peak sun hours, ROI, break-even, battery autonomy. Provide practical, concise guidance. For shopping: validate specs, check NEC (690/705/706), suggest compatible components, warn about mismatches.'
 
       const chatMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
         {
           role: 'system',
           content:
-            'You are a friendly, expert solar PV financial & technical analysis assistant. Be warm, encouraging, and approachable while staying precise and professional. Use clear language, celebrate smart design choices, and gently flag concerns. Keep responses concise yet thorough.',
+            'You are a helpful solar PV assistant. Keep responses BRIEF, CLEAR, and PRACTICAL. Use bullet points. Avoid long explanations. Focus on actionable advice. Celebrate good choices, flag concerns.',
         },
         { role: 'system', content: knowledge },
         { role: 'system', content: contextBlob + cartContext },
@@ -428,12 +428,13 @@ const ChatAssistant = () => {
             key={m.id}
             className={
               m.role === 'user'
-                ? 'rounded-2xl bg-accent/20 border border-accent/40 px-3 py-2 text-xs'
-                : 'rounded-2xl bg-white/10 border border-white/10 px-3 py-2 text-xs'
+                ? 'rounded-2xl bg-accent/20 border border-accent/40 px-3 py-2 text-xs max-w-full break-words overflow-wrap-anywhere'
+                : 'rounded-2xl bg-white/10 border border-white/10 px-3 py-2 text-xs max-w-full break-words overflow-wrap-anywhere'
             }
+            style={{ wordWrap: 'break-word', overflowWrap: 'anywhere' }}
           >
             <p className="mb-1 font-semibold capitalize text-[10px] tracking-wide opacity-70">{m.role}</p>
-            <p className="whitespace-pre-line leading-relaxed">{m.content}</p>
+            <p className="whitespace-pre-wrap leading-relaxed break-words">{m.content}</p>
           </div>
         ))}
         {loading && <div className="text-xs text-slate-300 typing-dots"><span></span><span></span><span></span></div>}

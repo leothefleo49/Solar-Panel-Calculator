@@ -328,3 +328,158 @@ Please consider:
 
 Provide specific, actionable recommendations tailored to this property's unique characteristics.`;
 }
+
+/**
+ * Search for nearby places using Google Places API (New)
+ * Useful for finding nearby electrical contractors, solar installers, etc.
+ */
+export async function searchNearbyPlaces(
+  latitude: number,
+  longitude: number,
+  type: string,
+  radius: number = 5000,
+  apiKeys: GoogleApiKeys
+): Promise<any[]> {
+  const apiKey = getApiKey(apiKeys, 'maps');
+  
+  if (!apiKey) {
+    throw new Error('Google Places API key is required');
+  }
+
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${radius}&type=${type}&key=${apiKey}`;
+  
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error_message || 'Failed to search nearby places');
+    }
+    
+    const data = await response.json();
+    
+    // Track usage
+    useApiUsageStore.getState().trackUsage('google-maps', 1);
+    
+    return data.results || [];
+  } catch (error) {
+    console.error('Places API error:', error);
+    throw new Error(`Failed to search nearby places: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Get place details using Google Places API
+ */
+export async function getPlaceDetails(
+  placeId: string,
+  apiKeys: GoogleApiKeys
+): Promise<any> {
+  const apiKey = getApiKey(apiKeys, 'maps');
+  
+  if (!apiKey) {
+    throw new Error('Google Places API key is required');
+  }
+
+  const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,formatted_phone_number,website,rating,reviews,opening_hours&key=${apiKey}`;
+  
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error_message || 'Failed to get place details');
+    }
+    
+    const data = await response.json();
+    
+    // Track usage
+    useApiUsageStore.getState().trackUsage('google-maps', 1);
+    
+    return data.result || null;
+  } catch (error) {
+    console.error('Place details error:', error);
+    throw new Error(`Failed to get place details: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Calculate distance and travel time using Distance Matrix API
+ * Useful for calculating distances between solar installation sites
+ */
+export async function calculateDistance(
+  origins: string[],
+  destinations: string[],
+  mode: 'driving' | 'walking' | 'bicycling' | 'transit' = 'driving',
+  apiKeys: GoogleApiKeys
+): Promise<any> {
+  const apiKey = getApiKey(apiKeys, 'maps');
+  
+  if (!apiKey) {
+    throw new Error('Google Distance Matrix API key is required');
+  }
+
+  const originsParam = origins.map(o => encodeURIComponent(o)).join('|');
+  const destinationsParam = destinations.map(d => encodeURIComponent(d)).join('|');
+  const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originsParam}&destinations=${destinationsParam}&mode=${mode}&key=${apiKey}`;
+  
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error_message || 'Failed to calculate distance');
+    }
+    
+    const data = await response.json();
+    
+    if (data.status !== 'OK') {
+      throw new Error(`Distance Matrix API error: ${data.status}`);
+    }
+    
+    // Track usage
+    useApiUsageStore.getState().trackUsage('google-maps', origins.length * destinations.length);
+    
+    return data;
+  } catch (error) {
+    console.error('Distance Matrix error:', error);
+    throw new Error(`Failed to calculate distance: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
+ * Enhanced geocoding with place details and nearby context
+ */
+export async function enhancedGeocode(
+  address: string,
+  apiKeys: GoogleApiKeys
+): Promise<{
+  coordinates: { lat: number; lng: number };
+  formatted_address: string;
+  placeDetails?: any;
+  nearbySolarInstallers?: any[];
+}> {
+  // First, geocode the address
+  const geocodeResult = await geocodeAddress(address, apiKeys);
+  
+  const result: any = {
+    coordinates: { lat: geocodeResult.lat, lng: geocodeResult.lng },
+    formatted_address: geocodeResult.formatted_address,
+  };
+
+  // Try to get nearby solar installers (optional, fails gracefully)
+  try {
+    const installers = await searchNearbyPlaces(
+      geocodeResult.lat,
+      geocodeResult.lng,
+      'electrician', // Or 'general_contractor' for broader results
+      10000, // 10km radius
+      apiKeys
+    );
+    result.nearbySolarInstallers = installers.slice(0, 5); // Top 5 results
+  } catch (error) {
+    console.warn('Could not fetch nearby installers:', error);
+  }
+
+  return result;
+}

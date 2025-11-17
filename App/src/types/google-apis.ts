@@ -10,6 +10,8 @@ export interface GoogleApiKeys {
   gemini?: string; // Separate Gemini AI key
   shopping?: string; // Separate Shopping API key (Custom Search API)
   shoppingCx?: string; // Custom Search Engine ID for Shopping
+  places?: string; // Separate Places API key (optional, unified key recommended)
+  distanceMatrix?: string; // Separate Distance Matrix API key (optional, unified key recommended)
 }
 
 export interface SolarPotentialRequest {

@@ -1,0 +1,632 @@
+/**
+ * Comprehensive Error Logging System
+ * 
+ * Features:
+ * - Captures all errors with detailed context
+ * - Includes system info, API states, stack traces
+ * - Provides debugging advice and recommendations
+ * - Sends error reports via email (beta: after each run, production: Monday 2 AM)
+ * - Stores logs locally for offline analysis
+ */
+
+import { isTauri } from '@tauri-apps/api/core';
+
+export interface ErrorLog {
+  id: string;
+  timestamp: number;
+  type: 'error' | 'warning' | 'info';
+  category: 'api' | 'ui' | 'system' | 'network' | 'validation' | 'unknown';
+  message: string;
+  stack?: string;
+  context: {
+    // System information
+    platform: string;
+    appVersion: string;
+    userAgent: string;
+    screenResolution: string;
+    memory?: {
+      used: number;
+      total: number;
+    };
+    
+    // Application state
+    currentRoute?: string;
+    apiKeysConfigured: {
+      unified: boolean;
+      solar: boolean;
+      maps: boolean;
+      shopping: boolean;
+      gemini: boolean;
+      openai: boolean;
+      anthropic: boolean;
+      grok: boolean;
+    };
+    
+    // API status
+    activeApiCalls?: string[];
+    lastApiError?: {
+      provider: string;
+      endpoint: string;
+      statusCode?: number;
+      errorMessage: string;
+      timestamp: number;
+    };
+    
+    // User action that triggered error
+    userAction?: string;
+    componentStack?: string;
+  };
+  
+  // Debugging assistance
+  debuggingAdvice: string[];
+  suggestedFixes: string[];
+  relatedCode?: string;
+  
+  // Email status
+  emailSent?: boolean;
+  emailSentAt?: number;
+}
+
+interface ErrorLoggerConfig {
+  mode: 'beta' | 'production';
+  emailEndpoint?: string;
+  emailTo?: string;
+  enableConsoleLogging: boolean;
+  maxLogsStored: number;
+}
+
+class ErrorLogger {
+  private logs: ErrorLog[] = [];
+  private config: ErrorLoggerConfig;
+  private scheduledEmailTimer?: any;
+  
+  constructor(config: Partial<ErrorLoggerConfig> = {}) {
+    this.config = {
+      mode: 'beta', // Change to 'production' when ready
+      emailEndpoint: 'https://your-backend-endpoint.com/api/error-logs', // Replace with your endpoint
+      emailTo: 'your-email@example.com', // Replace with your email
+      enableConsoleLogging: true,
+      maxLogsStored: 1000,
+      ...config,
+    };
+    
+    this.loadLogsFromStorage();
+    this.setupGlobalErrorHandlers();
+    this.scheduleEmailReports();
+  }
+  
+  /**
+   * Log an error with full context
+   */
+  async logError(
+    message: string,
+    error?: Error,
+    category: ErrorLog['category'] = 'unknown',
+    userAction?: string
+  ): Promise<void> {
+    const errorLog: ErrorLog = {
+      id: `err-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now(),
+      type: 'error',
+      category,
+      message,
+      stack: error?.stack,
+      context: await this.captureContext(userAction),
+      debuggingAdvice: this.generateDebuggingAdvice(category, message, error),
+      suggestedFixes: this.generateSuggestedFixes(category, message, error),
+      relatedCode: this.extractRelatedCode(error),
+    };
+    
+    this.addLog(errorLog);
+    
+    if (this.config.enableConsoleLogging) {
+      console.error('🚨 ERROR LOGGED:', errorLog);
+    }
+    
+    // In beta mode, send email immediately
+    if (this.config.mode === 'beta') {
+      await this.sendEmailReport([errorLog]);
+    }
+  }
+  
+  /**
+   * Log a warning
+   */
+  async logWarning(message: string, category: ErrorLog['category'] = 'unknown'): Promise<void> {
+    const warningLog: ErrorLog = {
+      id: `warn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now(),
+      type: 'warning',
+      category,
+      message,
+      context: await this.captureContext(),
+      debuggingAdvice: [],
+      suggestedFixes: [],
+    };
+    
+    this.addLog(warningLog);
+    
+    if (this.config.enableConsoleLogging) {
+      console.warn('⚠️ WARNING LOGGED:', warningLog);
+    }
+  }
+  
+  /**
+   * Log informational message
+   */
+  async logInfo(message: string, category: ErrorLog['category'] = 'unknown'): Promise<void> {
+    const infoLog: ErrorLog = {
+      id: `info-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: Date.now(),
+      type: 'info',
+      category,
+      message,
+      context: await this.captureContext(),
+      debuggingAdvice: [],
+      suggestedFixes: [],
+    };
+    
+    this.addLog(infoLog);
+  }
+  
+  /**
+   * Capture comprehensive system and app context
+   */
+  private async captureContext(userAction?: string): Promise<ErrorLog['context']> {
+    // Get API key configuration status (without exposing keys)
+    const getApiKeyStatus = () => {
+      try {
+        const googleStore = localStorage.getItem('google-api-storage');
+        const chatStore = localStorage.getItem('chat-storage');
+        
+        const googleData = googleStore ? JSON.parse(googleStore) : {};
+        const chatData = chatStore ? JSON.parse(chatStore) : {};
+        
+        return {
+          unified: !!googleData.state?.apiKeys?.unified,
+          solar: !!googleData.state?.apiKeys?.solar,
+          maps: !!googleData.state?.apiKeys?.maps,
+          shopping: !!googleData.state?.apiKeys?.shopping,
+          gemini: !!chatData.state?.providerKeys?.google,
+          openai: !!chatData.state?.providerKeys?.openai,
+          anthropic: !!chatData.state?.providerKeys?.anthropic,
+          grok: !!chatData.state?.providerKeys?.grok,
+        };
+      } catch {
+        return {
+          unified: false,
+          solar: false,
+          maps: false,
+          shopping: false,
+          gemini: false,
+          openai: false,
+          anthropic: false,
+          grok: false,
+        };
+      }
+    };
+    
+    // Get memory info if available
+    const getMemoryInfo = () => {
+      if ('memory' in performance && (performance as any).memory) {
+        const mem = (performance as any).memory;
+        return {
+          used: mem.usedJSHeapSize,
+          total: mem.totalJSHeapSize,
+        };
+      }
+      return undefined;
+    };
+    
+    // Get app version
+    const getAppVersion = async () => {
+      if (isTauri()) {
+        try {
+          const { getVersion } = await import('@tauri-apps/api/app');
+          return await getVersion();
+        } catch {
+          return 'unknown';
+        }
+      }
+      return import.meta.env.VITE_APP_VERSION || '1.4.10';
+    };
+    
+    return {
+      platform: isTauri() ? 'desktop' : (window as any).Capacitor ? 'android' : 'web',
+      appVersion: await getAppVersion(),
+      userAgent: navigator.userAgent,
+      screenResolution: `${window.screen.width}x${window.screen.height}`,
+      memory: getMemoryInfo(),
+      currentRoute: window.location.pathname,
+      apiKeysConfigured: getApiKeyStatus(),
+      userAction,
+    };
+  }
+  
+  /**
+   * Generate debugging advice based on error
+   */
+  private generateDebuggingAdvice(
+    category: ErrorLog['category'],
+    message: string,
+    error?: Error
+  ): string[] {
+    const advice: string[] = [];
+    
+    // API-specific advice
+    if (category === 'api') {
+      advice.push('Check if the API key is valid and has proper permissions');
+      advice.push('Verify that the API is enabled in the provider console');
+      advice.push('Ensure network connectivity is stable');
+      
+      if (message.includes('CORS')) {
+        advice.push('CORS error detected: The API endpoint is blocking requests from this origin');
+        advice.push('Solution: Add your domain to the API key restrictions (HTTP referrers) in Google Cloud Console');
+        advice.push('For desktop: CORS restrictions may not apply, but check API key restrictions');
+      }
+      
+      if (message.includes('401') || message.includes('403')) {
+        advice.push('Authentication error: API key may be invalid, expired, or lacks permissions');
+        advice.push('Solution: Generate a new API key and ensure all required APIs are enabled');
+      }
+      
+      if (message.includes('429')) {
+        advice.push('Rate limit exceeded: Too many requests in a short time');
+        advice.push('Solution: Wait a few minutes, or upgrade your API plan for higher limits');
+      }
+      
+      if (message.includes('500') || message.includes('502') || message.includes('503')) {
+        advice.push('Server error: The API provider is experiencing issues');
+        advice.push('Solution: This is not your fault. Wait and retry in a few minutes');
+      }
+      
+      if (message.includes('Failed to fetch')) {
+        advice.push('Network error: Request could not be completed');
+        advice.push('Possible causes: No internet connection, API endpoint blocked, or CORS issue');
+        advice.push('Solution: Check your internet connection and firewall settings');
+      }
+    }
+    
+    // Network-specific advice
+    if (category === 'network') {
+      advice.push('Check your internet connection');
+      advice.push('Verify that firewall/antivirus is not blocking requests');
+      advice.push('Try using a different network (e.g., mobile hotspot)');
+    }
+    
+    // Validation errors
+    if (category === 'validation') {
+      advice.push('Input validation failed: Check that all required fields are filled');
+      advice.push('Ensure data formats are correct (e.g., email, phone number)');
+    }
+    
+    // UI errors
+    if (category === 'ui') {
+      advice.push('UI component error: Try refreshing the page');
+      advice.push('Check browser console for additional errors');
+      advice.push('Ensure browser is up to date');
+    }
+    
+    return advice;
+  }
+  
+  /**
+   * Generate suggested fixes
+   */
+  private generateSuggestedFixes(
+    category: ErrorLog['category'],
+    message: string,
+    error?: Error
+  ): string[] {
+    const fixes: string[] = [];
+    
+    if (category === 'api') {
+      fixes.push('Go to Settings > APIs tab and verify all keys are correctly configured');
+      fixes.push('Click "Test Connection" button (if available) to validate API keys');
+      fixes.push('Try regenerating API keys in the provider console');
+    }
+    
+    if (message.includes('undefined') || message.includes('null')) {
+      fixes.push('Possible missing data: Ensure all required configuration is set');
+      fixes.push('Try resetting the app configuration to defaults');
+    }
+    
+    if (error?.stack?.includes('fetch')) {
+      fixes.push('Network request failed: Check API endpoint URLs in code');
+      fixes.push('Verify that API services are not down (check status pages)');
+    }
+    
+    return fixes;
+  }
+  
+  /**
+   * Extract related code from error stack
+   */
+  private extractRelatedCode(error?: Error): string | undefined {
+    if (!error?.stack) return undefined;
+    
+    // Extract file and line numbers from stack trace
+    const stackLines = error.stack.split('\n').slice(0, 5);
+    return stackLines.join('\n');
+  }
+  
+  /**
+   * Add log to storage
+   */
+  private addLog(log: ErrorLog): void {
+    this.logs.push(log);
+    
+    // Limit stored logs
+    if (this.logs.length > this.config.maxLogsStored) {
+      this.logs = this.logs.slice(-this.config.maxLogsStored);
+    }
+    
+    this.saveLogsToStorage();
+  }
+  
+  /**
+   * Save logs to persistent storage
+   */
+  private saveLogsToStorage(): void {
+    try {
+      localStorage.setItem('error-logs', JSON.stringify(this.logs));
+    } catch (e) {
+      console.error('Failed to save error logs to storage:', e);
+    }
+  }
+  
+  /**
+   * Load logs from persistent storage
+   */
+  private loadLogsFromStorage(): void {
+    try {
+      const stored = localStorage.getItem('error-logs');
+      if (stored) {
+        this.logs = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('Failed to load error logs from storage:', e);
+    }
+  }
+  
+  /**
+   * Get all logs
+   */
+  getLogs(filter?: { type?: ErrorLog['type']; category?: ErrorLog['category']; since?: number }): ErrorLog[] {
+    let filtered = this.logs;
+    
+    if (filter) {
+      if (filter.type) {
+        filtered = filtered.filter(log => log.type === filter.type);
+      }
+      if (filter.category) {
+        filtered = filtered.filter(log => log.category === filter.category);
+      }
+      if (filter.since) {
+        filtered = filtered.filter(log => log.timestamp >= filter.since);
+      }
+    }
+    
+    return filtered.sort((a, b) => b.timestamp - a.timestamp);
+  }
+  
+  /**
+   * Clear all logs
+   */
+  clearLogs(): void {
+    this.logs = [];
+    this.saveLogsToStorage();
+  }
+  
+  /**
+   * Setup global error handlers
+   */
+  private setupGlobalErrorHandlers(): void {
+    // Catch unhandled errors
+    window.addEventListener('error', (event) => {
+      this.logError(
+        event.message,
+        event.error,
+        'unknown',
+        'Unhandled error event'
+      );
+    });
+    
+    // Catch unhandled promise rejections
+    window.addEventListener('unhandledrejection', (event) => {
+      this.logError(
+        `Unhandled promise rejection: ${event.reason}`,
+        event.reason instanceof Error ? event.reason : undefined,
+        'unknown',
+        'Unhandled promise rejection'
+      );
+    });
+  }
+  
+  /**
+   * Schedule email reports based on mode
+   */
+  private scheduleEmailReports(): void {
+    if (this.config.mode === 'production') {
+      // Send every Monday at 2 AM
+      const scheduleNext = () => {
+        const now = new Date();
+        const nextMonday = new Date();
+        
+        // Find next Monday
+        const daysUntilMonday = (8 - now.getDay()) % 7 || 7;
+        nextMonday.setDate(now.getDate() + daysUntilMonday);
+        nextMonday.setHours(2, 0, 0, 0);
+        
+        // If Monday 2 AM has passed this week, schedule for next week
+        if (nextMonday.getTime() < now.getTime()) {
+          nextMonday.setDate(nextMonday.getDate() + 7);
+        }
+        
+        const msUntilMonday = nextMonday.getTime() - now.getTime();
+        
+        this.scheduledEmailTimer = setTimeout(() => {
+          this.sendWeeklyReport();
+          scheduleNext(); // Schedule next Monday
+        }, msUntilMonday);
+      };
+      
+      scheduleNext();
+    }
+  }
+  
+  /**
+   * Send weekly report (production mode)
+   */
+  private async sendWeeklyReport(): Promise<void> {
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recentLogs = this.getLogs({ since: oneWeekAgo });
+    
+    if (recentLogs.length > 0) {
+      await this.sendEmailReport(recentLogs);
+    }
+  }
+  
+  /**
+   * Send error report via email
+   */
+  private async sendEmailReport(logs: ErrorLog[]): Promise<void> {
+    if (!this.config.emailEndpoint) {
+      console.warn('Email endpoint not configured. Skipping email report.');
+      return;
+    }
+    
+    try {
+      const report = this.generateEmailReport(logs);
+      
+      const response = await fetch(this.config.emailEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: this.config.emailTo,
+          subject: `Solar Panel Calculator - Error Report (${logs.length} issues)`,
+          body: report,
+          logs: logs,
+        }),
+      });
+      
+      if (response.ok) {
+        // Mark logs as emailed
+        logs.forEach(log => {
+          log.emailSent = true;
+          log.emailSentAt = Date.now();
+        });
+        this.saveLogsToStorage();
+        
+        console.log(`✅ Error report sent successfully (${logs.length} logs)`);
+      } else {
+        console.error('Failed to send error report:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Failed to send error report:', error);
+    }
+  }
+  
+  /**
+   * Generate formatted email report
+   */
+  private generateEmailReport(logs: ErrorLog[]): string {
+    const errorCount = logs.filter(l => l.type === 'error').length;
+    const warningCount = logs.filter(l => l.type === 'warning').length;
+    
+    let report = `# Solar Panel Calculator - Error Report\n\n`;
+    report += `**Generated:** ${new Date().toLocaleString()}\n`;
+    report += `**Total Issues:** ${logs.length} (${errorCount} errors, ${warningCount} warnings)\n\n`;
+    report += `---\n\n`;
+    
+    // Group by category
+    const byCategory = logs.reduce((acc, log) => {
+      if (!acc[log.category]) acc[log.category] = [];
+      acc[log.category].push(log);
+      return acc;
+    }, {} as Record<string, ErrorLog[]>);
+    
+    Object.entries(byCategory).forEach(([category, categoryLogs]) => {
+      report += `## ${category.toUpperCase()} Issues (${categoryLogs.length})\n\n`;
+      
+      categoryLogs.forEach((log, index) => {
+        report += `### ${index + 1}. ${log.message}\n\n`;
+        report += `- **Type:** ${log.type}\n`;
+        report += `- **Time:** ${new Date(log.timestamp).toLocaleString()}\n`;
+        report += `- **Platform:** ${log.context.platform}\n`;
+        report += `- **App Version:** ${log.context.appVersion}\n`;
+        
+        if (log.context.userAction) {
+          report += `- **User Action:** ${log.context.userAction}\n`;
+        }
+        
+        if (log.stack) {
+          report += `\n**Stack Trace:**\n\`\`\`\n${log.stack}\n\`\`\`\n`;
+        }
+        
+        if (log.debuggingAdvice.length > 0) {
+          report += `\n**Debugging Advice:**\n`;
+          log.debuggingAdvice.forEach(advice => {
+            report += `- ${advice}\n`;
+          });
+        }
+        
+        if (log.suggestedFixes.length > 0) {
+          report += `\n**Suggested Fixes:**\n`;
+          log.suggestedFixes.forEach(fix => {
+            report += `- ${fix}\n`;
+          });
+        }
+        
+        report += `\n---\n\n`;
+      });
+    });
+    
+    return report;
+  }
+  
+  /**
+   * Export logs as JSON
+   */
+  exportLogs(): string {
+    return JSON.stringify(this.logs, null, 2);
+  }
+  
+  /**
+   * Export logs as CSV
+   */
+  exportLogsAsCSV(): string {
+    const headers = ['ID', 'Timestamp', 'Type', 'Category', 'Message', 'Platform', 'App Version'];
+    const rows = this.logs.map(log => [
+      log.id,
+      new Date(log.timestamp).toISOString(),
+      log.type,
+      log.category,
+      log.message,
+      log.context.platform,
+      log.context.appVersion,
+    ]);
+    
+    return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  }
+}
+
+// Singleton instance
+export const errorLogger = new ErrorLogger({
+  mode: 'beta', // Change to 'production' when ready
+  emailEndpoint: process.env.VITE_ERROR_LOG_ENDPOINT,
+  emailTo: process.env.VITE_ERROR_LOG_EMAIL,
+  enableConsoleLogging: true,
+});
+
+// Export convenience functions
+export const logError = (message: string, error?: Error, category?: ErrorLog['category'], userAction?: string) =>
+  errorLogger.logError(message, error, category, userAction);
+
+export const logWarning = (message: string, category?: ErrorLog['category']) =>
+  errorLogger.logWarning(message, category);
+
+export const logInfo = (message: string, category?: ErrorLog['category']) =>
+  errorLogger.logInfo(message, category);

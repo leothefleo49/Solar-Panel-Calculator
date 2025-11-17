@@ -25,7 +25,7 @@ const CATEGORIES: { value: ProductCategory; label: string }[] = [
 ];
 
 export default function ShoppingCart() {
-  const { items, addItem, removeItem, clearCart, checkCompatibility, getMissingComponents } = useCartStore();
+  const { items, addItem, removeItem, clearCart, checkCompatibility, getMissingComponents, useAIAssistance, setUseAIAssistance } = useCartStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchCategory, setSearchCategory] = useState<ProductCategory | ''>('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -57,6 +57,7 @@ export default function ShoppingCart() {
         maxResults: 12,
         category: searchCategory || undefined,
         multiSite: true,
+        useAI: useAIAssistance,
       });
       setSearchResults(results);
       if (results.length === 0) {
@@ -78,7 +79,7 @@ export default function ShoppingCart() {
   };
 
   const handleAddFromSearch = async (product: any) => {
-    const specs = await extractProductSpecs(product);
+    const specs = await extractProductSpecs(product, useAIAssistance);
     
     addItem({
       name: product.title || 'Unknown Product',
@@ -225,8 +226,8 @@ export default function ShoppingCart() {
           <div className="flex-1 space-y-3">
             <div>
               <label className="mb-2 flex items-center gap-2 text-sm font-medium text-white">
-                🔍 AI-Enhanced Product Search
-                <InfoTooltip content="Search by product name, model number, UPC, ASIN, brand, or general description. AI will enhance your query for better results." />
+                {useAIAssistance ? '🔍 AI-Enhanced Product Search' : '🔍 Manual Product Search'}
+                <InfoTooltip content={useAIAssistance ? 'Search by product name, model number, UPC, ASIN, brand, or general description. AI will enhance your query for better results.' : 'Search by product name, model number, UPC, ASIN. Manual mode without AI enhancement.'} />
               </label>
               <div className="flex gap-2">
                 <input
@@ -261,6 +262,28 @@ export default function ShoppingCart() {
                   </option>
                 ))}
               </select>
+
+              <div className="ml-auto flex items-center gap-2">
+                <label className="text-xs font-medium text-slate-300">AI Assistance:</label>
+                <button
+                  onClick={() => setUseAIAssistance(!useAIAssistance)}
+                  className={clsx(
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    useAIAssistance ? 'bg-accent' : 'bg-white/20'
+                  )}
+                >
+                  <span
+                    className={clsx(
+                      'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                      useAIAssistance ? 'translate-x-6' : 'translate-x-1'
+                    )}
+                  />
+                </button>
+                <span className={clsx('text-xs font-medium', useAIAssistance ? 'text-accent' : 'text-slate-400')}>
+                  {useAIAssistance ? 'ON' : 'OFF'}
+                </span>
+                <InfoTooltip content={useAIAssistance ? 'AI will enhance search queries and extract detailed specs (uses API credits)' : 'Manual mode - searches without AI enhancement (preserves API usage)'} />
+              </div>
             </div>
 
             <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-2 text-[10px] text-blue-200">

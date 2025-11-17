@@ -2,8 +2,10 @@ import Configurator from './components/Configurator'
 import Dashboard from './components/Dashboard'
 import ChatAssistant from './components/ChatAssistant'
 import FullscreenButton from './components/FullscreenButton'
+import UpdateNotification from './components/UpdateNotification'
 
 import { useState, useEffect } from 'react'
+import { initializeAutoUpdater } from './utils/updater'
 
 const App = () => {
   const [leftCollapsed, setLeftCollapsed] = useState(false)
@@ -20,6 +22,12 @@ const App = () => {
     return () => window.removeEventListener('panel-collapsed', handler)
   }, [])
 
+  // Initialize auto-updater
+  useEffect(() => {
+    initializeAutoUpdater(60) // Check every 60 minutes
+      .catch(err => console.error('Failed to initialize auto-updater:', err))
+  }, [])
+
   const dashboardFlexBasis = (() => {
     // Expand dashboard when panels are collapsed; add smooth transition via CSS class
     if (leftCollapsed && rightCollapsed) return '100%'
@@ -31,6 +39,7 @@ const App = () => {
   return (
     <div className="min-h-screen px-3 py-6 sm:px-6 lg:px-10">
       <FullscreenButton />
+      <UpdateNotification />
       <div className="mx-auto flex w-full max-w-[1840px] gap-6 xl:gap-8 transition-all duration-500">
         <div className={leftCollapsed ? 'flex-none w-0' : 'flex-none w-[24rem] transition-all duration-500'}>
           <Configurator />

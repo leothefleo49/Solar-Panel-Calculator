@@ -9,6 +9,7 @@ import { API_PRICING } from '../types/api-usage';
 import type { ApiProvider } from '../types/api-usage';
 import { formatCurrency } from '../utils/calculations';
 import InfoTooltip from './InfoTooltip';
+import QuotaMonitor from './QuotaMonitor';
 
 const PROVIDER_LABELS: Record<ApiProvider, string> = {
   'google-solar': 'Google Solar API',
@@ -109,6 +110,9 @@ export default function ApiUsageTab() {
           </button>
         </div>
       </div>
+
+      {/* Real-time Quota Monitor */}
+      <QuotaMonitor />
 
       {/* Monthly Summary */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

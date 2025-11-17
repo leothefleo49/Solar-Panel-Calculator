@@ -45,12 +45,14 @@
     "cap:build:android": "npm run build && npx cap sync android && cd android && ./gradlew assembleRelease",
     "cap:ios": "npm run build && npx cap sync ios && npx cap open ios",
     "cap:sync:ios": "npm run build && npx cap sync ios",
-    "smoke:test": "node scripts/smoke-test.mjs"
+    "smoke:test": "node scripts/smoke-test.mjs",
+    "generate:update-manifest": "node scripts/generate-update-manifest.mjs"
   },
   "dependencies": {
     "@capacitor/browser": "^7.0.2",
     "@tauri-apps/plugin-shell": "^2.3.3",
     "@tauri-apps/plugin-store": "^2.4.1",
+    "@tauri-apps/plugin-updater": "^2",
     "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",
     "react": "^19.2.0",
