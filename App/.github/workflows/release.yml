@@ -229,6 +229,7 @@ jobs:
         working-directory: App
       - name: Upload iOS Simulator Artifact
         uses: actions/upload-artifact@v4
+        if: ${{ hashFiles('Solar-Panel-Calculator-iOS-Simulator.zip') != '' }}
         with:
           name: Solar-Panel-Calculator-iOS-Simulator
           path: Solar-Panel-Calculator-iOS-Simulator.zip
