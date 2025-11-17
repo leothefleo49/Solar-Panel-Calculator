@@ -5,6 +5,21 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.5] - 2025-11-17
+
+### Fixed
+- Global themed scrollbars enforced across the app; eliminated default gray scrollbars. Added/verified `modern-scroll` on key lists and tables.
+- External links now open reliably via platform-aware opener (Tauri shell, Capacitor Browser, web fallback). Replaced in-app anchors in Shopping Cart, APIs tab, and Solar integration.
+- Fullscreen white flicker removed by setting dark backgrounds early and pre-setting before toggling fullscreen.
+- Dynamic sun hours label: shows "Peak Daily Sun Hours" for daily mode and "Total Yearly Sun Hours" for yearly mode.
+
+### Changed
+- APIs tab adds Quick Start guidance and a "Use Unified Google Key" shortcut for Gemini.
+- Themed dashboard data table scroll container for consistent look and feel.
+
+### Release
+- Version bumped across Node/Tauri/Android; CI configured to attach artifacts to the GitHub release for quick downloads.
+
 ## [1.4.3] - 2025-11-16
 
 ### Fixed
