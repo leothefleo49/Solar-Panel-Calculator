@@ -15,13 +15,14 @@ export type Conversation = {
   lastUsed: number
 }
 
-type Provider = 'google' | 'openai' | 'anthropic' | 'grok'
+type Provider = 'google' | 'openai' | 'anthropic' | 'grok' | 'gemini'
 
 type ProviderKeys = {
   google?: string
   openai?: string
   anthropic?: string
   grok?: string
+  gemini?: string
 }
 
 const defaultModelByProvider: Record<Provider, string> = {
@@ -29,6 +30,7 @@ const defaultModelByProvider: Record<Provider, string> = {
   openai: 'gpt-5',
   anthropic: 'claude-3.5-sonnet-latest',
   grok: 'grok-2',
+  gemini: 'gemini-2.5-pro',
 }
 
 interface ChatState {

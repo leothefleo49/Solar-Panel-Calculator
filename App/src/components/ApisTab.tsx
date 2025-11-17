@@ -407,10 +407,14 @@ const ApisTab = () => {
                         {result.statusCode && (
                           <p className="text-xs text-slate-400">Status Code: {result.statusCode}</p>
                         )}
-                        {result.suggestedFix && (
+                        {result.suggestedFixes && result.suggestedFixes.length > 0 && (
                           <div className="mt-2 rounded-lg border border-blue-500/30 bg-blue-500/5 p-2">
-                            <p className="text-xs text-blue-300 font-semibold">💡 Suggested Fix:</p>
-                            <p className="text-xs text-blue-200 mt-1">{result.suggestedFix}</p>
+                            <p className="text-xs text-blue-300 font-semibold">💡 Suggested Fixes:</p>
+                            <ul className="text-xs text-blue-200 mt-1 list-disc list-inside space-y-1">
+                              {result.suggestedFixes.map((fix, idx) => (
+                                <li key={idx}>{fix}</li>
+                              ))}
+                            </ul>
                           </div>
                         )}
                       </div>

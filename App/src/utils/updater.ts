@@ -7,14 +7,17 @@ import { isTauri } from '@tauri-apps/api/core';
 
 // Tauri updater (Desktop: Windows, macOS, Linux)
 let tauriCheck: any = null;
-let tauriDownloadAndInstall: any = null;
+let tauriDownload: any = null;
+let tauriInstall: any = null;
 
 // Try to import Tauri updater plugin only if running in Tauri
 if (isTauri()) {
   import('@tauri-apps/plugin-updater')
     .then((module) => {
       tauriCheck = module.check;
-      tauriDownloadAndInstall = module.downloadAndInstall;
+      // Modern API: use update.download() and update.install()
+      tauriDownload = (update: any) => update.download?.();
+      tauriInstall = (update: any) => update.install?.();
     })
     .catch((err) => {
       console.warn('Tauri updater plugin not available:', err);
@@ -124,14 +127,24 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
  * Download and install update (Desktop only)
  */
 export async function installUpdate(): Promise<void> {
-  if (!isTauri() || !tauriDownloadAndInstall) {
+  if (!isTauri() || !tauriCheck || !tauriDownload || !tauriInstall) {
     throw new Error('Update installation only available on desktop platforms');
   }
 
   try {
-    // This will download and install the update
+    // Check for update first
+    const update = await tauriCheck();
+    
+    if (!update?.available) {
+      throw new Error('No update available');
+    }
+
+    // Download the update
+    await tauriDownload(update);
+    
+    // Install the update
     // On Windows/macOS, it will prompt to restart the app
-    await tauriDownloadAndInstall();
+    await tauriInstall(update);
   } catch (error) {
     console.error('Failed to install update:', error);
     throw error;

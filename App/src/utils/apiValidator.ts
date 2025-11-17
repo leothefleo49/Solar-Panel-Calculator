@@ -22,7 +22,7 @@ export interface ValidationResult {
  */
 export async function validateGoogleApiKey(
   apiKey: string,
-  apiType: 'solar' | 'maps' | 'shopping'
+  apiType: 'solar' | 'maps' | 'shopping' | 'unified'
 ): Promise<ValidationResult> {
   try {
     let testEndpoint: string;
@@ -55,6 +55,16 @@ export async function validateGoogleApiKey(
           q: 'test',
           key: apiKey,
           cx: '000000000000000000000:aaaaaaa', // Placeholder CX
+        };
+        break;
+        
+      case 'unified':
+        // Test with Solar API (most comprehensive)
+        testEndpoint = 'https://solar.googleapis.com/v1/buildingInsights:findClosest';
+        testParams = {
+          'location.latitude': '37.4220936',
+          'location.longitude': '-122.0840777',
+          key: apiKey,
         };
         break;
     }
