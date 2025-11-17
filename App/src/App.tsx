@@ -27,13 +27,9 @@ const App = () => {
 
   // Initialize auto-updater - check immediately on startup, then periodically
   useEffect(() => {
-    // Check for updates 10 seconds after app loads (gives time for UI to render)
-    const startupCheck = setTimeout(() => {
-      initializeAutoUpdater(60) // Check immediately, then every 60 minutes
-        .catch(err => console.error('Failed to initialize auto-updater:', err))
-    }, 10000)
-    
-    return () => clearTimeout(startupCheck)
+    // Check for updates immediately on launch (no delay)
+    initializeAutoUpdater(60) // Check immediately, then every 60 minutes
+      .catch(err => console.error('Failed to initialize auto-updater:', err))
   }, [])
 
   // Persist widths

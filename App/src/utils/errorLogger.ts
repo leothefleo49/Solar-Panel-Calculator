@@ -77,7 +77,12 @@ interface ErrorLoggerConfig {
   remoteConfigUrl?: string;
   // Optional static default reporting interval
   reportingInterval?: 'every_run' | 'hourly' | 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'disabled';
+  // Email threading support
+  emailThreadId?: string;
 }
+
+const EMAIL_THREAD_KEY = 'error-logger-thread-id';
+const LAST_REPORT_KEY = 'error-logger-last-report';
 
 class ErrorLogger {
   private logs: ErrorLog[] = [];
@@ -87,8 +92,8 @@ class ErrorLogger {
   
   constructor(config: Partial<ErrorLoggerConfig> = {}) {
     this.config = {
-      mode: 'beta', // Change to 'production' when ready
-      emailEndpoint: import.meta.env.VITE_ERROR_LOG_ENDPOINT || 'https://your-backend-endpoint.com/api/error-logs', // Replace with your endpoint
+      mode: 'beta', // Default to beta mode for immediate error reports
+      emailEndpoint: import.meta.env.VITE_ERROR_LOG_ENDPOINT || 'https://your-backend-endpoint.com/api/error-logs',
       emailTo: import.meta.env.VITE_ERROR_LOG_EMAIL || 'leothefleo49@gmail.com',
       // Optional: remote config URL that returns JSON { reportingInterval: 'daily' }
       remoteConfigUrl: import.meta.env.VITE_ERROR_LOG_CONFIG_URL,
@@ -99,6 +104,7 @@ class ErrorLogger {
     
     this.loadLogsFromStorage();
     this.setupGlobalErrorHandlers();
+    this.setupBeforeUnloadHandler();
     this.scheduleEmailReports();
 
     // If a remote config URL is provided, poll it periodically and adjust reporting interval
@@ -459,6 +465,96 @@ class ErrorLogger {
   }
   
   /**
+   * Setup beforeunload handler to send report on app close
+   */
+  private setupBeforeUnloadHandler(): void {
+    const sendReportOnClose = async () => {
+      // Get logs since last report
+      const lastReportTime = this.getLastReportTime();
+      const newLogs = this.logs.filter(log => log.timestamp > lastReportTime);
+      
+      if (newLogs.length > 0 || this.config.mode === 'beta') {
+        // In beta mode, always send report (even if no new errors)
+        const logsToSend = newLogs.length > 0 ? newLogs : this.logs.slice(-10);
+        
+        // Use sendBeacon for reliable delivery during unload
+        if (this.config.emailEndpoint && navigator.sendBeacon) {
+          const report = this.generateEmailReport(logsToSend);
+          const payload = JSON.stringify({
+            to: this.config.emailTo,
+            subject: `Solar Panel Calculator - Session Report (${logsToSend.length} issues)`,
+            body: report,
+            logs: logsToSend,
+            threadId: this.getEmailThreadId(),
+          });
+          
+          const blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon(this.config.emailEndpoint, blob);
+          
+          this.updateLastReportTime();
+        }
+      }
+    };
+
+    // Handle browser/web app close
+    window.addEventListener('beforeunload', () => {
+      sendReportOnClose();
+    });
+    
+    // Handle Tauri app close
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      // Tauri apps: send report when window closes
+      import('@tauri-apps/api/window').then(({ appWindow }) => {
+        appWindow.onCloseRequested(() => {
+          sendReportOnClose();
+        });
+      }).catch(() => {
+        // Tauri not available, already handled by beforeunload
+      });
+    }
+  }
+  
+  /**
+   * Get or create email thread ID for threading all reports together
+   */
+  private getEmailThreadId(): string {
+    try {
+      let threadId = localStorage.getItem(EMAIL_THREAD_KEY);
+      if (!threadId) {
+        // Generate unique thread ID: email-thread-{timestamp}-{random}
+        threadId = `email-thread-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem(EMAIL_THREAD_KEY, threadId);
+      }
+      return threadId;
+    } catch {
+      return `email-thread-${Date.now()}`;
+    }
+  }
+  
+  /**
+   * Get timestamp of last sent report
+   */
+  private getLastReportTime(): number {
+    try {
+      const stored = localStorage.getItem(LAST_REPORT_KEY);
+      return stored ? parseInt(stored, 10) : 0;
+    } catch {
+      return 0;
+    }
+  }
+  
+  /**
+   * Update last report timestamp
+   */
+  private updateLastReportTime(): void {
+    try {
+      localStorage.setItem(LAST_REPORT_KEY, Date.now().toString());
+    } catch (e) {
+      console.warn('Failed to update last report time:', e);
+    }
+  }
+  
+  /**
    * Schedule email reports based on mode
    */
   private scheduleEmailReports(): void {
@@ -563,7 +659,7 @@ class ErrorLogger {
       
       // Add reply instructions so recipients can reply with commands to change reporting interval
       const replyInstructions = `\n\nReply with one of the following commands (in subject or body) to change the reporting interval:\n` +
-        `- interval: every_run\n- interval: hourly\n- interval: daily\n- interval: weekly\n- interval: biweekly\n- interval: monthly\n` +
+        `- mode: every_run\n- mode: hourly\n- mode: daily\n- mode: weekly\n- mode: biweekly\n- mode: monthly\n` +
         `\nOr configure the remote controller (if available) at: ${(this.config as any).remoteConfigUrl || 'not configured'}`;
 
       const response = await fetch(this.config.emailEndpoint, {
@@ -576,6 +672,7 @@ class ErrorLogger {
           subject: `Solar Panel Calculator - Error Report (${logs.length} issues)`,
           body: report + replyInstructions,
           logs: logs,
+          threadId: this.getEmailThreadId(), // Add thread ID for email threading
         }),
       });
       
@@ -586,6 +683,7 @@ class ErrorLogger {
           log.emailSentAt = Date.now();
         });
         this.saveLogsToStorage();
+        this.updateLastReportTime();
         
         console.log(`✅ Error report sent successfully (${logs.length} logs)`);
       } else {
@@ -682,9 +780,10 @@ class ErrorLogger {
 
 // Singleton instance
 export const errorLogger = new ErrorLogger({
-  mode: 'beta', // Change to 'production' when ready
+  mode: 'beta', // Beta mode: immediate error reports on every app close
   emailEndpoint: import.meta.env.VITE_ERROR_LOG_ENDPOINT,
   emailTo: import.meta.env.VITE_ERROR_LOG_EMAIL,
+  remoteConfigUrl: import.meta.env.VITE_ERROR_LOG_CONFIG_URL, // Optional: remote config for mode control
   enableConsoleLogging: true,
 });
 

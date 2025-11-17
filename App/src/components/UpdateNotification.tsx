@@ -4,7 +4,14 @@
  */
 
 import { useState, useEffect } from 'react';
-import { checkForUpdates, installUpdate, openDownloadPage, type UpdateInfo } from '../utils/updater';
+import { 
+  checkForUpdates, 
+  installUpdate, 
+  openDownloadPage, 
+  dismissUpdateReminder,
+  clearUpdateReminder,
+  type UpdateInfo 
+} from '../utils/updater';
 
 export default function UpdateNotification() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
@@ -12,7 +19,7 @@ export default function UpdateNotification() {
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    // Listen for update-available events
+    // Listen for update-available events from updater
     const handleUpdateAvailable = (event: Event) => {
       const customEvent = event as CustomEvent<UpdateInfo>;
       setUpdateInfo(customEvent.detail);
@@ -20,13 +27,6 @@ export default function UpdateNotification() {
     };
 
     window.addEventListener('update-available', handleUpdateAvailable);
-
-    // Check for updates on mount
-    checkForUpdates().then((info) => {
-      if (info.available) {
-        setUpdateInfo(info);
-      }
-    });
 
     return () => {
       window.removeEventListener('update-available', handleUpdateAvailable);
@@ -42,10 +42,12 @@ export default function UpdateNotification() {
       if (updateInfo.platform === 'desktop') {
         // Desktop: Tauri will handle download and install
         await installUpdate();
+        clearUpdateReminder(); // Clear reminder state - update being installed
         // App will restart automatically
       } else {
         // Android/Web: Open download page
         await openDownloadPage(updateInfo.downloadUrl);
+        clearUpdateReminder(); // User is downloading, clear reminder
         setIsDismissed(true);
       }
     } catch (error) {
@@ -56,13 +58,12 @@ export default function UpdateNotification() {
     }
   };
 
-  const handleDismiss = () => {
+  const handleCancel = () => {
+    if (updateInfo?.latestVersion) {
+      // Record dismissal - will remind after 3 more app launches
+      dismissUpdateReminder(updateInfo.latestVersion);
+    }
     setIsDismissed(true);
-  };
-
-  const handleRemindLater = () => {
-    setIsDismissed(true);
-    // Will check again on next startup or periodic check
   };
 
   if (!updateInfo?.available || isDismissed) {
@@ -111,10 +112,10 @@ export default function UpdateNotification() {
             <button
               onClick={handleInstall}
               disabled={isInstalling}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
+              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm font-medium rounded transition-colors"
             >
               {isInstalling ? (
-                <span className="flex items-center gap-2">
+                <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle
                       className="opacity-25"
@@ -134,34 +135,24 @@ export default function UpdateNotification() {
                   Installing...
                 </span>
               ) : updateInfo.platform === 'desktop' ? (
-                'Install & Restart'
+                '✨ Install Update'
               ) : (
-                'Download Update'
+                '📥 Download Update'
               )}
             </button>
 
             <button
-              onClick={handleRemindLater}
+              onClick={handleCancel}
               className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded transition-colors"
+              title="Remind me after 3 more app launches"
             >
-              Remind Later
-            </button>
-
-            <button
-              onClick={handleDismiss}
-              className="px-2 py-2 text-slate-400 hover:text-slate-300 transition-colors"
-              title="Dismiss"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              Cancel
             </button>
           </div>
+          
+          <p className="text-[10px] text-slate-400 mt-2 text-center">
+            Click Cancel to be reminded after 3 more app launches
+          </p>
         </div>
       </div>
     </div>

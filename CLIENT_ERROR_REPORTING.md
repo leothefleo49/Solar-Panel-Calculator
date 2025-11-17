@@ -2,6 +2,15 @@
 
 Get automatic email notifications when users encounter errors in your Solar Panel Calculator app.
 
+## 🎯 Key Features
+
+- ✅ **Automatic Reporting**: Sends email immediately after every app close (beta mode)
+- ✅ **Email Threading**: All reports in one email conversation thread
+- ✅ **Reply-Based Control**: Change settings by replying to emails with commands
+- ✅ **Persistent Config**: Settings survive app updates
+- ✅ **One Email Thread**: All error reports grouped in your inbox
+- ✅ **Comprehensive Errors**: API failures, UI issues, network problems, warnings
+
 ## Overview
 
 The app already has comprehensive error logging built in (`App/src/utils/errorLogger.ts`). It captures:
@@ -100,92 +109,97 @@ VITE_ERROR_LOG_ENDPOINT=https://your-app.railway.app/api/error-logs
 
 # Your email address (where reports are sent)
 VITE_ERROR_LOG_EMAIL=leothefleo49@gmail.com
+
+# Optional: Remote config URL for email-based mode control
+VITE_ERROR_LOG_CONFIG_URL=https://your-app.railway.app/api/config/default
 ```
 
 ### Step 4: Test It
 
-Run your app and trigger an error:
+Run your app:
 
 ```bash
 cd App
 npm run dev
 ```
 
-In the app:
-1. Go to **APIs** tab
-2. Enter invalid API key: `test123`
-3. Click **Test Connection**
+**Open the app, then close it.** You should receive an email within seconds! 📧
 
-You should receive an email within seconds! 📧
+The email will be the first in a new **threaded conversation**. All future reports will appear in the same thread.
 
 ## What You'll Receive
 
-Example email:
+Every time you close the app, you'll get an email in **one threaded conversation**:
 
 ```
-Subject: Solar Panel Calculator - Error Report (1 issues)
+Subject: Solar Panel Calculator - Session Report (3 issues)
 
 # Solar Panel Calculator - Client Error Report
 
 **Generated:** January 1, 2024 at 10:00 AM
-**Total Issues:** 1 (1 error, 0 warnings)
+**Total Issues:** 3 (2 errors, 1 warning)
 
 ---
 
-## API Issues (1)
+## API Issues (2)
 
 ### 🚨 1. Google Solar API request failed
+[... full error details ...]
 
-- **Type:** error
-- **Time:** January 1, 2024 at 10:00 AM
-- **Platform:** desktop
-- **App Version:** 1.4.12
-- **Screen:** 1920x1080
-- **User Action:** Click "Test Connection" button
-- **APIs Configured:** solar, gemini
-- **Memory Usage:** 245MB / 512MB
+---
 
-**Stack Trace:**
-Error: API request failed with status 401
-    at googleApis.ts:123:15
-    at SolarApiIntegration.tsx:456:20
-
-**Debugging Advice:**
-- Authentication error: API key may be invalid, expired, or lacks permissions
-- Solution: Generate a new API key and ensure all required APIs are enabled
-- Check if the API key is valid and has proper permissions
-
-**Suggested Fixes:**
-- Go to Settings > APIs tab and verify all keys are correctly configured
-- Click "Test Connection" button to validate API keys
-- Try regenerating API keys in the provider console
+Reply with one of the following commands to change the reporting interval:
+- mode: every_run
+- mode: hourly
+- mode: daily
+- mode: weekly
+- mode: biweekly  
+- mode: monthly
 ```
+
+### Changing Settings via Email Reply
+
+Just reply to any error report email with:
+
+```
+mode: daily
+```
+
+You'll get a confirmation:
+```
+Subject: Solar Panel Calculator - Config Updated
+
+Your error reporting interval has been updated to: daily
+
+Current settings:
+- Interval: daily
+
+Reply with another command to change it again.
+```
+
+All future reports will respect your new setting, **even after app updates**!
 
 ## Error Reporting Modes
 
 The error logger has two modes:
 
-### Beta Mode (Current)
-- **Behavior**: Sends email immediately after each error
-- **Use Case**: During testing, want instant notifications
-- **Config**: `mode: 'beta'` in `errorLogger.ts`
+### Beta Mode (Current Default) ✅
+- **Behavior**: Sends email immediately after each app close
+- **Use Case**: Testing, want instant notifications when you close the app
+- **Config**: Automatically set
+- **Email Threading**: All reports in one conversation
 
-### Production Mode
-- **Behavior**: Batches errors and sends weekly report (Mondays at 2 AM)
-- **Use Case**: Production app, don't want spam
-- **Config**: `mode: 'production'` in `errorLogger.ts`
-- **Configurable Intervals**: `hourly`, `daily`, `weekly`, `biweekly`, `monthly`
+### Custom Intervals
+Reply to any error email with:
+- `mode: every_run` - After every app close (default)
+- `mode: hourly` - Once per hour (batched)
+- `mode: daily` - Once per day at 2 AM
+- `mode: weekly` - Every Monday at 2 AM
+- `mode: biweekly` - Every other Monday
+- `mode: monthly` - First Monday of each month
+- `mode: disabled` - Stop all reports
 
-To change mode, edit `App/src/utils/errorLogger.ts`:
-
-```typescript
-export const errorLogger = new ErrorLogger({
-  mode: 'production', // Change from 'beta'
-  emailEndpoint: import.meta.env.VITE_ERROR_LOG_ENDPOINT,
-  emailTo: import.meta.env.VITE_ERROR_LOG_EMAIL,
-  enableConsoleLogging: true,
-});
-```
+**Your settings persist across app updates!** They're stored remotely on the webhook server and synced automatically.
 
 ## Remote Control (Optional)
 

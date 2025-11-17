@@ -33,6 +33,103 @@ export interface UpdateInfo {
   platform: 'desktop' | 'android' | 'web';
 }
 
+interface UpdateReminderState {
+  dismissedVersion?: string;
+  dismissCount: number;
+  lastDismissedAt?: number;
+}
+
+const REMINDER_KEY = 'update-reminder-state';
+const LAUNCHES_UNTIL_REMIND = 3;
+
+/**
+ * Get reminder state from localStorage
+ */
+function getReminderState(): UpdateReminderState {
+  try {
+    const stored = localStorage.getItem(REMINDER_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn('Failed to load reminder state:', e);
+  }
+  return { dismissCount: 0 };
+}
+
+/**
+ * Save reminder state to localStorage
+ */
+function saveReminderState(state: UpdateReminderState): void {
+  try {
+    localStorage.setItem(REMINDER_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.warn('Failed to save reminder state:', e);
+  }
+}
+
+/**
+ * Check if we should show reminder for this version
+ */
+export function shouldShowUpdateReminder(version: string): boolean {
+  const state = getReminderState();
+  
+  // New version? Always show
+  if (state.dismissedVersion !== version) {
+    return true;
+  }
+  
+  // Same version dismissed: check launch count
+  return state.dismissCount >= LAUNCHES_UNTIL_REMIND;
+}
+
+/**
+ * Record that user dismissed the update notification
+ */
+export function dismissUpdateReminder(version: string): void {
+  const state = getReminderState();
+  
+  if (state.dismissedVersion === version) {
+    // Increment counter - will remind after 3 more launches
+    saveReminderState({
+      dismissedVersion: version,
+      dismissCount: 0,
+      lastDismissedAt: Date.now(),
+    });
+  } else {
+    // First dismissal for this version
+    saveReminderState({
+      dismissedVersion: version,
+      dismissCount: 0,
+      lastDismissedAt: Date.now(),
+    });
+  }
+}
+
+/**
+ * Increment launch counter for reminder system
+ */
+export function incrementLaunchCounter(): void {
+  const state = getReminderState();
+  if (state.dismissedVersion) {
+    saveReminderState({
+      ...state,
+      dismissCount: state.dismissCount + 1,
+    });
+  }
+}
+
+/**
+ * Clear reminder state when update is installed
+ */
+export function clearUpdateReminder(): void {
+  try {
+    localStorage.removeItem(REMINDER_KEY);
+  } catch (e) {
+    console.warn('Failed to clear reminder state:', e);
+  }
+}
+
 /**
  * Get the current app version
  */
@@ -96,13 +193,13 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
     const latestVersion = release.tag_name.replace(/^v/, '');
     const available = compareVersions(latestVersion, currentVersion) > 0;
 
-    // Find appropriate download URL based on platform
+    // Use evergreen /releases/latest/download URLs
     let downloadUrl: string | undefined;
     if (platform === 'android') {
-      const apkAsset = release.assets?.find((asset: any) =>
-        asset.name.endsWith('.apk') && !asset.name.includes('Debug')
-      );
-      downloadUrl = apkAsset?.browser_download_url;
+      // Evergreen URL - always points to latest APK
+      downloadUrl = 'https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/solar-panel-calculator.apk';
+    } else if (platform === 'web') {
+      downloadUrl = 'https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest';
     }
 
     return {
@@ -212,19 +309,27 @@ function compareVersions(v1: string, v2: string): number {
  * Set up automatic update check on app startup
  */
 export async function initializeAutoUpdater(intervalMinutes = 60): Promise<void> {
-  // Check on startup
+  // Increment launch counter for reminder system
+  incrementLaunchCounter();
+  
+  // Check on startup immediately
   const updateInfo = await checkForUpdates();
   
-  if (updateInfo.available) {
-    console.log('Update available:', updateInfo.latestVersion);
-    // The update notification component will handle UI
-    window.dispatchEvent(new CustomEvent('update-available', { detail: updateInfo }));
+  if (updateInfo.available && updateInfo.latestVersion) {
+    // Check if we should show reminder based on dismissal history
+    if (shouldShowUpdateReminder(updateInfo.latestVersion)) {
+      console.log('Update available:', updateInfo.latestVersion);
+      // The update notification component will handle UI
+      window.dispatchEvent(new CustomEvent('update-available', { detail: updateInfo }));
+    } else {
+      console.log('Update available but reminder suppressed (dismissed recently)');
+    }
   }
 
   // Check periodically
   setInterval(async () => {
     const info = await checkForUpdates();
-    if (info.available) {
+    if (info.available && info.latestVersion && shouldShowUpdateReminder(info.latestVersion)) {
       window.dispatchEvent(new CustomEvent('update-available', { detail: info }));
     }
   }, intervalMinutes * 60 * 1000);
