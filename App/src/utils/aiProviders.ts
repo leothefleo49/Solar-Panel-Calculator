@@ -15,6 +15,25 @@ export interface AIProviderResult {
   error?: string
 }
 
+export async function openaiTts(apiKey: string, text: string, voice: string = 'alloy', format: 'mp3'|'wav' = 'mp3'): Promise<Blob> {
+  const res = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({ model: 'gpt-4o-mini-tts', input: text, voice, format }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    const msg = data.error?.message || res.statusText
+    await logError(`OpenAI TTS error (${res.status}): ${msg}`, undefined, 'api', 'OpenAI TTS')
+    throw new Error(msg)
+  }
+  const arrayBuf = await res.arrayBuffer()
+  return new Blob([arrayBuf], { type: format === 'wav' ? 'audio/wav' : 'audio/mpeg' })
+}
+
 export interface FileUpload {
   name: string
   type: string

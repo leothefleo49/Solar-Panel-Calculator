@@ -125,14 +125,6 @@ const Dashboard = () => {
             {tab.label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => exportSnapshot()}
-          className="tab-pill--idle tab-pill text-sm border-accent/50 hover:border-accent hover:bg-accent/10"
-          title="Download current config + computed 25-year analysis as JSON"
-        >
-          Download Analysis
-        </button>
       </nav>
 
       <div className="mt-6">
@@ -238,6 +230,14 @@ const AIOverviewTab = ({ snapshot, config }: AIOverviewTabProps) => {
             className="rounded-xl border border-accent/50 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent transition hover:bg-accent/20 disabled:opacity-40"
           >
             Send Summary to Chat
+          </button>
+          <button
+            type="button"
+            onClick={() => exportSnapshot()}
+            className="rounded-xl border border-accent/50 bg-white/5 px-4 py-2 text-xs font-semibold text-white/90 hover:border-accent hover:bg-accent/10"
+            title="Download current config + computed 25-year analysis as JSON"
+          >
+            Download Analysis
           </button>
           {!apiKey && (
             <span className="text-[10px] text-rose-300">Add an API key in the Chat Assistant to enable analysis.</span>

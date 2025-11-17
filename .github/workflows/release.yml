@@ -90,6 +90,23 @@ jobs:
           name: Solar-Panel-Calculator-Desktop-${{ matrix.platform }}
           path: App/src-tauri/target/release/release-artifacts/*
 
+      - name: Sign Windows binaries (optional)
+        if: matrix.platform == 'windows' && env.WINDOWS_PFX_BASE64 != ''
+        shell: pwsh
+        env:
+          WINDOWS_PFX_BASE64: ${{ secrets.WINDOWS_PFX_BASE64 }}
+          WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $pfxPath = "$PWD\codesign.pfx"
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WINDOWS_PFX_BASE64))
+          $signtool = "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe"
+          if (!(Test-Path $signtool)) { throw "signtool not found" }
+          $files = Get-ChildItem "App/src-tauri/target/release/release-artifacts" -Include *.msi,*.exe -Recurse | Select-Object -ExpandProperty FullName
+          foreach ($f in $files) {
+            & $signtool sign /fd SHA256 /f $pfxPath /p $env:WINDOWS_PFX_PASSWORD /tr http://timestamp.digicert.com /td SHA256 $f
+          }
+
   build-android:
     runs-on: ubuntu-22.04
     defaults:

@@ -5,7 +5,7 @@ import { buildModelSnapshot } from '../utils/calculations'
 import { useSolarStore } from '../state/solarStore'
 import { useCartStore } from '../state/cartStore'
 import { useGoogleApiStore } from '../state/googleApiStore'
-import { callOpenAI, callGeminiFlash, callClaude, callGrok } from '../utils/aiProviders'
+import { callOpenAI, callGeminiFlash, callClaude, callGrok, openaiTts } from '../utils/aiProviders'
 import type { FileUpload } from '../utils/aiProviders'
 
 const ChatAssistant = () => {
@@ -45,6 +45,7 @@ const ChatAssistant = () => {
   const [listening, setListening] = useState(false)
   const [recognitionSupported, setRecognitionSupported] = useState(false)
   const [ttsSupported, setTtsSupported] = useState(false)
+  const [useAiVoice, setUseAiVoice] = useState(true)
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
   const lastAssistantRef = useRef<string>('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -285,15 +286,29 @@ const ChatAssistant = () => {
     if (textareaRef.current) textareaRef.current.placeholder = 'Ask a question about system sizing, ROI, production...'
   }
 
-  const speakLastAssistant = () => {
-    if (!ttsSupported || !lastAssistantRef.current) return
+  const speakLastAssistant = async () => {
+    const text = lastAssistantRef.current
+    if (!text) return
+    // Prefer AI voice when available (OpenAI)
+    const apiKeyForProvider = getProviderKey('openai')
+    if (useAiVoice && provider === 'openai' && apiKeyForProvider) {
+      try {
+        const blob = await openaiTts(apiKeyForProvider, text.slice(0, 2000), 'alloy', 'mp3')
+        const url = URL.createObjectURL(blob)
+        const audio = new Audio(url)
+        audio.play().finally(() => URL.revokeObjectURL(url))
+        return
+      } catch (e) {
+        // Fall back to system/browser TTS on failure
+        console.warn('AI TTS failed, falling back to browser TTS:', e)
+      }
+    }
+    if (!ttsSupported) return
     window.speechSynthesis.cancel()
-    const utter = new SpeechSynthesisUtterance(lastAssistantRef.current.slice(0, 1200))
+    const utter = new SpeechSynthesisUtterance(text.slice(0, 1200))
     if (preferredVoice) {
       const matching = availableVoices.find((voice) => voice.voiceURI === preferredVoice || voice.name === preferredVoice)
-      if (matching) {
-        utter.voice = matching
-      }
+      if (matching) utter.voice = matching
     }
     utter.rate = 1
     utter.pitch = 1
@@ -547,6 +562,10 @@ const ChatAssistant = () => {
               className="inline-flex h-9 items-center rounded-lg border border-white/10 bg-white/5 px-3 font-semibold text-white/80 hover:border-accent hover:text-white disabled:opacity-40"
             >Play Last Reply</button>
           )}
+          <label className="flex items-center gap-1 text-[10px] text-slate-300">
+            <input type="checkbox" checked={useAiVoice} onChange={(e) => setUseAiVoice(e.target.checked)} />
+            Use AI Voice (if available)
+          </label>
           {ttsSupported && availableVoices.length > 0 && (
             <div className="flex items-center gap-1 text-[10px] text-slate-300">
               <label htmlFor="preferred-voice" className="whitespace-nowrap text-[10px] text-slate-400">Voice</label>

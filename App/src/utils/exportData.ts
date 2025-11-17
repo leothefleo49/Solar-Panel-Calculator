@@ -2,6 +2,29 @@ import { useSolarStore } from '../state/solarStore'
 import { buildModelSnapshot } from './calculations'
 import { version } from '../../package.json'
 
+async function saveWithDialog(defaultName: string, json: object): Promise<string | null> {
+  try {
+    // Detect Tauri environment
+    const isTauri = typeof (window as any).__TAURI_INTERNALS__ !== 'undefined'
+    if (!isTauri) return null
+
+    const [{ save } , { writeTextFile }] = await Promise.all([
+      import('@tauri-apps/plugin-dialog'),
+      import('@tauri-apps/plugin-fs'),
+    ])
+    const path = await save({
+      defaultPath: defaultName,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    })
+    if (!path) return null
+    await writeTextFile(path, JSON.stringify(json, null, 2))
+    return path
+  } catch (e) {
+    console.warn('Save dialog failed, falling back to browser download:', e)
+    return null
+  }
+}
+
 type ExportPayload = {
   kind: 'inputs' | 'snapshot'
   appVersion: string
@@ -25,7 +48,7 @@ function downloadBlob(data: object, filename: string) {
   }, 0)
 }
 
-export function exportInputs() {
+export async function exportInputs() {
   const { config, simulation } = useSolarStore.getState()
   const payload: ExportPayload = {
     kind: 'inputs',
@@ -34,10 +57,13 @@ export function exportInputs() {
     config,
     simulation,
   }
-  downloadBlob(payload, `solar-calculator-inputs-${Date.now()}.json`)
+  const name = `solar-calculator-inputs-${Date.now()}.json`
+  const saved = await saveWithDialog(name, payload)
+  if (!saved) downloadBlob(payload, name)
+  else alert(`Inputs saved to: ${saved}`)
 }
 
-export function exportSnapshot() {
+export async function exportSnapshot() {
   const { config, simulation } = useSolarStore.getState()
   const snapshot = buildModelSnapshot(config)
   const payload: ExportPayload = {
@@ -48,7 +74,10 @@ export function exportSnapshot() {
     simulation,
     snapshot,
   }
-  downloadBlob(payload, `solar-calculator-snapshot-${Date.now()}.json`)
+  const name = `solar-calculator-snapshot-${Date.now()}.json`
+  const saved = await saveWithDialog(name, payload)
+  if (!saved) downloadBlob(payload, name)
+  else alert(`Analysis saved to: ${saved}`)
 }
 
 export async function importInputsFromFile(file: File): Promise<{ applied: number; skipped: string[] }> {
