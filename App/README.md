@@ -4,6 +4,19 @@
 
 [![Download Latest Release](https://img.shields.io/github/v/release/leothefleo49/Solar-Panel-Calculator?style=for-the-badge&logo=github)](https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest)
 [![Platform Support](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS-blue?style=for-the-badge)](#)
+[![Version](https://img.shields.io/badge/Version-1.4.8-green?style=for-the-badge)](#)
+
+---
+
+## 🎉 What's New in v1.4.8
+
+**📌 No More Restarts!** API configuration changes now apply instantly with the new Save Changes button  
+**📚 Enhanced Setup Guide:** 3 clear paths - easiest setup, most free credits, or best AI quality  
+**🛒 Smarter Shopping:** AI-powered product search now supports UPC, ASIN, model numbers, and brand names  
+**🎨 Perfect Scrollbars:** Fixed white backgrounds in fullscreen mode across all platforms  
+**🔗 Reliable Links:** External links always open in your default browser (Windows & all platforms)  
+
+[View Full Changelog](./CHANGELOG.md)
 
 ---
 
@@ -38,20 +51,28 @@ Notes:
 ## ✨ Features
 
 ### Core Capabilities
-- **🌍 Google Solar API Integration** (NEW in v1.2.0):
+- **🌍 Google Solar API Integration**:
   - Analyze any property address with real-world roof data from Google's Solar API
   - Automatic geocoding and coordinate lookup
   - Detailed roof segment analysis (pitch, azimuth, area, sun exposure)
   - AI-powered recommendations using actual roof geometry
   - Financial projections based on real sun exposure data
+  - **NEW in v1.4.8:** Instant configuration updates with Save Changes button - no restart required!
+  - **NEW in v1.4.8:** Enhanced setup wizard with 3 recommended paths (easiest, most free, best quality)
   - Flexible API key management (unified or separate keys)
   - Optional - app works fully without Google APIs
+- **🛒 Shopping Cart with AI Search** (Enhanced in v1.4.8):
+  - Smart product search supporting product names, model numbers, UPC codes, ASIN, and brand names
+  - AI-powered query enhancement for better search results
+  - Category filtering and intelligent result ranking
+  - Automatic product spec extraction and compatibility checking
+  - Integration with Google Shopping API for real-time pricing
 - **Comprehensive Configurator**: Collapsible sections for utility costs, incentives, solar hardware, battery storage, and soft costs with contextual tooltips
 - **High-Precision Modeling**: Decimal.js engine simulates 25-year production, degradation, inflation-adjusted utility spend, net-metering cash flow, ROI, and break-even timing
 - **Interactive Visualizations**: Multi-line crossover charts, degradation trends, monthly production vs. consumption bars, and battery/outage simulator
 - **Data Studio**: Sortable amortization table with optional monthly expansion (up to 250 rows) for deep financial analysis
 - **AI Chat Assistant**: Multi-provider support (Google Gemini, OpenAI GPT, Anthropic Claude, xAI Grok) with up to 5 concurrent conversation threads and Solar API context integration
-- **Modern UX**: Dark-mode glassmorphism panels, responsive layout, accessible tooltips, auto-expanding chat input, fullscreen mode
+- **Modern UX**: Dark-mode glassmorphism panels, responsive layout, accessible tooltips, auto-expanding chat input, fullscreen mode (with fixed scrollbar styling in v1.4.8)
 
 ### Desktop App Benefits
 ✅ Runs completely offline after installation  
