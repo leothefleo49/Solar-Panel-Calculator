@@ -394,4 +394,12 @@ MIT License - See [LICENSE](./LICENSE) file for details.
 
 ---
 
+## 💖 Sponsor
+
+If you find this project useful, consider supporting continued development on GitHub Sponsors:
+
+- **Sponsor:** https://github.com/sponsors/leothefleo49
+
+Donations are not required but are very much appreciated — they help cover maintenance, hosting, and adding new features.
+
 Made with ❤️ by [leothefleo49](https://github.com/leothefleo49)
