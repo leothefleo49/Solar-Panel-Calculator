@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 /* eslint-env node */
-/* eslint-disable no-undef */
 // Cross-platform deep smoke test for release integrity.
 // Validations:
 // 1. Fetch latest release metadata and ensure tag matches environment (if provided).

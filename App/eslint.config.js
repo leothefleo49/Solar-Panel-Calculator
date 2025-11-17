@@ -8,6 +8,22 @@ export default [
   { ignores: ['dist', 'node_modules', 'temp-app', 'android', 'ios', 'src-tauri'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  // CommonJS files (.cjs and config files)
+  {
+    files: ['**/*.cjs', '*.config.js'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-undef': 'off',
+      'no-console': 'off',
+    },
+  },
   // Node scripts (e.g., release tools) use Node globals like `console`
   {
     files: ['scripts/**/*.{js,mjs}'],

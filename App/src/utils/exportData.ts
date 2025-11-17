@@ -56,7 +56,7 @@ export async function importInputsFromFile(file: File): Promise<{ applied: numbe
   let json: any
   try {
     json = JSON.parse(text)
-  } catch (e) {
+  } catch {
     throw new Error('Invalid JSON file')
   }
   if (!json || !json.config) {

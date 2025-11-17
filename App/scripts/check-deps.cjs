@@ -68,7 +68,7 @@ function checkRust() {
         process.exit(0);
       }
     }
-  } catch (error) {
+  } catch {
     log('\n❌ Automatic installation failed.', 'red');
     log('\n📖 Please install Rust manually:', 'yellow');
     log('   Windows: https://win.rustup.rs/', 'cyan');

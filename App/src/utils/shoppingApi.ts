@@ -291,7 +291,7 @@ async function rankProductResults(
  * Extract product specs from Shopping API result and page content
  * Uses AI to parse specs if available and enabled, otherwise manual extraction
  */
-export async function extractProductSpecs(product: GoogleShoppingProduct, useAI: boolean = true): Promise<{
+export async function extractProductSpecs(product: GoogleShoppingProduct, _useAI: boolean = true): Promise<{
   manufacturer?: string;
   model?: string;
   power?: number;
