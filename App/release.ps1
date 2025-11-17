@@ -1,4 +1,4 @@
-# Solar Panel Calculator v1.4.7 - Quick Release Script
+# Solar Panel Calculator v1.4.8 - Quick Release Script
 # Run this after reviewing all changes
 
 param(
@@ -7,7 +7,7 @@ param(
     [switch]$Help
 )
 
-$VERSION = "1.4.7"
+$VERSION = "1.4.8"
 $ErrorActionPreference = "Stop"
 
 function Write-Step {
@@ -136,7 +136,7 @@ if (-not $DryRun) {
 
 # Step 6: Commit
 Write-Step "Committing changes..."
-$commitMessage = "chore(release): v$VERSION - fix external links & fullscreen flicker`n`n- Fixed external link opening to use system default browser on all platforms`n- Eliminated white flash during fullscreen transitions`n- Enhanced Tauri shell plugin integration with static imports"
+$commitMessage = "chore(release): v$VERSION - API save button, enhanced instructions & AI shopping search`n`n- Added Save Changes button to APIs tab (no app restart needed)`n- Enhanced API setup instructions with 3 options: easiest, most credits, best quality`n- Fixed scrollbar transparency in fullscreen mode`n- Improved Shopping Cart with AI-enhanced search (UPC, ASIN, model, brand support)`n- Better product search ranking and categorization"
 
 try {
     if ($DryRun) {

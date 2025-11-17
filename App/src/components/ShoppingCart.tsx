@@ -27,6 +27,7 @@ const CATEGORIES: { value: ProductCategory; label: string }[] = [
 export default function ShoppingCart() {
   const { items, addItem, removeItem, clearCart, checkCompatibility, getMissingComponents } = useCartStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchCategory, setSearchCategory] = useState<ProductCategory | ''>('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -49,8 +50,14 @@ export default function ShoppingCart() {
     setSearchError(null);
     
     try {
-      const results = await searchProducts(searchQuery, { maxResults: 10 });
+      const results = await searchProducts(searchQuery, { 
+        maxResults: 10,
+        category: searchCategory || undefined
+      });
       setSearchResults(results);
+      if (results.length === 0) {
+        setSearchError('No products found. Try a different search term or check your API configuration.');
+      }
     } catch (error: any) {
       setSearchError(error.message);
       setSearchResults([]);
@@ -204,37 +211,70 @@ export default function ShoppingCart() {
       {/* Search Bar */}
       <div className="space-y-4 rounded-lg border border-white/10 bg-white/5 p-4">
         <div className="flex items-start gap-2">
-          <div className="flex-1">
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-white">
-              Search Products (Google Shopping API)
-              <InfoTooltip content="Enter product name, model number, or description. Uses Google Shopping API to find compatible equipment." />
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="e.g., 'Renogy 400W solar panel' or 'SMA inverter 5kW'"
-                className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:border-accent focus:outline-none"
-              />
-              <button
-                onClick={handleSearch}
-                disabled={isSearching || !searchQuery.trim()}
-                className="rounded-lg bg-accent px-6 py-2 font-medium text-white hover:bg-accent/90 disabled:opacity-50"
-              >
-                {isSearching ? 'Searching...' : 'Search'}
-              </button>
+          <div className="flex-1 space-y-3">
+            <div>
+              <label className="mb-2 flex items-center gap-2 text-sm font-medium text-white">
+                🔍 AI-Enhanced Product Search
+                <InfoTooltip content="Search by product name, model number, UPC, ASIN, brand, or general description. AI will enhance your query for better results." />
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  placeholder="e.g., 'Renogy 400W', 'B08ABCD123' (ASIN), '123456789012' (UPC), or 'high efficiency inverter'"
+                  className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:border-accent focus:outline-none"
+                />
+                <button
+                  onClick={handleSearch}
+                  disabled={isSearching || !searchQuery.trim()}
+                  className="rounded-lg bg-accent px-6 py-2 font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+                >
+                  {isSearching ? 'Searching...' : 'Search'}
+                </button>
+              </div>
             </div>
+            
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-medium text-slate-300">Filter by Category:</label>
+              <select
+                value={searchCategory}
+                onChange={(e) => setSearchCategory(e.target.value as ProductCategory | '')}
+                className="rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none"
+              >
+                <option value="">All Categories</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-2 text-[10px] text-blue-200">
+              <p className="font-semibold mb-1">✨ Smart Search Features:</p>
+              <ul className="space-y-0.5 ml-3">
+                <li>• <strong>Product Names:</strong> "Renogy 400W solar panel", "SMA Sunny Boy inverter"</li>
+                <li>• <strong>Model Numbers:</strong> "RNG-400D", "SB5.0-1SP-US"</li>
+                <li>• <strong>UPC Codes:</strong> 12-14 digit barcode numbers</li>
+                <li>• <strong>ASIN:</strong> Amazon product IDs (B followed by 9 characters)</li>
+                <li>• <strong>Brands:</strong> "Canadian Solar", "Enphase", "Tesla Powerwall"</li>
+                <li>• <strong>General Terms:</strong> "monocrystalline 400 watt", "microinverter 300W"</li>
+              </ul>
+            </div>
+
             {searchError && (
-              <p className="mt-2 text-sm text-red-400">{searchError}</p>
+              <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300">
+                <strong>Error:</strong> {searchError}
+              </div>
             )}
           </div>
           <button
             onClick={() => setShowManualForm(!showManualForm)}
             className="mt-7 rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/10"
           >
-            {showManualForm ? 'Hide' : 'Manual Entry'}
+            {showManualForm ? 'Hide Manual' : 'Manual Entry'}
           </button>
         </div>
 

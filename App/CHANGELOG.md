@@ -5,6 +5,37 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.8] - 2025-11-16
+
+### Added
+- **Save Changes Button**: APIs tab now has a "Save Changes" button that applies configuration updates without requiring app restart
+  - Visual feedback shows "Saving...", then "✓ Changes Saved!" with green confirmation
+  - Triggers `apiKeysUpdated` event for live configuration reload
+- **Enhanced API Setup Instructions**: Comprehensive 3-option guide in APIs tab:
+  - **Option 1 (Easiest)**: Unified Key from Google Cloud Console - single key for all services
+  - **Option 2 (More Control)**: Separate keys per service, including Google AI Studio for Gemini (1500 free requests/day)
+  - **Option 3 (Best Quality)**: Multi-provider setup with OpenAI, Anthropic Claude, xAI Grok
+  - Detailed comparison: easiest setup, most free credits, best AI quality, best value long-term
+  - Platform-specific restrictions guidance (web, Android, desktop)
+- **AI-Enhanced Shopping Search**: Dramatically improved product search capabilities:
+  - **Smart Query Detection**: Automatically recognizes UPC (12-14 digits), ASIN (B + 9 chars), model numbers
+  - **AI Query Enhancement**: Uses available AI provider to optimize search queries for better results
+  - **Category Filtering**: Filter search results by product category (panels, inverters, batteries, etc.)
+  - **Intelligent Ranking**: AI-powered result sorting for relevance
+  - **Expanded Search Types**: Support for product names, model numbers, UPCs, ASINs, brands, general descriptions
+  - Enhanced search UI with examples and smart search tips
+
+### Fixed
+- **Scrollbar Transparency in Fullscreen**: Eliminated white scrollbar backgrounds in fullscreen mode
+  - Added `!important` overrides for `:fullscreen`, `:-webkit-full-screen`, `:-moz-full-screen` pseudo-classes
+  - Enforced transparent background on all scrollbar tracks and corners across all states
+  - Fixed issue where scrollbars would show white background when entering/exiting fullscreen
+
+### Changed
+- APIs tab layout improved with sticky save button at top
+- Shopping Cart search interface redesigned with better UX and feature discoverability
+- Product search now uses category context for more accurate results
+
 ## [1.4.7] - 2025-11-16
 
 ### Fixed

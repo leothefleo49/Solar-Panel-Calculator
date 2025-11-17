@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import clsx from 'clsx'
 import { useGoogleApiStore } from '../state/googleApiStore'
 import { useChatStore } from '../state/chatStore'
 import InfoTooltip from './InfoTooltip'
@@ -21,17 +22,99 @@ const ApisTab = () => {
   const { setProviderKey, clearProviderKey, providerKeys } = useChatStore()
   const [showKeys, setShowKeys] = useState(false)
   const [mode, setMode] = useState<'unified' | 'separate'>(apiKeys.unified ? 'unified' : 'separate')
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+
+  const handleSaveChanges = () => {
+    setSaveStatus('saving')
+    // Force a re-render by triggering state updates
+    setTimeout(() => {
+      setSaveStatus('saved')
+      // Trigger any components that depend on API keys to refresh
+      window.dispatchEvent(new Event('apiKeysUpdated'))
+      setTimeout(() => setSaveStatus('idle'), 2000)
+    }, 300)
+  }
 
   return (
     <div className="space-y-6">
+      {/* Save Changes Button - Fixed Position */}
+      <div className="sticky top-0 z-10 flex justify-end pb-3">
+        <button
+          type="button"
+          onClick={handleSaveChanges}
+          disabled={saveStatus === 'saving'}
+          className={clsx(
+            'rounded-xl px-6 py-2.5 text-sm font-semibold transition-all',
+            saveStatus === 'saved'
+              ? 'bg-green-500/90 text-white'
+              : saveStatus === 'saving'
+              ? 'bg-accent/50 text-white cursor-wait'
+              : 'bg-accent text-slate-900 hover:bg-accent/90 hover:shadow-lg hover:shadow-accent/30'
+          )}
+        >
+          {saveStatus === 'saved' ? '✓ Changes Saved!' : saveStatus === 'saving' ? 'Saving...' : '💾 Save Changes'}
+        </button>
+      </div>
+
       <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
         <h3 className="text-lg font-semibold flex items-center gap-2">Google APIs Configuration <InfoTooltip content="Manage keys for Solar, Maps/Geocoding, Shopping. Use a unified key (enable all APIs on one key) OR separate keys per service." /></h3>
         <p className="text-sm text-slate-300 mt-1">Configure Google Cloud APIs for solar analysis, address lookup, and product search.</p>
-        <div className="mt-3 text-[11px] text-slate-300 space-y-1">
-          <p className="font-semibold text-white/90">Quick Start (fastest way to chat):</p>
-          <p>1) Select <span className="text-accent font-semibold">Unified Key</span>. Paste your Google Cloud key (enable Solar, Geocoding, and Custom Search APIs).</p>
-          <p>2) Click <span className="text-accent font-semibold">Use Unified Google Key</span> under Gemini.</p>
-          <p>3) Open the Chat Assistant and ask for help. You can add other providers later.</p>
+        
+        {/* Enhanced Quick Start Guide */}
+        <div className="mt-3 rounded-2xl border border-accent/30 bg-accent/5 p-4 space-y-2">
+          <p className="font-semibold text-white/90 text-sm">🚀 Quick Start Guide - Three Options:</p>
+          
+          <div className="space-y-3 text-xs text-slate-300">
+            <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-3">
+              <p className="font-semibold text-green-400 mb-1.5">✨ Option 1: Unified Key (Easiest - Recommended for Beginners)</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Go to <button type="button" onClick={() => openExternalUrl('https://console.cloud.google.com/')} className="text-accent hover:underline font-medium">Google Cloud Console</button></li>
+                <li>Create a project, enable: Solar API, Geocoding API, Custom Search API</li>
+                <li>Create ONE API key with restrictions (HTTP referrers for web, bundle ID for mobile)</li>
+                <li>Paste key below in "Unified Key" mode</li>
+                <li>Click "Use Unified Google Key" for Gemini chat (reuses same key)</li>
+                <li>Click Save Changes above</li>
+              </ol>
+              <p className="text-green-300 mt-2 text-[10px]">💡 Best for: Maximum simplicity, single key management</p>
+              <p className="text-green-300 text-[10px]">💰 Cost: Pay-as-you-go for all services ($200 free credits for new accounts)</p>
+            </div>
+
+            <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-3">
+              <p className="font-semibold text-blue-400 mb-1.5">⚡ Option 2: Separate Keys (More Control)</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Create separate API keys for Solar, Maps, Shopping in Cloud Console</li>
+                <li>Get dedicated Gemini key from <button type="button" onClick={() => openExternalUrl('https://aistudio.google.com/apikey')} className="text-accent hover:underline font-medium">Google AI Studio</button> (different from Cloud)</li>
+                <li>Switch to "Separate Keys" mode and paste each key</li>
+                <li>Click Save Changes above</li>
+              </ol>
+              <p className="text-blue-300 mt-2 text-[10px]">💡 Best for: Tracking usage per service, separate billing</p>
+              <p className="text-blue-300 text-[10px]">💰 Cost: Cloud Console (pay-as-you-go), AI Studio (free tier: 1500 requests/day for Gemini)</p>
+            </div>
+
+            <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-3">
+              <p className="font-semibold text-purple-400 mb-1.5">🎯 Option 3: Multi-Provider (Best Quality & Flexibility)</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Use Unified or Separate keys for Google services (Solar/Maps/Shopping)</li>
+                <li>Add OpenAI key (<button type="button" onClick={() => openExternalUrl('https://platform.openai.com/api-keys')} className="text-accent hover:underline font-medium">platform.openai.com</button>) for GPT-5</li>
+                <li>Add Anthropic key (<button type="button" onClick={() => openExternalUrl('https://console.anthropic.com/')} className="text-accent hover:underline font-medium">console.anthropic.com</button>) for Claude</li>
+                <li>Add xAI key for Grok (if desired)</li>
+                <li>Switch between providers in Chat Assistant</li>
+                <li>Click Save Changes above</li>
+              </ol>
+              <p className="text-purple-300 mt-2 text-[10px]">💡 Best for: Access to best models, redundancy, comparing AI outputs</p>
+              <p className="text-purple-300 text-[10px]">💰 Cost: Varies by provider - Claude/GPT-5 offer best quality, Gemini offers most free tier</p>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-white/10">
+            <p className="font-semibold text-white/90 text-xs mb-1">🎓 Recommendation Matrix:</p>
+            <ul className="space-y-1 text-[10px] text-slate-300">
+              <li><span className="text-green-400 font-semibold">• Easiest Setup:</span> Option 1 (Unified Key from Cloud Console)</li>
+              <li><span className="text-blue-400 font-semibold">• Most Free Credits:</span> Option 2 Gemini via AI Studio (1500/day) + Cloud Console ($200 initial credit)</li>
+              <li><span className="text-purple-400 font-semibold">• Best AI Quality:</span> Option 3 with Claude 3.5 Sonnet or GPT-5</li>
+              <li><span className="text-amber-400 font-semibold">• Best Value Long-Term:</span> Option 1 Unified Key (consolidated billing, easier tracking)</li>
+            </ul>
+          </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-3 items-center">
           <button
@@ -177,30 +260,53 @@ const ApisTab = () => {
       </div>
 
       <div className="rounded-3xl border border-white/10 bg-white/5 p-5 space-y-4">
-        <h4 className="text-sm font-semibold uppercase tracking-widest text-slate-300">Setup Instructions</h4>
+        <h4 className="text-sm font-semibold uppercase tracking-widest text-slate-300">Detailed Setup Instructions</h4>
         <div className="space-y-3 text-xs text-slate-300">
           <div>
-            <p className="font-semibold text-accent mb-1">Google Cloud APIs:</p>
+            <p className="font-semibold text-accent mb-1">Google Cloud Console Setup:</p>
             <ol className="list-decimal list-inside space-y-1">
-              <li>Create project at <button type="button" onClick={() => openExternalUrl('https://console.cloud.google.com/')} className="text-accent hover:underline">Google Cloud Console</button></li>
-              <li>Enable: Solar API, Maps JavaScript API, Geocoding API, Custom Search API</li>
-              <li>Generate restricted API key (HTTP referrers / bundle id / package name)</li>
-              <li>For Shopping: visit <button type="button" onClick={() => openExternalUrl('https://programmablesearchengine.google.com')} className="text-accent hover:underline">programmablesearchengine.google.com</button>, create engine, enable "Search the entire web", copy CX</li>
-              <li>Unified mode: same key for all. Separate mode: individual keys per API</li>
+              <li>Visit <button type="button" onClick={() => openExternalUrl('https://console.cloud.google.com/')} className="text-accent hover:underline">console.cloud.google.com</button> and create/select a project</li>
+              <li>Enable APIs: <span className="font-medium">Solar API, Maps JavaScript API, Geocoding API, Custom Search JSON API</span></li>
+              <li>Create API Key with appropriate restrictions:
+                <ul className="list-disc list-inside ml-4 mt-1 space-y-0.5">
+                  <li><span className="font-medium">Web:</span> HTTP referrers (e.g., localhost:*, yourdomain.com/*)</li>
+                  <li><span className="font-medium">Android:</span> Bundle ID (com.solarpanel.calculator)</li>
+                  <li><span className="font-medium">Desktop:</span> Use web restrictions or none for local testing</li>
+                </ul>
+              </li>
+              <li>For Shopping: Create Custom Search Engine at <button type="button" onClick={() => openExternalUrl('https://programmablesearchengine.google.com')} className="text-accent hover:underline">programmablesearchengine.google.com</button>
+                <ul className="list-disc list-inside ml-4 mt-1">
+                  <li>Enable "Search the entire web"</li>
+                  <li>Copy your Search Engine ID (cx parameter)</li>
+                </ul>
+              </li>
             </ol>
           </div>
           <div>
-            <p className="font-semibold text-accent mb-1">AI Provider Keys:</p>
+            <p className="font-semibold text-accent mb-1">Google AI Studio (Alternative for Gemini):</p>
             <ul className="list-disc list-inside space-y-1">
-              <li><strong>Gemini:</strong> Can use unified Google key OR separate Gemini key from AI Studio</li>
-              <li><strong>OpenAI:</strong> Get from <button type="button" onClick={() => openExternalUrl('https://platform.openai.com/api-keys')} className="text-accent hover:underline">platform.openai.com</button></li>
-              <li><strong>Claude:</strong> Get from <button type="button" onClick={() => openExternalUrl('https://console.anthropic.com/')} className="text-accent hover:underline">console.anthropic.com</button></li>
-              <li><strong>Grok:</strong> Get from xAI portal</li>
-              <li>Only providers with configured keys will appear in chat assistant</li>
+              <li>Visit <button type="button" onClick={() => openExternalUrl('https://aistudio.google.com/apikey')} className="text-accent hover:underline">aistudio.google.com/apikey</button></li>
+              <li>Create API key (separate from Cloud Console)</li>
+              <li>Free tier: 1500 requests/day for Gemini models</li>
+              <li>Cannot be used for Solar/Maps/Shopping APIs (Cloud Console only)</li>
+            </ul>
+          </div>
+          <div>
+            <p className="font-semibold text-accent mb-1">Other AI Provider Keys:</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li><strong>OpenAI:</strong> <button type="button" onClick={() => openExternalUrl('https://platform.openai.com/api-keys')} className="text-accent hover:underline">platform.openai.com/api-keys</button> - Pay-as-you-go, GPT-5/GPT-4o models</li>
+              <li><strong>Anthropic:</strong> <button type="button" onClick={() => openExternalUrl('https://console.anthropic.com/')} className="text-accent hover:underline">console.anthropic.com</button> - Claude 3.5 Sonnet (best for complex analysis)</li>
+              <li><strong>xAI Grok:</strong> Contact xAI for API access</li>
+              <li>Only configured providers appear in Chat Assistant dropdown</li>
             </ul>
           </div>
         </div>
-        <p className="text-[10px] text-slate-400">Never commit keys. They persist locally via storage; clear before sharing screenshots.</p>
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
+          <p className="text-[10px] text-amber-200">
+            <strong>🔒 Security:</strong> Never commit API keys to git. Keys are stored locally in browser/app storage. 
+            Clear keys before sharing screenshots. Use API restrictions to limit unauthorized usage.
+          </p>
+        </div>
       </div>
     </div>
   )

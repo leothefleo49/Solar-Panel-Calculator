@@ -183,6 +183,40 @@ body::-webkit-scrollbar-corner {
   background: transparent;
 }
 
+/* Fullscreen-specific scrollbar overrides to prevent white backgrounds */
+:fullscreen *::-webkit-scrollbar-track,
+:fullscreen body::-webkit-scrollbar-track,
+:fullscreen html::-webkit-scrollbar-track,
+:-webkit-full-screen *::-webkit-scrollbar-track,
+:-webkit-full-screen body::-webkit-scrollbar-track,
+:-webkit-full-screen html::-webkit-scrollbar-track,
+:-moz-full-screen *::-webkit-scrollbar-track,
+:-moz-full-screen body::-webkit-scrollbar-track,
+:-moz-full-screen html::-webkit-scrollbar-track {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+:fullscreen,
+:-webkit-full-screen,
+:-moz-full-screen {
+  scrollbar-color: rgba(56, 189, 248, 0.8) transparent !important;
+}
+
+:fullscreen *,
+:-webkit-full-screen *,
+:-moz-full-screen * {
+  scrollbar-color: rgba(56, 189, 248, 0.8) transparent !important;
+}
+
+/* Ensure scrollbar corners are always transparent */
+*::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner,
+html::-webkit-scrollbar-corner {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
 /* Reworked summary trigger with caret icon on right side */
 .summary-trigger {
   position: relative;

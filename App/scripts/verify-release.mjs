@@ -4,7 +4,7 @@
 
 /**
  * Production Release Checklist & Verification Script
- * Ensures all files are properly configured for v1.4.7 release
+ * Ensures all files are properly configured for v1.4.8 release
  */
 
 import { readFileSync, existsSync } from 'fs';
@@ -21,7 +21,7 @@ const CHECKS = {
   INFO: 'ℹ️'
 };
 
-const TARGET_VERSION = '1.4.7';
+const TARGET_VERSION = '1.4.8';
 let allPassed = true;
 
 console.log('\n🚀 Solar Panel Calculator - Production Release Verification\n');
@@ -203,8 +203,8 @@ if (allPassed) {
   console.log(`\n${CHECKS.PASSED} All critical checks passed!`);
   console.log('\n📋 Next Steps:');
   console.log('   1. Review changes: git status && git diff');
-  console.log('   2. Commit: git add -A && git commit -m "Release v1.4.7"');
-  console.log('   3. Tag: git tag v1.4.7');
+  console.log('   2. Commit: git add -A && git commit -m "Release v1.4.8"');
+  console.log('   3. Tag: git tag v1.4.8');
   console.log('   4. Push: git push origin main --tags');
   console.log('   5. GitHub Actions will automatically build and release\n');
 } else {
