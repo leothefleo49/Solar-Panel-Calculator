@@ -40,12 +40,16 @@ jobs:
         working-directory: App
 
       - name: Xcode Build (Simulator, unsigned)
+        id: xcode_build
+        continue-on-error: true
         run: |
           cd ios
           xcodebuild -scheme App -configuration Release -sdk iphonesimulator -arch x86_64 build | xcpretty || true
         working-directory: App
 
       - name: Package Simulator App
+        if: success() || failure()
+        continue-on-error: true
         run: |
           cd ios
           APP_PATH=$(find build -name "*.app" -type d | head -n1 || true)
@@ -57,14 +61,23 @@ jobs:
         working-directory: App
 
       - name: Upload iOS Simulator Artifact
-        uses: actions/upload-artifact@v4
         if: ${{ hashFiles('Solar-Panel-Calculator-iOS-Simulator.zip') != '' }}
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
         with:
           name: Solar-Panel-Calculator-iOS-Simulator
           path: Solar-Panel-Calculator-iOS-Simulator.zip
 
-      - name: Report Success (iOS is optional)
+      - name: iOS Build Status Summary
         if: always()
         run: |
-          echo "✅ iOS workflow completed. Build may have failed but this is expected for optional platform."
+          echo "📱 iOS Simulator Build (Optional Platform)"
+          echo "==========================================="
+          if [ -f "$GITHUB_WORKSPACE/Solar-Panel-Calculator-iOS-Simulator.zip" ]; then
+            echo "✅ iOS simulator build succeeded"
+          else
+            echo "⚠️  iOS simulator build skipped or failed (this is OK - iOS is optional)"
+          fi
+          echo ""
+          echo "This workflow always exits successfully because iOS builds are optional."
           exit 0
