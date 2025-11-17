@@ -5,7 +5,7 @@
  * Provides detailed error messages for troubleshooting.
  */
 
-import { logError, logWarning } from './errorLogger';
+import { logError } from './errorLogger';
 
 export interface ValidationResult {
   valid: boolean;
@@ -210,7 +210,7 @@ export async function validateGeminiKey(apiKey: string): Promise<ValidationResul
     if (!response.ok) {
       const errorMessage = data.error?.message || response.statusText;
       
-      let errorType: ValidationResult['errorType'] = 'auth';
+      const errorType: ValidationResult['errorType'] = 'auth';
       let suggestedFixes: string[] = [];
       
       if (response.status === 401 || response.status === 403) {

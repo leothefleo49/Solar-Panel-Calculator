@@ -77,10 +77,14 @@ export default function QuotaMonitor() {
   }, [providerKeys.openai, providerKeys.anthropic, providerKeys.google, apiKeys.unified, apiKeys.solar]);
 
   useEffect(() => {
-    refreshQuotas();
+    // Initial load with slight delay to avoid cascading renders
+    const timeout = setTimeout(refreshQuotas, 0);
     // Auto-refresh every 5 minutes
     const interval = setInterval(refreshQuotas, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, [refreshQuotas]);
 
   const getUsagePercentage = (quota: ApiQuota): number => {

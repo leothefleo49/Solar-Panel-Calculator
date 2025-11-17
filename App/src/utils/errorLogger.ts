@@ -78,7 +78,6 @@ interface ErrorLoggerConfig {
 class ErrorLogger {
   private logs: ErrorLog[] = [];
   private config: ErrorLoggerConfig;
-  private scheduledEmailTimer?: any;
   
   constructor(config: Partial<ErrorLoggerConfig> = {}) {
     this.config = {
@@ -249,7 +248,7 @@ class ErrorLogger {
   private generateDebuggingAdvice(
     category: ErrorLog['category'],
     message: string,
-    error?: Error
+    _error?: Error
   ): string[] {
     const advice: string[] = [];
     
@@ -402,8 +401,8 @@ class ErrorLogger {
       if (filter.category) {
         filtered = filtered.filter(log => log.category === filter.category);
       }
-      if (filter.since) {
-        filtered = filtered.filter(log => log.timestamp >= filter.since);
+      if (filter.since !== undefined) {
+        filtered = filtered.filter(log => log.timestamp >= filter.since!);
       }
     }
     
@@ -465,7 +464,7 @@ class ErrorLogger {
         
         const msUntilMonday = nextMonday.getTime() - now.getTime();
         
-        this.scheduledEmailTimer = setTimeout(() => {
+        setTimeout(() => {
           this.sendWeeklyReport();
           scheduleNext(); // Schedule next Monday
         }, msUntilMonday);
@@ -616,8 +615,8 @@ class ErrorLogger {
 // Singleton instance
 export const errorLogger = new ErrorLogger({
   mode: 'beta', // Change to 'production' when ready
-  emailEndpoint: process.env.VITE_ERROR_LOG_ENDPOINT,
-  emailTo: process.env.VITE_ERROR_LOG_EMAIL,
+  emailEndpoint: import.meta.env.VITE_ERROR_LOG_ENDPOINT,
+  emailTo: import.meta.env.VITE_ERROR_LOG_EMAIL,
   enableConsoleLogging: true,
 });
 
