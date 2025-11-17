@@ -35,7 +35,7 @@ Click your operating system to download the latest installer directly:
 - macOS: If blocked, right‑click the app → Open (first run).
 - Linux AppImage: Right‑click file → Properties → make executable.
 - Android: Enable "Install unknown apps" in your device settings.
-- iOS: See iOS Deployment Options below for web/PWA/self-build instructions.
+ - iOS: See [iOS Deployment Options](#ios-deployment-options) below for web/PWA/self-build instructions.
 
 ---
 

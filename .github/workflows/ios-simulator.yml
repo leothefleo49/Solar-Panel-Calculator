@@ -1,0 +1,61 @@
+name: iOS Simulator Build on Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-ios-simulator:
+    name: iOS Simulator (push to main)
+    runs-on: macos-latest
+    continue-on-error: true
+    env:
+      VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods --no-document
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: App
+
+      - name: Add iOS Platform (Capacitor)
+        run: |
+          npx cap add ios || echo 'iOS platform already added'
+        working-directory: App
+
+      - name: Sync iOS
+        run: npm run cap:sync:ios
+        working-directory: App
+
+      - name: Xcode Build (Simulator, unsigned)
+        run: |
+          cd ios
+          xcodebuild -scheme App -configuration Release -sdk iphonesimulator -arch x86_64 build | xcpretty || true
+        working-directory: App
+
+      - name: Package Simulator App
+        run: |
+          cd ios
+          APP_PATH=$(find build -name "*.app" -type d | head -n1 || true)
+          if [ -n "$APP_PATH" ]; then
+            ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$GITHUB_WORKSPACE/Solar-Panel-Calculator-iOS-Simulator.zip"
+          else
+            echo "No .app found to package"
+          fi
+        working-directory: App
+
+      - name: Upload iOS Simulator Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Solar-Panel-Calculator-iOS-Simulator
+          path: Solar-Panel-Calculator-iOS-Simulator.zip

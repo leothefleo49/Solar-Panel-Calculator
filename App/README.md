@@ -58,7 +58,7 @@ Notes:
 - macOS: If blocked, right‑click the app → Open (first run).
 - Linux AppImage: Right‑click file → Properties → make executable.
 - Android: Enable “Install unknown apps” in your device settings.
-- iOS: A signed .ipa requires Apple credentials; the simulator app is for developers.
+- iOS: See [iOS Deployment Options](#ios-deployment-options) in the project README for web/PWA/self-build instructions. A signed .ipa requires Apple credentials; the simulator app is for developers.
 
 ---
 
