@@ -123,7 +123,7 @@ jobs:
           path: App/src-tauri/target/release/release-artifacts/*
 
       - name: Sign Windows binaries (optional)
-        if: matrix.platform == 'windows' && secrets.WINDOWS_PFX_BASE64 != ''
+        if: ${{ matrix.platform == 'windows' && env.WINDOWS_PFX_BASE64 != '' }}
         shell: pwsh
         env:
           WINDOWS_PFX_BASE64: ${{ secrets.WINDOWS_PFX_BASE64 }}
