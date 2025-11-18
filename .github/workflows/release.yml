@@ -30,7 +30,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
-      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
+      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT != '' && secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
       
@@ -123,7 +123,7 @@ jobs:
           path: App/src-tauri/target/release/release-artifacts/*
 
       - name: Sign Windows binaries (optional)
-        if: matrix.platform == 'windows' && env.WINDOWS_PFX_BASE64 != ''
+        if: matrix.platform == 'windows' && secrets.WINDOWS_PFX_BASE64 != ''
         shell: pwsh
         env:
           WINDOWS_PFX_BASE64: ${{ secrets.WINDOWS_PFX_BASE64 }}
@@ -146,7 +146,7 @@ jobs:
         working-directory: App
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
-      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
+      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT != '' && secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -257,7 +257,7 @@ jobs:
     continue-on-error: true  # Don't fail CI if iOS build fails (optional platform)
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
-      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
+      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT != '' && secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
@@ -337,7 +337,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
-      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
+      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT != '' && secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
       

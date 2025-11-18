@@ -1,0 +1,198 @@
+name: Auto Version Sync & Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'App/package.json'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-version:
+    name: Sync Version Across Files
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      version-changed: ${{ steps.check-changes.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Get version from package.json
+        id: get-version
+        run: |
+          VERSION=$(node -p "require('./App/package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Current version: $VERSION"
+      
+      - name: Check if version changed
+        id: check-changes
+        run: |
+          # Check if version changed in last commit
+          if git diff HEAD~1 HEAD -- App/package.json | grep -q '"version"'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "✅ Version changed in this commit"
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Version unchanged, skipping"
+          fi
+      
+      - name: Sync version to all files
+        if: steps.check-changes.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.get-version.outputs.version }}"
+          
+          # Update tauri.conf.json
+          node -e "
+            const fs = require('fs');
+            const path = 'App/src-tauri/tauri.conf.json';
+            const config = JSON.parse(fs.readFileSync(path));
+            config.version = '$VERSION';
+            fs.writeFileSync(path, JSON.stringify(config, null, 2) + '\n');
+            console.log('✅ Updated tauri.conf.json');
+          "
+          
+          # Update Cargo.toml
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" App/src-tauri/Cargo.toml
+          echo "✅ Updated Cargo.toml"
+          
+          # Update README.md version badges
+          sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*/version-$VERSION/g" README.md
+          sed -i "s/v[0-9]*\.[0-9]*\.[0-9]*/v$VERSION/g" README.md
+          echo "✅ Updated README.md"
+          
+          # Update PHONE_QUICK_START.md
+          if [ -f PHONE_QUICK_START.md ]; then
+            sed -i "s/v[0-9]*\.[0-9]*\.[0-9]*/v$VERSION/g" PHONE_QUICK_START.md
+            echo "✅ Updated PHONE_QUICK_START.md"
+          fi
+      
+      - name: Check for changes
+        id: check-diff
+        if: steps.check-changes.outputs.changed == 'true'
+        run: |
+          if git diff --quiet; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "⏭️ No version sync needed"
+          else
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Version sync changes ready"
+          fi
+      
+      - name: Commit version sync
+        if: steps.check-changes.outputs.changed == 'true' && steps.check-diff.outputs.has-changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: sync version ${{ steps.get-version.outputs.version }} across all files [skip ci]"
+          git push
+
+  create-release:
+    name: Auto-Create Release
+    needs: sync-version
+    if: needs.sync-version.outputs.version-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      
+      - name: Wait for version sync commit
+        run: |
+          echo "⏳ Waiting 10 seconds for version sync to complete..."
+          sleep 10
+          git pull origin main
+      
+      - name: Check if tag exists
+        id: check-tag
+        run: |
+          VERSION="v${{ needs.sync-version.outputs.version }}"
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Tag $VERSION already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag $VERSION does not exist"
+          fi
+      
+      - name: Create and push tag
+        if: steps.check-tag.outputs.exists == 'false'
+        run: |
+          VERSION="v${{ needs.sync-version.outputs.version }}"
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Generate release notes
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            NOTES=$(git log $PREV_TAG..HEAD --pretty=format:"- %s" --no-merges | grep -v "skip ci" || echo "- Bug fixes and improvements")
+          else
+            NOTES="- Initial release"
+          fi
+          
+          # Create annotated tag
+          git tag -a "$VERSION" -m "Release $VERSION
+
+          Changes:
+          $NOTES"
+          
+          git push origin "$VERSION"
+          echo "✅ Created and pushed tag $VERSION"
+          echo "🚀 Release build will start automatically"
+
+  update-docs:
+    name: Update Documentation Links
+    needs: [sync-version, create-release]
+    if: needs.sync-version.outputs.version-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      
+      - name: Update download links in README
+        run: |
+          VERSION="${{ needs.sync-version.outputs.version }}"
+          
+          # Update README.md with latest download links
+          if [ -f README.md ]; then
+            # Update version badges
+            sed -i "s|releases/tag/v[0-9]*\.[0-9]*\.[0-9]*|releases/tag/v$VERSION|g" README.md
+            sed -i "s|releases/download/v[0-9]*\.[0-9]*\.[0-9]*|releases/download/v$VERSION|g" README.md
+            echo "✅ Updated README.md download links"
+          fi
+          
+          # Update QUICK_RELEASE.md
+          if [ -f QUICK_RELEASE.md ]; then
+            sed -i "s/1\.[0-9]*\.[0-9]*/$VERSION/g" QUICK_RELEASE.md
+            sed -i "s/v1\.[0-9]*\.[0-9]*/v$VERSION/g" QUICK_RELEASE.md
+            echo "✅ Updated QUICK_RELEASE.md"
+          fi
+          
+          # Update PHONE_QUICK_START.md
+          if [ -f PHONE_QUICK_START.md ]; then
+            sed -i "s/v[0-9]*\.[0-9]*\.[0-9]*/v$VERSION/g" PHONE_QUICK_START.md
+            echo "✅ Updated PHONE_QUICK_START.md"
+          fi
+      
+      - name: Commit documentation updates
+        run: |
+          if git diff --quiet; then
+            echo "⏭️ No documentation updates needed"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -m "docs: update download links for v${{ needs.sync-version.outputs.version }} [skip ci]"
+            git push
+            echo "✅ Documentation updated"
+          fi
