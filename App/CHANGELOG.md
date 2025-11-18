@@ -5,6 +5,17 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.15] - 2025-11-17
+
+### Fixed
+- **GitHub Actions Workflow**: Fixed duplicate `latest.json` upload error in release workflow
+  - Resolved file path conflicts in artifact uploads
+  - Improved file pattern matching for cleaner releases
+
+### Notes
+- This is a maintenance release to fix the v1.4.14 upload issue
+- All features and fixes from v1.4.13 and v1.4.14 are included
+
 ## [1.4.14] - 2025-11-17
 
 ### Fixed
