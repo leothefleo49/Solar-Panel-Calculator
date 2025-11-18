@@ -529,8 +529,8 @@ const ChatAssistant = () => {
             type="button"
             onClick={handleSend}
             disabled={loading}
-            className="rounded-xl bg-accent px-3 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:opacity-40 flex items-center justify-center"
-            style={{ minWidth: '70px', height: textareaRef.current?.offsetHeight || 48 }}
+            className="rounded-xl bg-accent px-4 h-12 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:opacity-40 flex items-center justify-center"
+            style={{ minWidth: '70px' }}
           >
             Send
           </button>

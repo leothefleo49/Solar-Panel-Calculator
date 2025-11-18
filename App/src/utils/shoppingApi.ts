@@ -63,7 +63,19 @@ export async function searchProducts(query: string, options?: {
       // If first query fails—throw; otherwise continue to next fallback
       if (aggregated.length === 0) {
         const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
-        throw new Error(error.error?.message || `Shopping API request failed: ${response.status}`);
+        const errorMessage = error.error?.message || `Shopping API request failed: ${response.status}`;
+        
+        // Provide helpful error messages based on common issues
+        if (response.status === 403) {
+          if (errorMessage.includes('blocked') || errorMessage.includes('API')) {
+            throw new Error('Custom Search API is not enabled for this key. Enable it in Google Cloud Console: https://console.cloud.google.com/apis/library/customsearch.googleapis.com');
+          }
+          throw new Error('Invalid API key or Search Engine ID (CX). Please check your configuration in the APIs tab.');
+        } else if (response.status === 429) {
+          throw new Error('Daily quota exceeded (100 queries/day free). Please wait until tomorrow or upgrade your plan.');
+        }
+        
+        throw new Error(errorMessage);
       } else {
         continue;
       }

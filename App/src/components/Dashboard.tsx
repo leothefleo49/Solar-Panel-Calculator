@@ -95,7 +95,7 @@ const Dashboard = () => {
       <header className="flex flex-col gap-2 border-b border-white/10 pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-accent">Dashboard</p>
-          <h2 className="mt-2 text-3xl font-semibold">Solar System Financial & Technical Analysis</h2>
+          <h2 className="mt-2 text-3xl font-semibold">Solar Panel System Financial & Technical Analysis</h2>
           <p className="text-sm text-slate-300">
             Every visualization updates instantly as you tweak the configurator. Use the tabs to explore finances,
             production, resilience, and the full amortization schedule.
@@ -605,7 +605,7 @@ const LabeledInput = ({ label, helper, value, onChange }: LabeledInputProps) => 
         const nextValue = Number(event.target.value)
         onChange(Number.isNaN(nextValue) ? 0 : nextValue)
       }}
-      className="mt-1 w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-accent focus:ring-accent"
+      className="mt-1 w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-accent"
     />
     <span className="text-xs text-slate-400">{helper}</span>
   </label>

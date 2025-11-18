@@ -92,7 +92,12 @@ export async function callOpenAI(apiKey: string, model: string, messages: AIMess
     }
     
     const data = await res.json()
-    const answer = data.choices?.[0]?.message?.content?.trim() || 'No response.'
+    const answer = data.choices?.[0]?.message?.content?.trim()
+    
+    if (!answer) {
+      await logWarning('OpenAI returned empty response', 'api')
+      return { ok: false, content: '', error: 'OpenAI returned an empty response. The model may have refused to generate content or encountered an issue. Try rephrasing your request.' }
+    }
     
     // Track usage with token count
     const tokens = data.usage?.total_tokens || 0
@@ -151,7 +156,12 @@ export async function callGrok(apiKey: string, model: string, messages: AIMessag
     }
     
     const data = await res.json()
-    const answer = data.choices?.[0]?.message?.content?.trim() || 'No response.'
+    const answer = data.choices?.[0]?.message?.content?.trim()
+    
+    if (!answer) {
+      await logWarning('Grok returned empty response', 'api')
+      return { ok: false, content: '', error: 'Grok returned an empty response. The model may have refused to generate content or encountered an issue. Try rephrasing your request.' }
+    }
     
     // Track usage with token count
     const tokens = data.usage?.total_tokens || 0
@@ -241,7 +251,12 @@ export async function callGeminiFlash(
       return { ok: false, content: '', error: 'Response blocked by safety filters. Try rephrasing your question.' }
     }
     
-    const answer = data.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('\n')?.trim() || 'No response.'
+    const answer = data.candidates?.[0]?.content?.parts?.map((p: any) => p.text).join('\n')?.trim()
+    
+    if (!answer) {
+      await logWarning('Gemini returned empty response', 'api')
+      return { ok: false, content: '', error: 'Gemini returned an empty response. The model may have refused to generate content or encountered an issue. Try rephrasing your request.' }
+    }
     
     // Track usage with token count (Gemini may not always provide usage metadata)
     const tokens = data.usageMetadata?.totalTokenCount || 0
@@ -316,7 +331,12 @@ export async function callClaude(apiKey: string, model: string, messages: AIMess
     }
     
     const data = await res.json()
-    const answer = data.content?.[0]?.text?.trim() || 'No response.'
+    const answer = data.content?.[0]?.text?.trim()
+    
+    if (!answer) {
+      await logWarning('Claude returned empty response', 'api')
+      return { ok: false, content: '', error: 'Claude returned an empty response. The model may have refused to generate content or encountered an issue. Try rephrasing your request.' }
+    }
     
     // Track usage with token count
     const tokens = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)

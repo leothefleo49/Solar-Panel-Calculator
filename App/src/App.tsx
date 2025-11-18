@@ -42,10 +42,10 @@ const App = () => {
       if (!resizing.current) return
       const dx = e.clientX - resizing.current.startX
       if (resizing.current.side === 'left') {
-        const next = Math.min(640, Math.max(240, resizing.current.startW + dx))
+        const next = Math.min(800, Math.max(240, resizing.current.startW + dx))
         setLeftWidth(next)
       } else {
-        const next = Math.min(640, Math.max(320, resizing.current.startW - dx))
+        const next = Math.min(1000, Math.max(320, resizing.current.startW - dx))
         setRightWidth(next)
       }
     }
@@ -59,11 +59,11 @@ const App = () => {
   }, [])
 
   const dashboardFlexBasis = (() => {
-    // Expand dashboard when panels are collapsed; add smooth transition via CSS class
+    // Expand dashboard to fill remaining space between panels
     if (leftCollapsed && rightCollapsed) return '100%'
-    if (leftCollapsed && !rightCollapsed) return 'calc(100% - 28rem)' // reserve space right panel
-    if (!leftCollapsed && rightCollapsed) return 'calc(100% - 24rem)' // reserve space left panel
-    return 'auto'
+    if (leftCollapsed && !rightCollapsed) return `calc(100% - ${rightWidth}px - 3rem)` // reserve space for right panel + gaps
+    if (!leftCollapsed && rightCollapsed) return `calc(100% - ${leftWidth}px - 3rem)` // reserve space for left panel + gaps
+    return `calc(100% - ${leftWidth}px - ${rightWidth}px - 6rem)` // both panels visible
   })()
 
   const startResize = (side: 'left' | 'right', e: React.MouseEvent) => {
