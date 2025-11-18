@@ -30,6 +30,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
+      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
       
@@ -145,6 +146,7 @@ jobs:
         working-directory: App
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
+      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -255,6 +257,7 @@ jobs:
     continue-on-error: true  # Don't fail CI if iOS build fails (optional platform)
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
+      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Node
@@ -334,6 +337,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
+      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
       
