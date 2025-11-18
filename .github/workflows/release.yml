@@ -390,12 +390,25 @@ jobs:
           set -e
           base="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download"
           urls=(
+            # Desktop (Windows)
             "$base/Solar-Panel-Calculator-Windows.msi"
             "$base/Solar-Panel-Calculator-Windows.exe"
+
+            # macOS
             "$base/Solar-Panel-Calculator-macOS.dmg"
+
+            # Linux
             "$base/Solar-Panel-Calculator-Linux.AppImage"
             "$base/Solar-Panel-Calculator-Linux.deb"
+
+            # Android - try common signed/unsigned/debug names (some CI builds produce different names)
+            "$base/Solar-Panel-Calculator-Android.apk"
             "$base/Solar-Panel-Calculator-Android-Unsigned.apk"
+            "$base/Solar-Panel-Calculator-Android-Debug.apk"
+            "$base/Solar-Panel-Calculator-Android-Release.apk"
+
+            # iOS Simulator (optional)
+            "$base/Solar-Panel-Calculator-iOS-Simulator.zip"
           )
           for u in "${urls[@]}"; do
             echo "Checking: $u"

@@ -2,7 +2,6 @@
 
 > 🌞 **Professional solar PV financial & technical analysis dashboard** with glassmorphism UI, high-precision modeling, AI-powered assistance, and **Google Solar API integration**.
 
-[![Download Latest Release](https://img.shields.io/github/v/release/leothefleo49/Solar-Panel-Calculator?style=for-the-badge&logo=github)](https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest)
 [![Platform Support](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS-blue?style=for-the-badge)](#)
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ff69b4?style=for-the-badge&logo=github)](https://github.com/sponsors/leothefleo49)
 
