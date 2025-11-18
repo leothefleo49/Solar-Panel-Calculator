@@ -102,6 +102,15 @@ class ErrorLogger {
       ...config,
     };
     
+    // Log configuration status
+    if (this.config.enableConsoleLogging) {
+      console.log('🔧 Error Logger initialized:', {
+        mode: this.config.mode,
+        endpointConfigured: this.config.emailEndpoint?.startsWith('http') ? '✅' : '❌ (Set VITE_ERROR_LOG_ENDPOINT in .env)',
+        emailTo: this.config.emailTo,
+      });
+    }
+    
     this.loadLogsFromStorage();
     this.setupGlobalErrorHandlers();
     this.setupBeforeUnloadHandler();
@@ -468,30 +477,76 @@ class ErrorLogger {
    * Setup beforeunload handler to send report on app close
    */
   private setupBeforeUnloadHandler(): void {
-    const sendReportOnClose = async () => {
+    const sendReportOnClose = () => {
       // Get logs since last report
       const lastReportTime = this.getLastReportTime();
       const newLogs = this.logs.filter(log => log.timestamp > lastReportTime);
       
-      if (newLogs.length > 0 || this.config.mode === 'beta') {
-        // In beta mode, always send report (even if no new errors)
-        const logsToSend = newLogs.length > 0 ? newLogs : this.logs.slice(-10);
-        
+      if (!this.config.emailEndpoint) {
+        console.warn('⚠️ Error logger: No email endpoint configured. Set VITE_ERROR_LOG_ENDPOINT in .env file.');
+        return;
+      }
+      
+      if (!this.config.emailEndpoint.startsWith('http')) {
+        console.warn('⚠️ Error logger: Invalid email endpoint. Please deploy webhook server and update .env');
+        return;
+      }
+      
+      // In beta mode, always send report (even if no errors)
+      let logsToSend = newLogs.length > 0 ? newLogs : [];
+      
+      if (this.config.mode === 'beta' && logsToSend.length === 0) {
+        // Create a session report log
+        logsToSend = [{
+          id: `session-${Date.now()}`,
+          timestamp: Date.now(),
+          type: 'info',
+          category: 'system',
+          message: 'App session ended - no errors encountered',
+          context: {
+            platform: 'unknown',
+            appVersion: 'unknown',
+            userAgent: navigator.userAgent,
+            screenResolution: `${window.screen.width}x${window.screen.height}`,
+            apiKeysConfigured: {
+              unified: false,
+              solar: false,
+              maps: false,
+              shopping: false,
+              gemini: false,
+              openai: false,
+              anthropic: false,
+              grok: false,
+            },
+          },
+          debuggingAdvice: [],
+          suggestedFixes: [],
+        } as ErrorLog];
+      }
+      
+      if (logsToSend.length > 0) {
         // Use sendBeacon for reliable delivery during unload
-        if (this.config.emailEndpoint && navigator.sendBeacon) {
+        if (navigator.sendBeacon) {
           const report = this.generateEmailReport(logsToSend);
           const payload = JSON.stringify({
             to: this.config.emailTo,
-            subject: `Solar Panel Calculator - Session Report (${logsToSend.length} issues)`,
+            subject: `Solar Panel Calculator - Session Report (${logsToSend.length} ${logsToSend.length === 1 ? 'issue' : 'issues'})`,
             body: report,
             logs: logsToSend,
             threadId: this.getEmailThreadId(),
           });
           
           const blob = new Blob([payload], { type: 'application/json' });
-          navigator.sendBeacon(this.config.emailEndpoint, blob);
+          const sent = navigator.sendBeacon(this.config.emailEndpoint, blob);
           
-          this.updateLastReportTime();
+          if (sent) {
+            console.log(`✅ Error report queued for delivery (${logsToSend.length} logs)`);
+            this.updateLastReportTime();
+          } else {
+            console.error('❌ Failed to queue error report');
+          }
+        } else {
+          console.warn('⚠️ sendBeacon not available, report not sent');
         }
       }
     };
@@ -499,6 +554,13 @@ class ErrorLogger {
     // Handle browser/web app close
     window.addEventListener('beforeunload', () => {
       sendReportOnClose();
+    });
+    
+    // Also send on visibility change (when tab is closed or app goes to background)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        sendReportOnClose();
+      }
     });
     
     // Handle Tauri app close
