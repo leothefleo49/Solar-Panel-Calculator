@@ -360,15 +360,22 @@ jobs:
         run: ls -R artifacts
       
       - name: Copy Update Manifest to Artifacts
-        run: cp App/latest.json artifacts/
+        run: cp App/latest.json artifacts/latest.json
       
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            artifacts/**
-            App/latest.json
+            artifacts/**/*.apk
+            artifacts/**/*.msi
+            artifacts/**/*.exe
+            artifacts/**/*.dmg
+            artifacts/**/*.deb
+            artifacts/**/*.AppImage
+            artifacts/**/*.zip
+            artifacts/*.txt
+            artifacts/latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
