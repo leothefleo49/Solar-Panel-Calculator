@@ -41,9 +41,9 @@ Follow these steps to release a new version:
 
 Update version in these 3 files:
 
-- [ ] `App/package.json` → `"version": "1.4.13"`
-- [ ] `App/src-tauri/tauri.conf.json` → `"version": "1.4.13"`
-- [ ] `App/src-tauri/Cargo.toml` → `version = "1.4.13"`
+- [ ] `App/package.json` → `"version": "1.4.15"`
+- [ ] `App/src-tauri/tauri.conf.json` → `"version": "1.4.15"`
+- [ ] `App/src-tauri/Cargo.toml` → `version = "1.4.15"`
 
 ### 2. Commit and Tag
 
@@ -52,16 +52,16 @@ Update version in these 3 files:
 git add .
 
 # Commit version bump
-git commit -m "chore: bump version to 1.4.13"
+git commit -m "chore: bump version to 1.4.15"
 
 # Push to main
 git push origin main
 
 # Create tag
-git tag v1.4.13
+git tag v1.4.15
 
 # Push tag (this triggers the release build)
-git push origin v1.4.13
+git push origin v1.4.15
 ```
 
 ### 3. Monitor Build
@@ -118,9 +118,9 @@ Use semantic versioning: `MAJOR.MINOR.PATCH`
 - **PATCH** (x.x.13): Bug fixes, small improvements
 
 Examples:
-- `1.4.12` → `1.4.13` (bug fix)
-- `1.4.13` → `1.5.0` (new feature)
-- `1.4.13` → `2.0.0` (breaking change)
+- `1.4.15` → `1.4.15` (bug fix)
+- `1.4.15` → `1.4.15` (new feature)
+- `1.4.15` → `2.0.0` (breaking change)
 
 ## Troubleshooting
 
@@ -128,16 +128,16 @@ Examples:
 
 **Check:**
 1. Are all 3 version numbers the same?
-2. Is the tag format correct? (`v1.4.13`, not `1.4.13`)
+2. Is the tag format correct? (`v1.4.15`, not `1.4.15`)
 3. Is Rust/Android SDK available in CI? (usually automatic)
 
 **Solution:** Fix the issue, delete the tag, and try again:
 ```powershell
-git tag -d v1.4.13
-git push origin :refs/tags/v1.4.13
+git tag -d v1.4.15
+git push origin :refs/tags/v1.4.15
 # Make fixes, then retag
-git tag v1.4.13
-git push origin v1.4.13
+git tag v1.4.15
+git push origin v1.4.15
 ```
 
 ### Update Not Detected
