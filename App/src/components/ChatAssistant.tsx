@@ -348,12 +348,12 @@ const ChatAssistant = () => {
         </button>
       </div>
 
-      <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         {conversations.map((conv) => (
           <button
             key={conv.id}
             onClick={() => switchConversation(conv.id)}
-            className={`group relative flex items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs transition ${
+            className={`group relative flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition ${
               conv.id === activeConversationId
                 ? 'border-accent bg-accent/20 text-accent font-semibold'
                 : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:text-white'

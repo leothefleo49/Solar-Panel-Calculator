@@ -4,6 +4,44 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.4.13] - 2025-11-17
+
+### Added
+- **Enhanced Error Reporting**: Automatic error log emails sent after every app session in beta mode
+  - Email threading support - all reports thread together in your inbox
+  - Reply to error emails with `mode: <frequency>` to adjust reporting interval
+  - Supported modes: every_run, hourly, daily, weekly, biweekly, monthly
+  - Comprehensive error context including system info, API states, and debugging advice
+- **Desktop Auto-Update System**: Tauri desktop builds now automatically check for updates on launch
+  - Smart reminder system - reminds after 3 dismissals
+  - Download and install updates directly from the app
+  - Works on Windows, macOS, and Linux
+
+### Changed
+- **Mobile UI Improvements**: Fixed unnecessary horizontal scrolling on small screens
+  - Chat conversation tabs now wrap instead of scrolling horizontally
+  - Better layout on mobile devices and narrow screens
+  - Improved readability of chat names and simple text elements
+
+### Fixed
+- **Chat Send Button Height**: Send button no longer expands with textarea, stays fixed at 48px
+- **Fullscreen Scrollbar**: Ensured transparent scrollbar backgrounds in fullscreen mode
+- **Chat Panel Resizing**: Can now expand chat panel much larger (up to 1000px)
+- **Dashboard Layout**: Dynamically fills remaining space based on panel sizes
+- **Focus Highlights**: Removed aggressive gray highlight rings throughout app
+  - Subtler focus states with border color changes only
+  - No more distracting box shadows on focus
+- **AI Response Errors**: Replaced generic "No response" with descriptive error messages
+  - Explains when model refuses to generate content
+  - Provides suggestions for rephrasing requests
+- **Google Solar Address Input**: Changed background opacity for better text visibility
+- **App Titles**: Changed "Solar System" to "Solar Panel System" to avoid confusion
+- **Shopping API Errors**: Added helpful error message for Custom Search API not enabled
+  - Includes direct link to Google Cloud Console
+  - Specific guidance for 403 and 429 errors
+- **External Links**: Verified link opening works correctly across all platforms
+
 ## [1.4.11] - 2025-11-17
 
 ### Added
