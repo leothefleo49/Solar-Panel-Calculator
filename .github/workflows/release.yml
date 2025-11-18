@@ -5,12 +5,17 @@ on:
   push:
     tags:
       - 'v*'
+  release:
+    types: [created]
   workflow_dispatch:
     inputs:
       include_ios:
         description: 'Attempt iOS build (requires signing secrets)'
         required: false
         default: 'false'
+  workflow_run:
+    workflows: ['Auto Release on Push']
+    types: [completed]
 
 permissions:
   contents: write
@@ -48,32 +53,56 @@ jobs:
       - name: Set version from tag (tauri.conf.json + package.json + Cargo.toml)
         shell: bash
         env:
-          TAG_NAME: ${{ github.ref_name }}
+          TAG_NAME: ${{ github.event.release.tag_name != '' && github.event.release.tag_name || github.ref_name }}
         run: |
           set -e
           node -e '
             const fs = require("fs");
-            const tag = (process.env.TAG_NAME || "").replace(/^v/, "");
-            
-            // Update tauri.conf.json
-            const p1 = "App/src-tauri/tauri.conf.json";
-            const j1 = JSON.parse(fs.readFileSync(p1));
-            j1.version = tag;
-            fs.writeFileSync(p1, JSON.stringify(j1, null, 2) + "\n");
-            
-            // Update package.json
-            const p2 = "App/package.json";
-            const j2 = JSON.parse(fs.readFileSync(p2));
-            j2.version = tag;
-            fs.writeFileSync(p2, JSON.stringify(j2, null, 2) + "\n");
-            
-            // Update Cargo.toml
-            const p3 = "App/src-tauri/Cargo.toml";
-            let cargo = fs.readFileSync(p3, "utf8");
-            cargo = cargo.replace(/^version = ".*"$/m, `version = "${tag}"`);
-            fs.writeFileSync(p3, cargo);
-            
-            console.log("✅ Set all versions to", tag);
+            const https = require("https");
+
+            (async function() {
+              try {
+                let tag = (process.env.TAG_NAME || "").replace(/^v/, "");
+                if (!tag) {
+                  const repo = process.env.GITHUB_REPOSITORY;
+                  const options = {
+                    hostname: "api.github.com",
+                    path: `/repos/${repo}/releases/latest`,
+                    headers: { "User-Agent": "node" }
+                  };
+                  tag = await new Promise((resolve, reject) => {
+                    https.get(options, res => {
+                      let b = "";
+                      res.on("data", c => b += c);
+                      res.on("end", () => {
+                        try { const j = JSON.parse(b); resolve((j.tag_name || "").replace(/^v/, "")); } catch (e) { reject(e); }
+                      });
+                    }).on("error", e => reject(e));
+                  });
+                }
+                if (!tag) { console.error("Could not determine tag"); process.exit(1); }
+
+                // Update tauri.conf.json
+                const p1 = "App/src-tauri/tauri.conf.json";
+                const j1 = JSON.parse(fs.readFileSync(p1));
+                j1.version = tag;
+                fs.writeFileSync(p1, JSON.stringify(j1, null, 2) + "\n");
+
+                // Update package.json
+                const p2 = "App/package.json";
+                const j2 = JSON.parse(fs.readFileSync(p2));
+                j2.version = tag;
+                fs.writeFileSync(p2, JSON.stringify(j2, null, 2) + "\n");
+
+                // Update Cargo.toml
+                const p3 = "App/src-tauri/Cargo.toml";
+                let cargo = fs.readFileSync(p3, "utf8");
+                cargo = cargo.replace(/^version = ".*"$/m, `version = "${tag}"`);
+                fs.writeFileSync(p3, cargo);
+
+                console.log("✅ Set all versions to", tag);
+              } catch (e) { console.error(e); process.exit(1); }
+            })();
           '
       
       - name: Setup Rust
@@ -87,8 +116,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         with:
           projectPath: App
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Solar Panel Calculator ${{ github.ref_name }}'
+          tagName: ${{ github.event.release.tag_name || github.ref_name }}
+          releaseName: 'Solar Panel Calculator ${{ github.event.release.tag_name || github.ref_name }}'
           releaseBody: 'Automated desktop builds for Windows, macOS and Linux.'
           releaseDraft: false
           prerelease: false
@@ -333,7 +362,7 @@ jobs:
   release-attach:
     name: Attach Artifacts to Release
     needs: [build-tauri, build-android, build-ios, checksums]
-    if: always() && startsWith(github.ref, 'refs/tags/')
+    if: always() && (startsWith(github.ref, 'refs/tags/') || github.event_name == 'release')
     runs-on: ubuntu-latest
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
@@ -365,7 +394,7 @@ jobs:
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
           files: |
             artifacts/**/*.apk
             artifacts/**/*.msi
