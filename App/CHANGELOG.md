@@ -5,6 +5,17 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.14] - 2025-11-17
+
+### Fixed
+- **GitHub Actions Workflow**: Fixed workflow syntax error preventing release builds
+  - Corrected conditional expression for Windows code signing
+  - All platform builds now complete successfully
+
+### Notes
+- This is a maintenance release to fix the v1.4.13 build failure
+- All features and fixes from v1.4.13 are included
+
 ## [1.4.13] - 2025-11-17
 
 ### Added
