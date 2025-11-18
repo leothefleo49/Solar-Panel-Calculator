@@ -30,7 +30,7 @@
   "type": "module",
   "scripts": {
     "preinstall": "node -e \"console.log('Checking system dependencies...')\"",
-    "postinstall": "node scripts/check-deps.cjs",
+    "postinstall": "node scripts/run-check-deps-safe.cjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:prod": "tsc -b && vite build --mode production",

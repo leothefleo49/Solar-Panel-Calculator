@@ -2,8 +2,7 @@
 
 const { execSync } = require('child_process');
 const os = require('os');
-const fs = require('fs');
-const path = require('path');
+// fs and path were used previously for auto-install detection; avoid unused imports now
 
 const platform = os.platform();
 const checkRustOnly = process.argv[2] === 'rust';
@@ -33,49 +32,30 @@ function execCommand(cmd) {
 
 function checkRust() {
   log('\n🔍 Checking for Rust...', 'cyan');
-  
+  // If running in CI/GitHub Actions, skip Rust auto-install (CI handles toolchain separately)
+  if (process.env.CI || process.env.GITHUB_ACTIONS) {
+    log('\n⏩ CI detected: skipping Rust auto-install/check', 'cyan');
+    if (execCommand('cargo --version')) {
+      log('✅ Rust is installed in CI runner', 'green');
+      return true;
+    }
+    log('⚠️ Rust not found in CI runner, but CI workflow should install it separately. Skipping.', 'yellow');
+    return true;
+  }
+
   if (execCommand('cargo --version')) {
     log('✅ Rust is installed!', 'green');
     return true;
   }
 
-  log('❌ Rust not found. Installing...', 'yellow');
-  
-  try {
-    if (platform === 'win32') {
-      log('\n📥 Downloading Rust installer for Windows...', 'cyan');
-      log('⚠️  This will open the installer. Please follow the prompts.', 'yellow');
-      log('⚠️  After installation completes, restart your terminal and run this command again.\n', 'yellow');
-      
-      // Download and run rustup-init.exe
-      execSync('powershell -Command "Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile $env:TEMP\\rustup-init.exe; Start-Process $env:TEMP\\rustup-init.exe -Wait"', { stdio: 'inherit' });
-      
-      log('\n✨ Rust installation started!', 'green');
-      log('⚠️  Please restart your terminal and run the command again.', 'yellow');
-      process.exit(0);
-      
-    } else if (platform === 'darwin' || platform === 'linux') {
-      log('\n📥 Installing Rust via rustup...', 'cyan');
-      
-      // Run rustup installer
-      execSync('curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y', { stdio: 'inherit' });
-      
-      // Source the cargo env
-      const cargoEnv = path.join(os.homedir(), '.cargo', 'env');
-      if (fs.existsSync(cargoEnv)) {
-        log('\n✨ Rust installed successfully!', 'green');
-        log('⚠️  Please restart your terminal and run the command again.', 'yellow');
-        process.exit(0);
-      }
-    }
-  } catch {
-    log('\n❌ Automatic installation failed.', 'red');
-    log('\n📖 Please install Rust manually:', 'yellow');
-    log('   Windows: https://win.rustup.rs/', 'cyan');
-    log('   Mac/Linux: https://rustup.rs/', 'cyan');
-    log('\n   After installation, restart your terminal and try again.', 'yellow');
-    process.exit(1);
-  }
+  // Do not attempt automatic installs from this script in interactive runs.
+  // Instead, instruct the developer to install Rust manually to avoid launching installers unexpectedly.
+  log('\n❌ Rust not found.', 'yellow');
+  log('\n📖 Please install Rust manually:', 'yellow');
+  log('   Windows: https://win.rustup.rs/', 'cyan');
+  log('   Mac/Linux: https://rustup.rs/', 'cyan');
+  log('\n   After installation, restart your terminal and try again.', 'yellow');
+  process.exit(1);
 }
 
 function checkSystemDeps() {
