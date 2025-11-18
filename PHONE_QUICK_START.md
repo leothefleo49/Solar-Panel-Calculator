@@ -1,4 +1,4 @@
-# 📱 QUICK START: Create v3.0.0 Release (Phone/Web Only)
+# 📱 QUICK START: Create v1.4.15 Release (Phone/Web Only)
 
 ## What You'll Do (Takes 5 Minutes)
 You're going to create a release on GitHub using just your phone/browser. This will automatically build the app and make it downloadable for all platforms including Android.
@@ -8,7 +8,7 @@ You're going to create a release on GitHub using just your phone/browser. This w
 ## Step 1: Merge This Pull Request (2 minutes)
 
 1. **Open this link on your phone**: https://github.com/leothefleo49/Solar-Panel-Calculator/pulls
-2. Click on the pull request called **"Add automated GitHub releases for one-click downloads (v3.0.0)"**
+2. Click on the pull request called **"Add automated GitHub releases for one-click downloads (v1.4.15)"**
 3. Scroll down and click the green **"Merge pull request"** button
 4. Click **"Confirm merge"**
 5. ✅ Done! The code is now in your main branch
@@ -23,15 +23,15 @@ You're going to create a release on GitHub using just your phone/browser. This w
 
 3. **Choose a tag:**
    - Click the dropdown that says "Choose a tag"
-   - Type: `v3.0.0`
-   - Click "Create new tag: v3.0.0 on publish" (it will appear below)
+   - Type: `v1.4.15`
+   - Click "Create new tag: v1.4.15 on publish" (it will appear below)
 
 4. **Set release title:**
-   - In the "Release title" box, type: `Solar Panel Calculator v3.0.0`
+   - In the "Release title" box, type: `Solar Panel Calculator v1.4.15`
 
 5. **Add description (optional but recommended):**
    ```
-   ## What's New in v3.0.0
+   ## What's New in v1.4.15
    
    - ✅ One-click downloads for all platforms
    - ✅ Windows, macOS, Linux desktop apps
@@ -85,7 +85,7 @@ Once all builds show green checkmarks:
 
 1. **Go back to releases**: https://github.com/leothefleo49/Solar-Panel-Calculator/releases
 
-2. You'll see **"Solar Panel Calculator v3.0.0"** at the top
+2. You'll see **"Solar Panel Calculator v1.4.15"** at the top
 
 3. Scroll down to **"Assets"** section (below the description)
 
