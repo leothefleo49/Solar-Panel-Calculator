@@ -70,7 +70,9 @@ jobs:
             (async function() {
               try {
                 let tag = (process.env.TAG_NAME || "").replace(/^v/, "");
-                if (!tag) {
+                // If tag is "main" or empty, fetch latest from GitHub
+                if (!tag || tag === "main" || !/^\d+\.\d+\.\d+/.test(tag)) {
+                  console.log("Tag is invalid or branch name (" + tag + "), fetching latest release...");
                   const repo = process.env.GITHUB_REPOSITORY;
                   const options = {
                     hostname: "api.github.com",
@@ -89,6 +91,10 @@ jobs:
                 }
                 if (!tag) { console.error("Could not determine tag"); process.exit(1); }
 
+                console.log("Resolved version:", tag);
+                // Export for subsequent steps
+                fs.appendFileSync(process.env.GITHUB_ENV, `RESOLVED_VERSION=${tag}\n`);
+                
                 // Update tauri.conf.json
                 const p1 = "App/src-tauri/tauri.conf.json";
                 const j1 = JSON.parse(fs.readFileSync(p1));
@@ -123,8 +129,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         with:
           projectPath: App
-          tagName: ${{ github.event.release.tag_name || github.ref_name }}
-          releaseName: 'Solar Panel Calculator ${{ github.event.release.tag_name || github.ref_name }}'
+          tagName: v${{ env.RESOLVED_VERSION }}
+          releaseName: 'Solar Panel Calculator v${{ env.RESOLVED_VERSION }}'
           releaseBody: 'Automated desktop builds for Windows, macOS and Linux.'
           releaseDraft: false
           prerelease: false
@@ -416,7 +422,7 @@ jobs:
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+          tag_name: v${{ env.RESOLVED_VERSION }}
           files: |
             artifacts/**/*.apk
             artifacts/**/*.msi
