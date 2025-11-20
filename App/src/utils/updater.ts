@@ -197,7 +197,7 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
     let downloadUrl: string | undefined;
     if (platform === 'android') {
       // Evergreen URL - always points to latest APK
-      downloadUrl = 'https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/solar-panel-calculator.apk';
+      downloadUrl = 'https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/Solar-Panel-Calculator-Android.apk';
     } else if (platform === 'web') {
       downloadUrl = 'https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest';
     }
