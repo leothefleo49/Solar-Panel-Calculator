@@ -11,6 +11,8 @@
     "core:window:allow-is-fullscreen",
     "shell:allow-open",
     "dialog:default",
-    "fs:default"
+    "fs:default",
+    "updater:default",
+    "store:default"
   ]
 }
