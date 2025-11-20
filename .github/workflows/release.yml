@@ -36,6 +36,9 @@ jobs:
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
       VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
+      # Expose secrets to env for use in if conditions
+      WINDOWS_PFX_BASE64: ${{ secrets.WINDOWS_PFX_BASE64 }}
+      WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       
@@ -53,7 +56,7 @@ jobs:
       - name: Set version from tag (tauri.conf.json + package.json + Cargo.toml)
         shell: bash
         env:
-          TAG_NAME: ${{ github.event.release.tag_name != '' && github.event.release.tag_name || github.ref_name }}
+          TAG_NAME: ${{ github.event.release.tag_name || github.ref_name }}
         run: |
           set -e
           node -e '
@@ -152,11 +155,8 @@ jobs:
           path: App/src-tauri/target/release/release-artifacts/*
 
       - name: Sign Windows binaries (optional)
-        if: matrix.platform == 'windows' && secrets.WINDOWS_PFX_BASE64 != ''
+        if: matrix.platform == 'windows' && env.WINDOWS_PFX_BASE64 != ''
         shell: pwsh
-        env:
-          WINDOWS_PFX_BASE64: ${{ secrets.WINDOWS_PFX_BASE64 }}
-          WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
         run: |
           $ErrorActionPreference = 'Stop'
           $pfxPath = "$PWD\codesign.pfx"
