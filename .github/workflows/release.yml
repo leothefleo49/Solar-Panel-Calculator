@@ -24,6 +24,7 @@ jobs:
   build-tauri:
     name: Desktop (Tauri) ${{ matrix.platform }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - platform: windows
@@ -57,6 +58,10 @@ jobs:
         with:
           node-version: '20'
       
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: App
+
       - name: Set version from tag (tauri.conf.json + package.json + Cargo.toml)
         shell: bash
         env:
@@ -117,6 +122,16 @@ jobs:
               } catch (e) { console.error(e); process.exit(1); }
             })();
           '
+      
+      - name: Debug Version Config
+        shell: bash
+        run: |
+          echo "=== tauri.conf.json ==="
+          grep -i "version" App/src-tauri/tauri.conf.json || true
+          echo "=== Cargo.toml ==="
+          grep -i "version" App/src-tauri/Cargo.toml || true
+          echo "=== package.json ==="
+          grep -i "version" App/package.json || true
       
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -278,6 +293,10 @@ jobs:
         run: |
           APK_DIR="android/app/build/outputs/apk"
           mkdir -p android/app/build/outputs/release-artifacts
+          
+          echo "Listing APK directory:"
+          ls -R android/app/build/outputs || true
+
           # Always name the release APK consistently for the evergreen link
           if [ -f "$APK_DIR/release/app-release-signed.apk" ]; then
             cp "$APK_DIR/release/app-release-signed.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
