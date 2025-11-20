@@ -35,12 +35,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
-      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
       # Expose secrets to env for use in if conditions
       WINDOWS_PFX_BASE64: ${{ secrets.WINDOWS_PFX_BASE64 }}
       WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Configure Environment
+        shell: bash
+        run: |
+          echo "VITE_ERROR_LOG_ENDPOINT=${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}" >> $GITHUB_ENV
       
       - name: Install Linux dependencies
         if: matrix.platform == 'linux'
@@ -175,9 +179,15 @@ jobs:
         working-directory: App
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
-      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure Environment
+        shell: bash
+        env:
+          ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT }}
+        run: |
+          echo "VITE_ERROR_LOG_ENDPOINT=${ENDPOINT:-https://solar-error-reporter.railway.app/api/error-logs}" >> $GITHUB_ENV
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -262,10 +272,11 @@ jobs:
         run: |
           APK_DIR="android/app/build/outputs/apk"
           mkdir -p android/app/build/outputs/release-artifacts
+          # Always name the release APK consistently for the evergreen link
           if [ -f "$APK_DIR/release/app-release-signed.apk" ]; then
             cp "$APK_DIR/release/app-release-signed.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
           elif [ -f "$APK_DIR/release/app-release-unsigned.apk" ]; then
-            cp "$APK_DIR/release/app-release-unsigned.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android-Unsigned.apk"
+            cp "$APK_DIR/release/app-release-unsigned.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
           fi
           if [ -f "$APK_DIR/debug/app-debug.apk" ]; then
             cp "$APK_DIR/debug/app-debug.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android-Debug.apk"
@@ -286,9 +297,14 @@ jobs:
     continue-on-error: true  # Don't fail CI if iOS build fails (optional platform)
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
-      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Configure Environment
+        shell: bash
+        env:
+          ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT }}
+        run: |
+          echo "VITE_ERROR_LOG_ENDPOINT=${ENDPOINT:-https://solar-error-reporter.railway.app/api/error-logs}" >> $GITHUB_ENV
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -366,9 +382,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
-      VITE_ERROR_LOG_ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Configure Environment
+        shell: bash
+        env:
+          ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT }}
+        run: |
+          echo "VITE_ERROR_LOG_ENDPOINT=${ENDPOINT:-https://solar-error-reporter.railway.app/api/error-logs}" >> $GITHUB_ENV
       
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -432,9 +454,7 @@ jobs:
 
             # Android - try common signed/unsigned/debug names (some CI builds produce different names)
             "$base/Solar-Panel-Calculator-Android.apk"
-            "$base/Solar-Panel-Calculator-Android-Unsigned.apk"
             "$base/Solar-Panel-Calculator-Android-Debug.apk"
-            "$base/Solar-Panel-Calculator-Android-Release.apk"
 
             # iOS Simulator (optional)
             "$base/Solar-Panel-Calculator-iOS-Simulator.zip"

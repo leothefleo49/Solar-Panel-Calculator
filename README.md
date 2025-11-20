@@ -22,7 +22,7 @@ Click your operating system to download the latest installer directly:
 - 🐧 Linux (Debian/Ubuntu .deb):
   https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/Solar-Panel-Calculator-Linux.deb
 - 📱 Android (APK):
-  https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/Solar-Panel-Calculator-Android-Unsigned.apk
+  https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/Solar-Panel-Calculator-Android.apk
 - 🍏 iOS (Simulator App – for developers):
   https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/Solar-Panel-Calculator-iOS-Simulator.zip
 
