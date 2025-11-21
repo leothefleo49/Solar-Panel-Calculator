@@ -27,7 +27,7 @@ Click your operating system to download the latest installer directly:
   https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/Solar-Panel-Calculator-iOS-Simulator.zip
 
 **Important for Desktop Users:**
-- 🔄 **Auto-updater requires v1.4.15+**: Download and install this version manually to enable automatic updates for future releases!
+- 🔄 **Auto-updater requires v1.4.28+**: Download and install this version manually to enable automatic updates for future releases!
 - Once installed, the app will notify you of new versions and offer one-click updates
 
 **Platform Notes:**
@@ -42,7 +42,7 @@ Click your operating system to download the latest installer directly:
 ## ✨ Features
 
 ### Core Capabilities
-- **🌍 Google Solar API Integration** (Enhanced in v1.4.15+):
+- **🌍 Google Solar API Integration** (Enhanced in v1.4.28+):
   - Analyze any property address with real-world roof data from Google's Solar API
   - Automatic geocoding and coordinate lookup
   - Detailed roof segment analysis (pitch, azimuth, area, sun exposure)
@@ -50,11 +50,11 @@ Click your operating system to download the latest installer directly:
   - Financial projections based on real sun exposure data
   - **Enhanced Setup Wizard**: 3 recommended paths (easiest, most free, best quality)
   - **Instant Config Updates**: Save Changes button applies settings without restart
-  - **API Validation** (v1.4.15): Pre-save key testing with detailed error messages
-  - **Quota Monitoring** (v1.4.15): Real-time usage tracking with visual indicators
+  - **API Validation** (v1.4.28): Pre-save key testing with detailed error messages
+  - **Quota Monitoring** (v1.4.28): Real-time usage tracking with visual indicators
   - Flexible key management (unified or separate for Solar/Maps/Shopping)
   - Optional - app works fully without Google APIs
-- **🛒 Shopping Cart with AI Search** (Enhanced in v1.4.15):
+- **🛒 Shopping Cart with AI Search** (Enhanced in v1.4.28):
   - Smart product search supporting names, model numbers, UPC, ASIN, brand names
   - AI-powered query enhancement for better results
   - Multi-site fallbacks with source attribution (Amazon, Walmart, Home Depot, Lowes, eBay)
@@ -71,7 +71,7 @@ Click your operating system to download the latest installer directly:
 
 ### Desktop App Benefits
 ✅ Runs completely offline after installation  
-✅ **Automatic updates** (v1.4.15+) – Get new features without manual downloads  
+✅ **Automatic updates** (v1.4.28+) – Get new features without manual downloads  
 ✅ Secure encrypted API key storage  
 ✅ Native OS integration (taskbar, notifications)  
 ✅ Faster performance vs. browser  
@@ -236,11 +236,11 @@ For production deployments, route AI API requests through a secure backend proxy
 ## 📦 Distribution
 
 ### Automated Releases (CI)
-Push a semantic git tag (e.g. `v1.4.15`) to trigger the CI matrix build:
+Push a semantic git tag (e.g. `v1.4.28`) to trigger the CI matrix build:
 
 ```bash
-git tag v1.4.15
-git push origin v1.4.15
+git tag v1.4.28
+git push origin v1.4.28
 ```
 
 GitHub Actions produces clearly named artifacts:
