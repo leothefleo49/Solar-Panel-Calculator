@@ -535,6 +535,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.get_tag.outputs.tag_name }}
+          fail_on_unmatched_files: false
+          make_latest: true
           files: |
             artifacts/**/*.apk
             artifacts/**/*.msi
