@@ -42,8 +42,10 @@ jobs:
       - name: Type Check
         run: npx tsc --noEmit
 
-      - name: Run Smoke Tests
-        run: npm run smoke:test
+      # Smoke tests check the latest GitHub Release, which might not be updated yet.
+      # Removing from CI to prevent false negatives.
+      # - name: Run Smoke Tests
+      #   run: npm run smoke:test
 
   build-desktop:
     name: Build Desktop (No Release)
