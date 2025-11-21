@@ -70,32 +70,22 @@ jobs:
           set -e
           node -e '
             const fs = require("fs");
-            const https = require("https");
 
             (async function() {
               try {
                 let tag = (process.env.TAG_NAME || "").replace(/^v/, "");
-                // If tag is "main" or empty, fetch latest from GitHub
+                
+                // If tag is "main" or branch name, read version from package.json
                 if (!tag || tag === "main" || !/^\d+\.\d+\.\d+/.test(tag)) {
-                  console.log("Tag is invalid or branch name (" + tag + "), fetching latest release...");
-                  const repo = process.env.GITHUB_REPOSITORY;
-                  const options = {
-                    hostname: "api.github.com",
-                    path: `/repos/${repo}/releases/latest`,
-                    headers: { "User-Agent": "node" }
-                  };
-                  tag = await new Promise((resolve, reject) => {
-                    https.get(options, res => {
-                      let b = "";
-                      res.on("data", c => b += c);
-                      res.on("end", () => {
-                        try { const j = JSON.parse(b); resolve((j.tag_name || "").replace(/^v/, "")); } catch (e) { reject(e); }
-                      });
-                    }).on("error", e => reject(e));
-                  });
+                  console.log("Tag is invalid or branch name (" + tag + "), reading version from package.json...");
+                  const pkg = JSON.parse(fs.readFileSync("App/package.json", "utf8"));
+                  tag = pkg.version;
+                  if (!tag || !/^\d+\.\d+\.\d+/.test(tag)) {
+                    console.error("Could not determine valid version from package.json");
+                    process.exit(1);
+                  }
                 }
-                if (!tag) { console.error("Could not determine tag"); process.exit(1); }
-
+                
                 console.log("Resolved version:", tag);
                 // Export for subsequent steps
                 fs.appendFileSync(process.env.GITHUB_ENV, `RESOLVED_VERSION=${tag}\n`);
