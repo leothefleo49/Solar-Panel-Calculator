@@ -136,21 +136,74 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
       
-      - name: Install Dependencies
-        run: npm ci
-        working-directory: App
+      - name: Install Dependencies (with retries)
+        shell: bash
+        run: |
+          set -e
+          cd App
+          for i in 1 2 3; do
+            if npm ci --silent; then
+              echo "npm ci succeeded"
+              break
+            else
+              echo "npm ci failed, attempt $i/3"
+              sleep $((i*3))
+            fi
+            if [ $i -eq 3 ]; then
+              echo "npm ci failed after 3 attempts, trying legacy-peer-deps install"
+              npm install --legacy-peer-deps || true
+            fi
+          done
       
-      - name: Build Tauri App
-        uses: tauri-apps/tauri-action@v0
+      - name: Verbose Tauri Build (debug + retries)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd App
+          echo "Running tauri build (will retry up to 3 times)"
+          export LOGNAME="tauri-build-${{ matrix.platform }}-$(date +%s)"
+          for attempt in 1 2 3; do
+            echo "Attempt $attempt"
+            # Run the build and capture all output to a log file for upload
+            if npm run tauri:build --silent >../${LOGNAME}.log 2>&1; then
+              echo "Tauri build succeeded on attempt $attempt"
+              break
+            else
+              echo "Tauri build failed on attempt $attempt, check ../${LOGNAME}.log"
+              tail -n 200 ../${LOGNAME}.log || true
+              sleep $((attempt * 5))
+              if [ $attempt -eq 3 ]; then
+                echo "All attempts failed, exiting with failure (log saved)"
+                cat ../${LOGNAME}.log || true
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Upload Tauri build log
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          projectPath: App
-          tagName: v${{ env.RESOLVED_VERSION }}
-          releaseName: 'Solar Panel Calculator v${{ env.RESOLVED_VERSION }}'
-          releaseBody: 'Automated desktop builds for Windows, macOS and Linux.'
-          releaseDraft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: tauri-build-log-${{ matrix.platform }}
+          path: |
+            *.log
+
+      - name: Debug Tauri Build Output
+        if: always()
+        shell: bash
+        run: |
+          echo "=== Listing build output (App/src-tauri/target/release) ==="
+          ls -la App/src-tauri/target/release || true
+          echo "=== Bundle directories (bundle) ==="
+          find App/src-tauri/target/release -maxdepth 3 -type f -print -exec ls -lh {} \; || true
+          echo "=== End debug ==="
+
+      - name: Upload Tauri build output for debugging
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauri-build-output-${{ matrix.platform }}
+          path: App/src-tauri/target/release/**
 
       - name: Collect Desktop Artifacts (stable names)
         shell: bash
@@ -178,6 +231,13 @@ jobs:
         with:
           name: Solar-Panel-Calculator-Desktop-${{ matrix.platform }}
           path: App/src-tauri/target/release/release-artifacts/*
+
+      - name: Upload entire release-artifacts dir for debugging
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Solar-Panel-Calculator-Desktop-All-${{ matrix.platform }}
+          path: App/src-tauri/target/release/release-artifacts/**
 
       - name: Sign Windows binaries (optional)
         if: matrix.platform == 'windows' && env.WINDOWS_PFX_BASE64 != ''
@@ -247,6 +307,7 @@ jobs:
 
       - name: Setup Gradle cache
         uses: gradle/actions/setup-gradle@v3
+        continue-on-error: true
 
       - name: Ensure Gradle wrapper is executable
         run: |
@@ -437,8 +498,26 @@ jobs:
       
       - name: Copy Update Manifest to Artifacts
         run: cp App/latest.json artifacts/latest.json
+
+      - name: Check artifacts to upload
+        id: check_artifacts
+        run: |
+          set -e
+          echo "Looking for files to attach to release..."
+          FOUND=0
+          # Look for common release files
+          for f in artifacts/**/*.apk artifacts/**/*.msi artifacts/**/*.exe artifacts/**/*.dmg artifacts/**/*.deb artifacts/**/*.AppImage artifacts/**/*.zip artifacts/*.txt artifacts/latest.json; do
+            if [ -e "$f" ]; then FOUND=1; break; fi
+          done
+          echo "found=$FOUND" >> $GITHUB_OUTPUT
+          if [ "$FOUND" -eq 0 ]; then
+            echo "No artifacts found to attach to release. Skipping release attach step.";
+          else
+            echo "Artifacts found to attach to release.";
+          fi
       
       - name: Upload to Release
+        if: steps.check_artifacts.outputs.found == '1'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.RESOLVED_VERSION }}
