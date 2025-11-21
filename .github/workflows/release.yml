@@ -36,16 +36,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       VITE_ERROR_LOG_EMAIL: 'leothefleo49@gmail.com'
-      # Expose secrets to env for use in if conditions
-      WINDOWS_PFX_BASE64: ${{ secrets.WINDOWS_PFX_BASE64 }}
-      WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
+      VITE_ERROR_LOG_ENDPOINT: 'https://solar-error-reporter.railway.app/api/error-logs'
     steps:
       - uses: actions/checkout@v4
       
       - name: Configure Environment
         shell: bash
         run: |
-          echo "VITE_ERROR_LOG_ENDPOINT=${{ secrets.ERROR_LOG_ENDPOINT || 'https://solar-error-reporter.railway.app/api/error-logs' }}" >> $GITHUB_ENV
+          if [ -n "${{ secrets.ERROR_LOG_ENDPOINT }}" ]; then
+            echo "VITE_ERROR_LOG_ENDPOINT=${{ secrets.ERROR_LOG_ENDPOINT }}" >> $GITHUB_ENV
+          fi
       
       - name: Install Linux dependencies
         if: matrix.platform == 'linux'
@@ -240,9 +240,16 @@ jobs:
           path: App/src-tauri/target/release/release-artifacts/**
 
       - name: Sign Windows binaries (optional)
-        if: matrix.platform == 'windows' && env.WINDOWS_PFX_BASE64 != ''
+        if: matrix.platform == 'windows'
         shell: pwsh
+        env:
+          WINDOWS_PFX_BASE64: ${{ secrets.WINDOWS_PFX_BASE64 }}
+          WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
         run: |
+          if ([string]::IsNullOrEmpty($env:WINDOWS_PFX_BASE64)) {
+            Write-Host "Skipping code signing - no certificate configured"
+            exit 0
+          }
           $ErrorActionPreference = 'Stop'
           $pfxPath = "$PWD\codesign.pfx"
           [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WINDOWS_PFX_BASE64))
@@ -265,10 +272,12 @@ jobs:
 
       - name: Configure Environment
         shell: bash
-        env:
-          ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT }}
         run: |
-          echo "VITE_ERROR_LOG_ENDPOINT=${ENDPOINT:-https://solar-error-reporter.railway.app/api/error-logs}" >> $GITHUB_ENV
+          ENDPOINT="${{ secrets.ERROR_LOG_ENDPOINT }}"
+          if [ -z "$ENDPOINT" ]; then
+            ENDPOINT="https://solar-error-reporter.railway.app/api/error-logs"
+          fi
+          echo "VITE_ERROR_LOG_ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -387,10 +396,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure Environment
         shell: bash
-        env:
-          ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT }}
         run: |
-          echo "VITE_ERROR_LOG_ENDPOINT=${ENDPOINT:-https://solar-error-reporter.railway.app/api/error-logs}" >> $GITHUB_ENV
+          ENDPOINT="${{ secrets.ERROR_LOG_ENDPOINT }}"
+          if [ -z "$ENDPOINT" ]; then
+            ENDPOINT="https://solar-error-reporter.railway.app/api/error-logs"
+          fi
+          echo "VITE_ERROR_LOG_ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -473,10 +484,12 @@ jobs:
       
       - name: Configure Environment
         shell: bash
-        env:
-          ENDPOINT: ${{ secrets.ERROR_LOG_ENDPOINT }}
         run: |
-          echo "VITE_ERROR_LOG_ENDPOINT=${ENDPOINT:-https://solar-error-reporter.railway.app/api/error-logs}" >> $GITHUB_ENV
+          ENDPOINT="${{ secrets.ERROR_LOG_ENDPOINT }}"
+          if [ -z "$ENDPOINT" ]; then
+            ENDPOINT="https://solar-error-reporter.railway.app/api/error-logs"
+          fi
+          echo "VITE_ERROR_LOG_ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
       
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -516,11 +529,22 @@ jobs:
             echo "Artifacts found to attach to release.";
           fi
       
+      - name: Get Tag Name
+        id: get_tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+      
       - name: Upload to Release
         if: steps.check_artifacts.outputs.found == '1'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.RESOLVED_VERSION }}
+          tag_name: ${{ steps.get_tag.outputs.tag_name }}
           files: |
             artifacts/**/*.apk
             artifacts/**/*.msi
