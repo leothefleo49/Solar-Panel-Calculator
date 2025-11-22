@@ -13,8 +13,13 @@ function getCurrentMonth(): string {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function calculateCost(provider: ApiProvider, requests: number, tokens?: number): number {
-  const pricing = PRICING[provider];
+function calculateCost(provider: ApiProvider, requests: number, tokens?: number, model?: string): number {
+  let pricing = PRICING[provider];
+  
+  // Apply model-specific overrides if available
+  if (model && pricing.modelOverrides && pricing.modelOverrides[model]) {
+    pricing = { ...pricing, ...pricing.modelOverrides[model] } as any;
+  }
   
   if (pricing.billingModel === 'per-token' && tokens) {
     return tokens * (pricing.costPerToken || 0);
@@ -47,7 +52,7 @@ export const useApiUsageStore = create<ApiUsageState>()(
 
       trackUsage: (provider, requests, tokens, model) => {
         const month = getCurrentMonth();
-        const cost = calculateCost(provider, requests, tokens);
+        const cost = calculateCost(provider, requests, tokens, model);
         
         set((state) => {
           const existingMonth = state.usage.find(
@@ -63,9 +68,14 @@ export const useApiUsageStore = create<ApiUsageState>()(
             model,
           };
 
+          // Determine pricing config to use (base or override)
+          let pricing = PRICING[provider];
+          if (model && pricing.modelOverrides && pricing.modelOverrides[model]) {
+            pricing = { ...pricing, ...pricing.modelOverrides[model] } as any;
+          }
+
           if (existingMonth) {
             const newTotalRequests = existingMonth.totalRequests + requests;
-            const pricing = PRICING[provider];
             const freeTierUsed = Math.min(newTotalRequests, pricing.freeTierLimit);
             const paidRequests = Math.max(0, newTotalRequests - pricing.freeTierLimit);
             
@@ -85,7 +95,6 @@ export const useApiUsageStore = create<ApiUsageState>()(
               ),
             };
           } else {
-            const pricing = PRICING[provider];
             const freeTierUsed = Math.min(requests, pricing.freeTierLimit);
             const paidRequests = Math.max(0, requests - pricing.freeTierLimit);
 
@@ -151,6 +160,9 @@ export const useApiUsageStore = create<ApiUsageState>()(
         const month = getCurrentMonth();
         const usage = get().getMonthlyUsage(provider, month);
         const pricing = PRICING[provider];
+        
+        // Note: This doesn't account for model-specific overrides since we don't know the model here
+        // Ideally, we should pass the model to this function if needed
         
         if (!usage) return pricing.freeTierLimit;
         

@@ -132,23 +132,23 @@ export const useGoogleApiStore = create<GoogleApiState>()(
       getEffectiveKey: (apiType: 'solar' | 'maps' | 'shopping' | 'gemini') => {
         const { apiKeys, keyMode } = get();
         
+        // Strict mode enforcement: if separate, NEVER return unified key unless explicitly requested
+        if (keyMode === 'separate') {
+          switch (apiType) {
+            case 'solar': return apiKeys.solar || null;
+            case 'maps': return apiKeys.maps || null;
+            case 'shopping': return apiKeys.shopping || null;
+            case 'gemini': return apiKeys.gemini || null;
+            default: return null;
+          }
+        }
+        
+        // Unified mode
         if (keyMode === 'unified' && apiKeys.unified) {
           return apiKeys.unified;
         }
         
-        // Use specific key
-        switch (apiType) {
-          case 'solar':
-            return apiKeys.solar || null;
-          case 'maps':
-            return apiKeys.maps || null;
-          case 'shopping':
-            return apiKeys.shopping || null;
-          case 'gemini':
-            return apiKeys.gemini || null;
-          default:
-            return null;
-        }
+        return null;
       },
     }),
     {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import clsx from 'clsx'
 import { useGoogleApiStore } from '../state/googleApiStore'
 import { useChatStore } from '../state/chatStore'
@@ -24,10 +24,18 @@ const ApisTab = () => {
   } = useGoogleApiStore()
   const { setProviderKey, clearProviderKey, providerKeys } = useChatStore()
   const [showKeys, setShowKeys] = useState(false)
+  // Initialize mode directly from store to ensure persistence
   const [mode, setMode] = useState<'unified' | 'separate'>(keyMode)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'validating'>('idle')
   const [validationResults, setValidationResults] = useState<Record<string, ValidationResult | null>>({})
   const [showValidationModal, setShowValidationModal] = useState(false)
+
+  // Sync local state with store if store changes externally
+  useEffect(() => {
+    if (keyMode !== mode) {
+      setMode(keyMode)
+    }
+  }, [keyMode])
 
   // Update mode in store when it changes
   const handleModeChange = (newMode: 'unified' | 'separate') => {

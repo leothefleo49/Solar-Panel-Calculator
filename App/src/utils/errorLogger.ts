@@ -293,16 +293,19 @@ class ErrorLogger {
         advice.push('CORS error detected: The API endpoint is blocking requests from this origin');
         advice.push('Solution: Add your domain to the API key restrictions (HTTP referrers) in Google Cloud Console');
         advice.push('For desktop: CORS restrictions may not apply, but check API key restrictions');
+        advice.push('Code Hint: Ensure your fetch request includes mode: "cors" if needed, or use a proxy.');
       }
       
       if (message.includes('401') || message.includes('403')) {
         advice.push('Authentication error: API key may be invalid, expired, or lacks permissions');
         advice.push('Solution: Generate a new API key and ensure all required APIs are enabled');
+        advice.push('Check: Did you enable "Solar API", "Maps JavaScript API", "Geocoding API"?');
       }
       
       if (message.includes('429')) {
         advice.push('Rate limit exceeded: Too many requests in a short time');
         advice.push('Solution: Wait a few minutes, or upgrade your API plan for higher limits');
+        advice.push('Tip: Implement exponential backoff in your retry logic.');
       }
       
       if (message.includes('500') || message.includes('502') || message.includes('503')) {
@@ -314,6 +317,7 @@ class ErrorLogger {
         advice.push('Network error: Request could not be completed');
         advice.push('Possible causes: No internet connection, API endpoint blocked, or CORS issue');
         advice.push('Solution: Check your internet connection and firewall settings');
+        advice.push('Debug: Try accessing the API endpoint directly in your browser to check connectivity.');
       }
     }
     
@@ -525,29 +529,39 @@ class ErrorLogger {
       }
       
       if (logsToSend.length > 0) {
-        // Use sendBeacon for reliable delivery during unload
-        if (navigator.sendBeacon) {
-          const report = this.generateEmailReport(logsToSend);
-          const payload = JSON.stringify({
-            to: this.config.emailTo,
-            subject: `Solar Panel Calculator - Session Report (${logsToSend.length} ${logsToSend.length === 1 ? 'issue' : 'issues'})`,
-            body: report,
-            logs: logsToSend,
-            threadId: this.getEmailThreadId(),
-          });
-          
-          const blob = new Blob([payload], { type: 'application/json' });
-          const sent = navigator.sendBeacon(this.config.emailEndpoint, blob);
-          
-          if (sent) {
-            console.log(`✅ Error report queued for delivery (${logsToSend.length} logs)`);
+        // Try fetch with keepalive first (more reliable for JSON payloads than beacon sometimes)
+        const payload = JSON.stringify({
+          to: this.config.emailTo,
+          subject: `Solar Panel Calculator - Session Report (${logsToSend.length} ${logsToSend.length === 1 ? 'issue' : 'issues'})`,
+          body: report,
+          logs: logsToSend,
+          threadId: this.getEmailThreadId(),
+        });
+
+        const blob = new Blob([payload], { type: 'application/json' });
+        
+        // Try fetch with keepalive
+        fetch(this.config.emailEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true,
+        }).then(res => {
+          if (res.ok) {
+            console.log(`✅ Error report sent via fetch/keepalive (${logsToSend.length} logs)`);
             this.updateLastReportTime();
           } else {
-            console.error('❌ Failed to queue error report');
+            // Fallback to beacon
+            if (navigator.sendBeacon) {
+               navigator.sendBeacon(this.config.emailEndpoint!, blob);
+            }
           }
-        } else {
-          console.warn('⚠️ sendBeacon not available, report not sent');
-        }
+        }).catch(() => {
+           // Fallback to beacon
+           if (navigator.sendBeacon) {
+              navigator.sendBeacon(this.config.emailEndpoint!, blob);
+           }
+        });
       }
     };
 

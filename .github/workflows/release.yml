@@ -8,14 +8,6 @@ on:
   release:
     types: [created]
   workflow_dispatch:
-    inputs:
-      include_ios:
-        description: 'Attempt iOS build (requires signing secrets)'
-        required: false
-        default: 'false'
-  workflow_run:
-    workflows: ['Auto Release on Push']
-    types: [completed]
 
 permissions:
   contents: write

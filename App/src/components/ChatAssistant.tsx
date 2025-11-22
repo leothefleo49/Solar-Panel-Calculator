@@ -153,7 +153,7 @@ const ChatAssistant = () => {
         {
           role: 'system',
           content:
-            'You are a helpful solar PV assistant. Keep responses BRIEF, CLEAR, and PRACTICAL. Use bullet points. Avoid long explanations. Focus on actionable advice. Celebrate good choices, flag concerns.',
+            'You are a helpful solar PV assistant. Keep responses EXTREMELY BRIEF, CLEAR, and PRACTICAL. Use bullet points. Avoid long explanations. Focus on actionable advice. Celebrate good choices, flag concerns. Do not output long blocks of text.',
         },
         { role: 'system', content: knowledge },
         { role: 'system', content: contextBlob + cartContext },
@@ -427,23 +427,25 @@ const ChatAssistant = () => {
             >
               {provider === 'google' && (
                 <>
-                  <option value="gemini-2.5-pro" className="bg-slate">gemini-2.5-pro</option>
-                  <option value="gemini-2.5-flash" className="bg-slate">gemini-2.5-flash</option>
-                  <option value="gemini-2.0-ultra" className="bg-slate">gemini-2.0-ultra</option>
-                  <option value="gemini-2.0-flash" className="bg-slate">gemini-2.0-flash</option>
-                  <option value="gemini-1.5-pro" className="bg-slate">gemini-1.5-pro</option>
-                  <option value="gemini-1.5-flash" className="bg-slate">gemini-1.5-flash</option>
-                  <option value="gemini-exp-1206" className="bg-slate">gemini-exp-1206</option>
+                  <option value="gemini-3.0-pro-exp" className="bg-slate-900">gemini-3.0-pro-exp</option>
+                  <option value="gemini-2.5-pro" className="bg-slate-900">gemini-2.5-pro</option>
+                  <option value="gemini-2.5-flash" className="bg-slate-900">gemini-2.5-flash</option>
+                  <option value="gemini-2.0-ultra" className="bg-slate-900">gemini-2.0-ultra</option>
+                  <option value="gemini-2.0-flash" className="bg-slate-900">gemini-2.0-flash</option>
+                  <option value="gemini-1.5-pro" className="bg-slate-900">gemini-1.5-pro</option>
+                  <option value="gemini-1.5-flash" className="bg-slate-900">gemini-1.5-flash</option>
+                  <option value="gemini-exp-1206" className="bg-slate-900">gemini-exp-1206</option>
                 </>
               )}
               {provider === 'openai' && (
                 <>
-                  <option value="gpt-5" className="bg-slate">gpt-5</option>
-                  <option value="gpt-4.1" className="bg-slate">gpt-4.1</option>
-                  <option value="gpt-4o" className="bg-slate">gpt-4o</option>
-                  <option value="gpt-4o-mini" className="bg-slate">gpt-4o-mini</option>
-                  <option value="gpt-4-turbo" className="bg-slate">gpt-4-turbo</option>
-                  <option value="gpt-3.5-turbo" className="bg-slate">gpt-3.5-turbo</option>
+                  <option value="gpt-5.1" className="bg-slate-900">gpt-5.1</option>
+                  <option value="gpt-5" className="bg-slate-900">gpt-5</option>
+                  <option value="gpt-4.1" className="bg-slate-900">gpt-4.1</option>
+                  <option value="gpt-4o" className="bg-slate-900">gpt-4o</option>
+                  <option value="gpt-4o-mini" className="bg-slate-900">gpt-4o-mini</option>
+                  <option value="gpt-4-turbo" className="bg-slate-900">gpt-4-turbo</option>
+                  <option value="gpt-3.5-turbo" className="bg-slate-900">gpt-3.5-turbo</option>
                 </>
               )}
               {provider === 'anthropic' && (
@@ -491,14 +493,14 @@ const ChatAssistant = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1 modern-scroll">
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1 modern-scroll min-h-0 w-full">
         {messages.map((m) => (
           <div
             key={m.id}
             className={
               m.role === 'user'
-                ? 'rounded-2xl bg-accent/20 border border-accent/40 px-3 py-2 text-xs max-w-full break-words overflow-wrap-anywhere'
-                : 'rounded-2xl bg-white/10 border border-white/10 px-3 py-2 text-xs max-w-full break-words overflow-wrap-anywhere'
+                ? 'rounded-2xl bg-accent/20 border border-accent/40 px-3 py-2 text-xs max-w-full break-words overflow-hidden'
+                : 'rounded-2xl bg-white/10 border border-white/10 px-3 py-2 text-xs max-w-full break-words overflow-hidden'
             }
             style={{ wordWrap: 'break-word', overflowWrap: 'anywhere' }}
           >
@@ -573,11 +575,11 @@ const ChatAssistant = () => {
                 id="preferred-voice"
                 value={preferredVoice || ''}
                 onChange={(e) => setPreferredVoice(e.target.value || null)}
-                className="rounded-xl border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-white/80 focus:border-accent focus:ring-accent"
+                className="rounded-xl border border-white/10 bg-slate-900 px-2 py-1 text-[10px] text-white focus:border-accent focus:ring-accent max-w-[150px]"
               >
-                <option value="">Browser default</option>
+                <option value="" className="bg-slate-900">Browser default</option>
                 {availableVoices.map((voice) => (
-                  <option key={voice.voiceURI} value={voice.voiceURI}>
+                  <option key={voice.voiceURI} value={voice.voiceURI} className="bg-slate-900">
                     {voice.name} ({voice.lang})
                   </option>
                 ))}

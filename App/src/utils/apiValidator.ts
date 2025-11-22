@@ -159,6 +159,7 @@ export async function validateGoogleApiKey(
         'Verify that firewall or antivirus is not blocking the request',
         'If on desktop, CORS restrictions should not apply',
         'If on web, ensure your domain is whitelisted in API key restrictions',
+        'Try disabling VPN if active',
       ];
     }
     
@@ -172,7 +173,7 @@ export async function validateGoogleApiKey(
     return {
       valid: false,
       provider: `google-${apiType}`,
-      message: 'Network error - could not connect to API',
+      message: `Network error - could not connect to API: ${error.message}`,
       details: error.message,
       errorType,
       suggestedFixes,

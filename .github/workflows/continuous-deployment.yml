@@ -1,0 +1,98 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - 'tools/**'
+
+permissions:
+  contents: write
+
+jobs:
+  bump-and-release:
+    name: Bump Version & Release
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, 'chore(release)') && github.actor != 'github-actions[bot]' }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump Version
+        id: bump
+        run: |
+          # Read current version
+          CURRENT_VERSION=$(node -p "require('./App/package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Bump patch version
+          npm version patch --no-git-tag-version --prefix App
+          NEW_VERSION=$(node -p "require('./App/package.json').version")
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Sync Version to Config Files
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const version = process.env.VERSION;
+            
+            // Update tauri.conf.json
+            const tauriPath = "App/src-tauri/tauri.conf.json";
+            if (fs.existsSync(tauriPath)) {
+              const tauriConf = JSON.parse(fs.readFileSync(tauriPath));
+              tauriConf.version = version;
+              fs.writeFileSync(tauriPath, JSON.stringify(tauriConf, null, 2) + "\n");
+              console.log("Updated tauri.conf.json");
+            }
+            
+            // Update Cargo.toml
+            const cargoPath = "App/src-tauri/Cargo.toml";
+            if (fs.existsSync(cargoPath)) {
+              let cargo = fs.readFileSync(cargoPath, "utf8");
+              cargo = cargo.replace(/^version = ".*"$/m, `version = "${version}"`);
+              fs.writeFileSync(cargoPath, cargo);
+              console.log("Updated Cargo.toml");
+            }
+          '
+
+      - name: Commit & Push Changes
+        run: |
+          git add App/package.json App/src-tauri/tauri.conf.json App/src-tauri/Cargo.toml
+          git commit -m "chore(release): bump version to ${{ steps.bump.outputs.version }} [skip ci]"
+          git push origin main
+
+      - name: Create Tag
+        run: |
+          git tag "v${{ steps.bump.outputs.version }}"
+          git push origin "v${{ steps.bump.outputs.version }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ steps.bump.outputs.version }}"
+          name: "v${{ steps.bump.outputs.version }}"
+          body: "Automated release for version ${{ steps.bump.outputs.version }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -18,6 +18,7 @@ export interface ApiPricing {
   costPer1000?: number; // Cost per 1000 requests (USD)
   costPerToken?: number; // Cost per token (for AI models, USD)
   billingModel: 'per-request' | 'per-token' | 'per-1000';
+  modelOverrides?: Record<string, Partial<Omit<ApiPricing, 'modelOverrides'>>>;
 }
 
 export interface UsageRecord {
@@ -69,6 +70,21 @@ export const API_PRICING: Record<ApiProvider, ApiPricing> = {
     freeTierLimit: 60, // 60 requests/min free tier (rate limit, not quota)
     costPer1000: 0, // Gemini 1.5 Flash is free up to rate limits; Pro has token pricing
     billingModel: 'per-request',
+    modelOverrides: {
+      'gemini-2.5-flash': {
+        freeTierLimit: Infinity, // Effectively unlimited for AI Studio key
+        costPer1000: 0,
+      },
+      'gemini-1.5-flash': {
+        freeTierLimit: Infinity,
+        costPer1000: 0,
+      },
+      'gemini-2.5-pro': {
+        freeTierLimit: 50, // Example limit
+        costPerToken: 0.000001, // Example pricing
+        billingModel: 'per-token',
+      }
+    }
   },
   'google-shopping': {
     freeTierLimit: 100, // 100 queries/day free
