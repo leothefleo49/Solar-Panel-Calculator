@@ -43,17 +43,20 @@ const ChatAssistant = () => {
 
   const [input, setInput] = useState('')
   const [images, setImages] = useState<File[]>([])
-  const [collapsed, setCollapsed] = useState(false)
-  const [listening, setListening] = useState(false)
-  const [recognitionSupported, setRecognitionSupported] = useState(false)
-  const [ttsSupported, setTtsSupported] = useState(false)
-  const [useAiVoice, setUseAiVoice] = useState(true)
+  const [liveMode, setLiveMode] = useState(false)
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
   const lastAssistantRef = useRef<string>('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const silenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const shouldSendOnStop = useRef(false)
   const lastPlayedMsgId = useRef<string | null>(null)
+  const inputRef = useRef('')
+  const isSpeakingRef = useRef(false)
+
+  // Keep inputRef in sync with input state
+  useEffect(() => {
+    inputRef.current = input
+  }, [input])
 
   useEffect(() => {
     if (!textareaRef.current) return
@@ -108,8 +111,9 @@ const ChatAssistant = () => {
   }
 
   const handleSend = async () => {
-    if (!input.trim()) return
-    const question = input.trim()
+    const currentInput = inputRef.current
+    if (!currentInput.trim()) return
+    const question = currentInput.trim()
     setInput('')
     addMessage('user', question)
 
@@ -238,7 +242,10 @@ const ChatAssistant = () => {
   useEffect(() => {
     if (!('speechSynthesis' in window)) return undefined
     const synth = window.speechSynthesis
-    const refreshVoices = () => setAvailableVoices(synth.getVoices())
+    const refreshVoices = () => {
+      const voices = synth.getVoices().filter(v => v.name && v.lang)
+      setAvailableVoices(voices)
+    }
     refreshVoices()
     synth.addEventListener('voiceschanged', refreshVoices)
     return () => synth.removeEventListener('voiceschanged', refreshVoices)
@@ -273,6 +280,10 @@ const ChatAssistant = () => {
     )
 
   const startListening = () => {
+    // Stop any current speech when starting to listen
+    window.speechSynthesis.cancel()
+    isSpeakingRef.current = false
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) return
     const rec = new SpeechRecognition()
@@ -327,6 +338,15 @@ const ChatAssistant = () => {
     
     // Stop any current speech
     window.speechSynthesis.cancel()
+    isSpeakingRef.current = true
+
+    const onSpeechEnd = () => {
+      isSpeakingRef.current = false
+      // If Live Mode is on, start listening again after speech ends
+      if (liveMode) {
+        setTimeout(() => startListening(), 300)
+      }
+    }
 
     // Prefer AI voice when available (OpenAI)
     const apiKeyForProvider = getProviderKey('openai')
@@ -337,14 +357,24 @@ const ChatAssistant = () => {
         const blob = await openaiTts(apiKeyForProvider, text.slice(0, 2000), (voice as any), 'mp3')
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
-        audio.play().finally(() => URL.revokeObjectURL(url))
+        audio.onended = () => {
+          URL.revokeObjectURL(url)
+          onSpeechEnd()
+        }
+        audio.play().catch(e => {
+          console.error('Audio play failed', e)
+          onSpeechEnd()
+        })
         return
       } catch (e) {
         // Fall back to system/browser TTS on failure
         console.warn('AI TTS failed, falling back to browser TTS:', e)
       }
     }
-    if (!ttsSupported) return
+    if (!ttsSupported) {
+      onSpeechEnd()
+      return
+    }
     
     const utter = new SpeechSynthesisUtterance(text.slice(0, 1200))
     if (preferredVoice) {
@@ -354,6 +384,8 @@ const ChatAssistant = () => {
     utter.rate = 1
     utter.pitch = 1
     utter.volume = 1
+    utter.onend = onSpeechEnd
+    utter.onerror = onSpeechEnd
     window.speechSynthesis.speak(utter)
   }
 
@@ -606,8 +638,12 @@ const ChatAssistant = () => {
             >Play Last Reply</button>
           )}
           <label className="flex items-center gap-1 text-[10px] text-slate-300">
+            <input type="checkbox" checked={liveMode} onChange={(e) => setLiveMode(e.target.checked)} />
+            Live Chat
+          </label>
+          <label className="flex items-center gap-1 text-[10px] text-slate-300">
             <input type="checkbox" checked={useAiVoice} onChange={(e) => setUseAiVoice(e.target.checked)} />
-            Use AI Voice (if available)
+            Use AI Voice
           </label>
           {ttsSupported && (availableVoices.length > 0 || provider === 'openai') && (
             <div className="flex items-center gap-1 text-[10px] text-slate-300">
@@ -620,13 +656,13 @@ const ChatAssistant = () => {
               >
                 <option value="" className="bg-slate-900">Default</option>
                 {provider === 'openai' && (
-                  <optgroup label="OpenAI Voices">
+                  <optgroup label="OpenAI Voices" className="bg-slate-900 text-white">
                     {OPENAI_VOICES.map((v) => (
                       <option key={v} value={v} className="bg-slate-900 capitalize">{v}</option>
                     ))}
                   </optgroup>
                 )}
-                <optgroup label="System Voices">
+                <optgroup label="System Voices" className="bg-slate-900 text-white">
                   {availableVoices.map((voice) => (
                     <option key={voice.voiceURI} value={voice.voiceURI} className="bg-slate-900">
                       {voice.name} ({voice.lang})
