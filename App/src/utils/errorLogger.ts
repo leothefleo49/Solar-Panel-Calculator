@@ -529,6 +529,9 @@ class ErrorLogger {
       }
       
       if (logsToSend.length > 0) {
+        // Generate the report string
+        const report = this.generateEmailReport(logsToSend);
+
         // Try fetch with keepalive first (more reliable for JSON payloads than beacon sometimes)
         const payload = JSON.stringify({
           to: this.config.emailTo,
