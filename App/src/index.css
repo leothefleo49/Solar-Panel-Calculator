@@ -201,15 +201,12 @@ body::-webkit-scrollbar-corner {
 
 /* Fullscreen-specific scrollbar overrides to prevent white backgrounds */
 :fullscreen,
-:fullscreen *,
 :fullscreen body,
 :fullscreen html,
 :-webkit-full-screen,
-:-webkit-full-screen *,
 :-webkit-full-screen body,
 :-webkit-full-screen html,
 :-moz-full-screen,
-:-moz-full-screen *,
 :-moz-full-screen body,
 :-moz-full-screen html,
 :fullscreen::backdrop,

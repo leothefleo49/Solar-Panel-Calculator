@@ -496,7 +496,7 @@ const ChatAssistant = () => {
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="premium-select rounded-xl border border-white/10 bg-white/5 px-2 py-2 text-xs focus:border-accent focus:ring-accent min-w-[140px]"
+              className="premium-select rounded-xl border border-white/10 bg-slate-900 px-2 py-2 text-xs focus:border-accent focus:ring-accent min-w-[140px] text-white"
             >
               {provider === 'google' && (
                 <>
@@ -654,7 +654,7 @@ const ChatAssistant = () => {
                 onChange={(e) => setPreferredVoice(e.target.value || null)}
                 className="rounded-xl border border-white/10 bg-slate-900 px-2 py-1 text-[10px] text-white focus:border-accent focus:ring-accent max-w-[150px] min-w-[100px]"
               >
-                <option value="" className="bg-slate-900">Default</option>
+                <option value="" className="bg-slate-900">System Default</option>
                 {provider === 'openai' && (
                   <optgroup label="OpenAI Voices" className="bg-slate-900 text-white">
                     {OPENAI_VOICES.map((v) => (
