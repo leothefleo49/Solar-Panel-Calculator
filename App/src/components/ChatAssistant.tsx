@@ -51,7 +51,7 @@ const ChatAssistant = () => {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
   const lastAssistantRef = useRef<string>('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const silenceTimer = useRef<NodeJS.Timeout | null>(null)
+  const silenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const shouldSendOnStop = useRef(false)
   const lastPlayedMsgId = useRef<string | null>(null)
 
@@ -74,6 +74,7 @@ const ChatAssistant = () => {
         setTimeout(() => speakLastAssistant(), 500)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, useAiVoice, ttsSupported])
 
   // Auto-select first available provider if current one has no key
