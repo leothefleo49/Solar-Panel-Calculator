@@ -566,10 +566,10 @@ type MetricCardProps = {
 }
 
 const MetricCard = ({ label, value, sublabel }: MetricCardProps) => (
-  <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+  <div className="rounded-3xl border border-white/10 bg-white/5 p-5 flex flex-col justify-between h-full">
     <p className="text-xs uppercase tracking-[0.2em] text-slate-300">{label}</p>
-    <p className="mt-2 text-3xl font-semibold">{value}</p>
-    <p className="text-xs text-slate-400">{sublabel}</p>
+    <p className="mt-2 text-2xl xl:text-3xl font-semibold break-words leading-tight">{value}</p>
+    <p className="text-xs text-slate-400 mt-2">{sublabel}</p>
   </div>
 )
 

@@ -8,6 +8,8 @@ import { useGoogleApiStore } from '../state/googleApiStore'
 import { callOpenAI, callGeminiFlash, callClaude, callGrok, openaiTts } from '../utils/aiProviders'
 import type { FileUpload } from '../utils/aiProviders'
 
+const OPENAI_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']
+
 const ChatAssistant = () => {
   const config = useSolarStore((s) => s.config)
   const snapshot = buildModelSnapshot(config)
@@ -49,6 +51,9 @@ const ChatAssistant = () => {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
   const lastAssistantRef = useRef<string>('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const silenceTimer = useRef<NodeJS.Timeout | null>(null)
+  const shouldSendOnStop = useRef(false)
+  const lastPlayedMsgId = useRef<string | null>(null)
 
   useEffect(() => {
     if (!textareaRef.current) return
@@ -57,6 +62,19 @@ const ChatAssistant = () => {
     const maxHeightPx = 9 * 16 // 9rem
     textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeightPx)}px`
   }, [input])
+
+  // Auto-play response when new assistant message arrives
+  useEffect(() => {
+    const lastMsg = messages[messages.length - 1]
+    if (lastMsg?.role === 'assistant' && lastMsg.id !== lastPlayedMsgId.current) {
+      lastPlayedMsgId.current = lastMsg.id
+      // Only auto-play if user has enabled AI voice or we have TTS support
+      if (useAiVoice || ttsSupported) {
+        // Small delay to ensure state is settled
+        setTimeout(() => speakLastAssistant(), 500)
+      }
+    }
+  }, [messages, useAiVoice, ttsSupported])
 
   // Auto-select first available provider if current one has no key
   useEffect(() => {
@@ -271,15 +289,31 @@ const ChatAssistant = () => {
         }
       }
       if (textareaRef.current) textareaRef.current.placeholder = interim ? `Speaking: ${interim}` : 'Ask a question...'
+      
+      // Silence detection for auto-send
+      if (silenceTimer.current) clearTimeout(silenceTimer.current)
+      silenceTimer.current = setTimeout(() => {
+        shouldSendOnStop.current = true
+        stopListening()
+      }, 2000) // 2 seconds of silence triggers send
     }
     rec.onerror = () => setListening(false)
-    rec.onend = () => setListening(false)
+    rec.onend = () => {
+      setListening(false)
+      if (shouldSendOnStop.current) {
+        shouldSendOnStop.current = false
+        // Small delay to allow state update to settle
+        setTimeout(() => handleSend(), 100)
+      }
+    }
     rec.start()
     ;(window as any).__activeRecognition = rec
     setListening(true)
+    shouldSendOnStop.current = false
   }
 
   const stopListening = () => {
+    if (silenceTimer.current) clearTimeout(silenceTimer.current)
     const rec = (window as any).__activeRecognition
     if (rec) rec.stop()
     setListening(false)
@@ -289,11 +323,17 @@ const ChatAssistant = () => {
   const speakLastAssistant = async () => {
     const text = lastAssistantRef.current
     if (!text) return
+    
+    // Stop any current speech
+    window.speechSynthesis.cancel()
+
     // Prefer AI voice when available (OpenAI)
     const apiKeyForProvider = getProviderKey('openai')
     if (useAiVoice && provider === 'openai' && apiKeyForProvider) {
       try {
-        const blob = await openaiTts(apiKeyForProvider, text.slice(0, 2000), 'alloy', 'mp3')
+        // Use preferred voice if it's an OpenAI voice, otherwise default to alloy
+        const voice = OPENAI_VOICES.includes(preferredVoice || '') ? preferredVoice : 'alloy'
+        const blob = await openaiTts(apiKeyForProvider, text.slice(0, 2000), (voice as any), 'mp3')
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
         audio.play().finally(() => URL.revokeObjectURL(url))
@@ -304,7 +344,7 @@ const ChatAssistant = () => {
       }
     }
     if (!ttsSupported) return
-    window.speechSynthesis.cancel()
+    
     const utter = new SpeechSynthesisUtterance(text.slice(0, 1200))
     if (preferredVoice) {
       const matching = availableVoices.find((voice) => voice.voiceURI === preferredVoice || voice.name === preferredVoice)
@@ -568,21 +608,30 @@ const ChatAssistant = () => {
             <input type="checkbox" checked={useAiVoice} onChange={(e) => setUseAiVoice(e.target.checked)} />
             Use AI Voice (if available)
           </label>
-          {ttsSupported && availableVoices.length > 0 && (
+          {ttsSupported && (availableVoices.length > 0 || provider === 'openai') && (
             <div className="flex items-center gap-1 text-[10px] text-slate-300">
               <label htmlFor="preferred-voice" className="whitespace-nowrap text-[10px] text-slate-400">Voice</label>
               <select
                 id="preferred-voice"
                 value={preferredVoice || ''}
                 onChange={(e) => setPreferredVoice(e.target.value || null)}
-                className="rounded-xl border border-white/10 bg-slate-900 px-2 py-1 text-[10px] text-white focus:border-accent focus:ring-accent max-w-[150px]"
+                className="rounded-xl border border-white/10 bg-slate-900 px-2 py-1 text-[10px] text-white focus:border-accent focus:ring-accent max-w-[150px] min-w-[100px]"
               >
-                <option value="" className="bg-slate-900">Browser default</option>
-                {availableVoices.map((voice) => (
-                  <option key={voice.voiceURI} value={voice.voiceURI} className="bg-slate-900">
-                    {voice.name} ({voice.lang})
-                  </option>
-                ))}
+                <option value="" className="bg-slate-900">Default</option>
+                {provider === 'openai' && (
+                  <optgroup label="OpenAI Voices">
+                    {OPENAI_VOICES.map((v) => (
+                      <option key={v} value={v} className="bg-slate-900 capitalize">{v}</option>
+                    ))}
+                  </optgroup>
+                )}
+                <optgroup label="System Voices">
+                  {availableVoices.map((voice) => (
+                    <option key={voice.voiceURI} value={voice.voiceURI} className="bg-slate-900">
+                      {voice.name} ({voice.lang})
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </div>
           )}
