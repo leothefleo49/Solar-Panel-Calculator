@@ -43,6 +43,11 @@ const ChatAssistant = () => {
 
   const [input, setInput] = useState('')
   const [images, setImages] = useState<File[]>([])
+  const [collapsed, setCollapsed] = useState(false)
+  const [listening, setListening] = useState(false)
+  const [recognitionSupported, setRecognitionSupported] = useState(false)
+  const [ttsSupported, setTtsSupported] = useState(false)
+  const [useAiVoice, setUseAiVoice] = useState(true)
   const [liveMode, setLiveMode] = useState(false)
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([])
   const lastAssistantRef = useRef<string>('')
