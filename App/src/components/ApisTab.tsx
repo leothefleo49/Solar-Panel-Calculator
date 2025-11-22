@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import clsx from 'clsx'
 import { useGoogleApiStore } from '../state/googleApiStore'
 import { useChatStore } from '../state/chatStore'
@@ -24,22 +24,12 @@ const ApisTab = () => {
   } = useGoogleApiStore()
   const { setProviderKey, clearProviderKey, providerKeys } = useChatStore()
   const [showKeys, setShowKeys] = useState(false)
-  // Initialize mode directly from store to ensure persistence
-  const [mode, setMode] = useState<'unified' | 'separate'>(keyMode)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'validating'>('idle')
   const [validationResults, setValidationResults] = useState<Record<string, ValidationResult | null>>({})
   const [showValidationModal, setShowValidationModal] = useState(false)
 
-  // Sync local state with store if store changes externally
-  useEffect(() => {
-    if (keyMode !== mode) {
-      setMode(keyMode)
-    }
-  }, [keyMode])
-
   // Update mode in store when it changes
   const handleModeChange = (newMode: 'unified' | 'separate') => {
-    setMode(newMode)
     setKeyMode(newMode)
   }
 
@@ -50,11 +40,11 @@ const ApisTab = () => {
 
     try {
       // Validate Google keys based on mode
-      if (mode === 'unified' && apiKeys.unified) {
+      if (keyMode === 'unified' && apiKeys.unified) {
         const unifiedResult = await validateGoogleApiKey(apiKeys.unified, 'unified')
         results['google-unified'] = unifiedResult
         if (!unifiedResult.valid) hasErrors = true
-      } else if (mode === 'separate') {
+      } else if (keyMode === 'separate') {
         if (apiKeys.solar) {
           const solarResult = await validateGoogleApiKey(apiKeys.solar, 'solar')
           results['google-solar'] = solarResult
@@ -202,12 +192,12 @@ const ApisTab = () => {
           <button
             type="button"
             onClick={() => handleModeChange('unified')}
-            className={mode === 'unified' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            className={keyMode === 'unified' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
           >Unified Key</button>
           <button
             type="button"
             onClick={() => handleModeChange('separate')}
-            className={mode === 'separate' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+            className={keyMode === 'separate' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
           >Separate Keys</button>
           <button
             type="button"
@@ -216,7 +206,7 @@ const ApisTab = () => {
           >{showKeys ? 'Hide Keys' : 'Show Keys'}</button>
         </div>
         <div className="mt-5 space-y-4">
-          {mode === 'unified' ? (
+          {keyMode === 'unified' ? (
             <div>
               <label className="text-xs font-semibold uppercase tracking-widest text-slate-300 flex items-center gap-2">Unified Google Cloud Key <InfoTooltip content="Single key with access to Solar API, Maps (Geocoding), and Shopping (Custom Search). Enable these APIs in Google Cloud Console." /></label>
               <div className="mt-2 flex gap-2">
