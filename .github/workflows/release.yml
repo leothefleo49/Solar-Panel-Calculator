@@ -222,13 +222,6 @@ jobs:
           name: Solar-Panel-Calculator-Desktop-${{ matrix.platform }}
           path: App/src-tauri/target/release/release-artifacts/*
 
-      - name: Upload entire release-artifacts dir for debugging
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Solar-Panel-Calculator-Desktop-All-${{ matrix.platform }}
-          path: App/src-tauri/target/release/release-artifacts/**
-
       - name: Sign Windows binaries (optional)
         if: matrix.platform == 'windows'
         shell: pwsh
