@@ -143,7 +143,7 @@ jobs:
           node-version: '20'
       
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
         working-directory: App
       
       - name: Setup Rust
@@ -155,15 +155,15 @@ jobs:
           set -e
           cd App
           for i in 1 2 3; do
-            if npm ci --silent; then
-              echo "npm ci succeeded"
+            if npm install --silent; then
+              echo "npm install succeeded"
               break
             else
-              echo "npm ci failed, attempt $i/3"
+              echo "npm install failed, attempt $i/3"
               sleep $((i*3))
             fi
             if [ $i -eq 3 ]; then
-              echo "npm ci failed after 3 attempts, trying legacy-peer-deps install"
+              echo "npm install failed after 3 attempts, trying legacy-peer-deps install"
               npm install --legacy-peer-deps || true
             fi
           done

@@ -11,6 +11,10 @@
     "core:window:allow-is-fullscreen",
     "shell:allow-open",
     "dialog:default",
-    "fs:default"
+    "fs:default",
+    "updater:default",
+    "http:default",
+    "process:default",
+    "process:allow-restart"
   ]
 }
