@@ -605,7 +605,7 @@ const LabeledInput = ({ label, helper, value, onChange }: LabeledInputProps) => 
         const nextValue = Number(event.target.value)
         onChange(Number.isNaN(nextValue) ? 0 : nextValue)
       }}
-      className="mt-1 w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white focus:border-accent"
+      className="mt-1 w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-white focus:outline-none"
     />
     <span className="text-xs text-slate-400">{helper}</span>
   </label>

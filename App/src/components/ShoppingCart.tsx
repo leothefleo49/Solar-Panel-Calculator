@@ -236,7 +236,7 @@ export default function ShoppingCart() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="e.g., 'Renogy 400W', 'B08ABCD123' (ASIN), '123456789012' (UPC), or 'high efficiency inverter'"
-                  className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:border-accent focus:outline-none"
+                  className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none"
                 />
                 <button
                   onClick={handleSearch}
@@ -253,7 +253,7 @@ export default function ShoppingCart() {
               <select
                 value={searchCategory}
                 onChange={(e) => setSearchCategory(e.target.value as ProductCategory | '')}
-                className="premium-select rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-sm text-white focus:border-accent focus:outline-none hover:border-accent/60 transition-colors"
+                className="premium-select rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-sm text-white focus:outline-none hover:border-white/30 transition-colors"
               >
                 <option value="" className="bg-slate-900 text-white">All Categories</option>
                 {CATEGORIES.map((cat) => (

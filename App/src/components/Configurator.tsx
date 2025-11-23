@@ -137,7 +137,7 @@ const Configurator = () => {
               min={field.min}
               max={field.max}
               step={field.step ?? 1}
-              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             />
             <span className="text-sm text-slate-400">units</span>
           </div>
@@ -162,7 +162,7 @@ const Configurator = () => {
               min={field.min}
               max={field.max}
               step={field.step ?? 10}
-              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             />
             <button
               type="button"
@@ -190,7 +190,7 @@ const Configurator = () => {
           <select
             value={config[field.key] as string}
             onChange={handleSelectChange(field.key)}
-            className="premium-select block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent"
+            className="premium-select block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none"
           >
             {field.options?.map((option) => (
               <option key={option} value={option} className="bg-slate-900">
@@ -266,7 +266,7 @@ const Configurator = () => {
             max={max}
             step={step}
             disabled={disabled}
-            className="block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 pr-16 text-sm text-white focus:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+            className="block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 pr-16 text-sm text-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
           {displaySuffix && (
             <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">

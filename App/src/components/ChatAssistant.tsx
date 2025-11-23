@@ -5,10 +5,24 @@ import { buildModelSnapshot } from '../utils/calculations'
 import { useSolarStore } from '../state/solarStore'
 import { useCartStore } from '../state/cartStore'
 import { useGoogleApiStore } from '../state/googleApiStore'
-import { callOpenAI, callGeminiFlash, callClaude, callGrok, openaiTts } from '../utils/aiProviders'
+import { callOpenAI, callGeminiFlash, callClaude, callGrok, openaiTts, googleTts } from '../utils/aiProviders'
 import type { FileUpload } from '../utils/aiProviders'
 
 const OPENAI_VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer']
+const GOOGLE_VOICES = [
+  'en-US-Neural2-A',  // Female
+  'en-US-Neural2-C',  // Female
+  'en-US-Neural2-D',  // Male
+  'en-US-Neural2-F',  // Female
+  'en-US-Neural2-G',  // Female
+  'en-US-Neural2-H',  // Female
+  'en-US-Neural2-I',  // Male
+  'en-US-Neural2-J',  // Male
+  'en-GB-Neural2-A',  // British Female
+  'en-GB-Neural2-B',  // British Male
+  'en-AU-Neural2-A',  // Australian Female
+  'en-AU-Neural2-B',  // Australian Male
+]
 
 const ChatAssistant = () => {
   const config = useSolarStore((s) => s.config)
@@ -284,10 +298,32 @@ const ChatAssistant = () => {
       ),
     )
 
-  const startListening = () => {
-    // Stop any current speech when starting to listen
+  // Stop all voice activity (speaking and listening)
+  const stopAllVoiceActivity = () => {
+    // Stop speech synthesis
     window.speechSynthesis.cancel()
     isSpeakingRef.current = false
+    
+    // Stop recognition
+    if (silenceTimer.current) clearTimeout(silenceTimer.current)
+    const rec = (window as any).__activeRecognition
+    if (rec) {
+      try {
+        rec.stop()
+      } catch (e) {
+        // Already stopped
+      }
+    }
+    setListening(false)
+    if (textareaRef.current) textareaRef.current.placeholder = 'Ask a question about system sizing, ROI, production...'
+  }
+
+  const startListening = () => {
+    // Don't start if already listening
+    if (listening) return
+    
+    // Stop any current speech when starting to listen
+    stopAllVoiceActivity()
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognition) return
@@ -341,6 +377,11 @@ const ChatAssistant = () => {
     const text = lastAssistantRef.current
     if (!text) return
     
+    // Stop listening if active
+    if (listening) {
+      stopListening()
+    }
+    
     // Stop any current speech
     window.speechSynthesis.cancel()
     isSpeakingRef.current = true
@@ -353,24 +394,41 @@ const ChatAssistant = () => {
       }
     }
 
-    // Prefer AI voice when available (OpenAI)
-    const apiKeyForProvider = getProviderKey('openai')
-    if (useAiVoice && provider === 'openai' && apiKeyForProvider) {
+    // Prefer AI voice when available
+    if (useAiVoice) {
       try {
-        // Use preferred voice if it's an OpenAI voice, otherwise default to alloy
-        const voice = OPENAI_VOICES.includes(preferredVoice || '') ? preferredVoice : 'alloy'
-        const blob = await openaiTts(apiKeyForProvider, text.slice(0, 2000), (voice as any), 'mp3')
-        const url = URL.createObjectURL(blob)
-        const audio = new Audio(url)
-        audio.onended = () => {
-          URL.revokeObjectURL(url)
-          onSpeechEnd()
+        let blob: Blob | null = null
+        
+        // Google provider: use Google Cloud TTS
+        if (provider === 'google') {
+          const apiKey = googleApiKeys.unified || googleApiKeys.gemini
+          if (apiKey) {
+            const voice = GOOGLE_VOICES.includes(preferredVoice || '') ? preferredVoice : 'en-US-Neural2-A'
+            blob = await googleTts(apiKey, text.slice(0, 5000), (voice as any), 'mp3')
+          }
         }
-        audio.play().catch(e => {
-          console.error('Audio play failed', e)
-          onSpeechEnd()
-        })
-        return
+        // OpenAI provider: use OpenAI TTS
+        else if (provider === 'openai') {
+          const apiKey = getProviderKey('openai')
+          if (apiKey) {
+            const voice = OPENAI_VOICES.includes(preferredVoice || '') ? preferredVoice : 'alloy'
+            blob = await openaiTts(apiKey, text.slice(0, 2000), (voice as any), 'mp3')
+          }
+        }
+        
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          const audio = new Audio(url)
+          audio.onended = () => {
+            URL.revokeObjectURL(url)
+            onSpeechEnd()
+          }
+          audio.play().catch(e => {
+            console.error('Audio play failed', e)
+            onSpeechEnd()
+          })
+          return
+        }
       } catch (e) {
         // Fall back to system/browser TTS on failure
         console.warn('AI TTS failed, falling back to browser TTS:', e)
@@ -642,15 +700,54 @@ const ChatAssistant = () => {
               className="inline-flex h-9 items-center rounded-lg border border-white/10 bg-white/5 px-3 font-semibold text-white/80 hover:border-accent hover:text-white disabled:opacity-40"
             >Play Last Reply</button>
           )}
-          <label className="flex items-center gap-1 text-[10px] text-slate-300">
+          <label className="glow-toggle">
             <input type="checkbox" checked={liveMode} onChange={(e) => setLiveMode(e.target.checked)} />
-            Live Chat
+            <span className="glow-toggle-slider"></span>
+            <span className="text-[10px] text-slate-300">Live Chat</span>
           </label>
-          <label className="flex items-center gap-1 text-[10px] text-slate-300">
-            <input type="checkbox" checked={useAiVoice} onChange={(e) => setUseAiVoice(e.target.checked)} />
-            Use AI Voice
-          </label>
-          {ttsSupported && (availableVoices.length > 0 || provider === 'openai') && (
+          {(provider === 'openai' || provider === 'google') && (
+            <div className="tooltip-group relative">
+              <label className="glow-toggle">
+                <input 
+                  type="checkbox" 
+                  checked={useAiVoice} 
+                  onChange={(e) => {
+                    setUseAiVoice(e.target.checked)
+                    if (e.target.checked) {
+                      // Show brief notification about API usage
+                      setTimeout(() => {
+                        const tooltip = document.getElementById('ai-voice-tooltip')
+                        if (tooltip) {
+                          tooltip.style.opacity = '1'
+                          setTimeout(() => {
+                            tooltip.style.opacity = '0'
+                          }, 3000)
+                        }
+                      }, 100)
+                    }
+                  }} 
+                />
+                <span className="glow-toggle-slider"></span>
+                <span className="text-[10px] text-slate-300">Use AI Voice</span>
+              </label>
+              <div 
+                id="ai-voice-tooltip"
+                className="tooltip-content absolute bottom-full left-0 mb-2 w-64 rounded-lg bg-slate-800 p-3 text-xs text-slate-200 shadow-xl border border-white/10 opacity-0 transition-opacity duration-300 pointer-events-none z-50"
+                style={{ transition: 'opacity 0.3s ease' }}
+              >
+                <div className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <p className="font-semibold text-amber-400 mb-1">Higher API Usage</p>
+                    <p>AI voices consume more API quota. Each response uses additional calls to {provider === 'google' ? 'Google Cloud Text-to-Speech' : 'OpenAI TTS'} API.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {ttsSupported && (availableVoices.length > 0 || provider === 'openai' || provider === 'google') && (
             <div className="flex items-center gap-1 text-[10px] text-slate-300">
               <label htmlFor="preferred-voice" className="whitespace-nowrap text-[10px] text-slate-400">Voice</label>
               <select
@@ -660,6 +757,16 @@ const ChatAssistant = () => {
                 className="premium-select rounded-xl border border-white/10 bg-slate-900 px-2 py-1 text-[10px] text-white focus:outline-none focus:border-white/30 max-w-[150px] min-w-[100px]"
               >
                 <option value="" className="bg-slate-900 text-white">System Default</option>
+                {provider === 'google' && (
+                  <optgroup label="Google Cloud Voices" className="bg-slate-900 text-white">
+                    {GOOGLE_VOICES.map((v) => {
+                      const label = v.replace('en-', '').replace('-Neural2-', ' ').replace('-', ' ')
+                      return (
+                        <option key={v} value={v} className="bg-slate-900 text-white">{label}</option>
+                      )
+                    })}
+                  </optgroup>
+                )}
                 {provider === 'openai' && (
                   <optgroup label="OpenAI Voices" className="bg-slate-900 text-white">
                     {OPENAI_VOICES.map((v) => (

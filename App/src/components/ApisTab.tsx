@@ -215,7 +215,7 @@ const ApisTab = () => {
                   value={apiKeys.unified || ''}
                   onChange={(e) => setUnifiedKey(e.target.value)}
                   placeholder="Paste unified Google Cloud key"
-                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none"
                 />
                 {apiKeys.unified && (
                   <button type="button" onClick={clearUnifiedKey} className="rounded-xl bg-red-500/80 px-4 py-3 text-xs font-semibold">Clear</button>

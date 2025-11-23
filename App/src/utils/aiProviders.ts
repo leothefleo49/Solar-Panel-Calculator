@@ -34,6 +34,46 @@ export async function openaiTts(apiKey: string, text: string, voice: string = 'a
   return new Blob([arrayBuf], { type: format === 'wav' ? 'audio/wav' : 'audio/mpeg' })
 }
 
+export async function googleTts(apiKey: string, text: string, voice: string = 'en-US-Neural2-A', format: 'mp3'|'wav' = 'mp3'): Promise<Blob> {
+  const languageCode = voice.substring(0, 5) // e.g., 'en-US' from 'en-US-Neural2-A'
+  const res = await fetch(
+    `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: { text },
+        voice: {
+          languageCode,
+          name: voice,
+        },
+        audioConfig: {
+          audioEncoding: format === 'wav' ? 'LINEAR16' : 'MP3',
+          speakingRate: 1.0,
+          pitch: 0.0,
+        },
+      }),
+    }
+  )
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    const msg = data.error?.message || res.statusText
+    await logError(`Google TTS error (${res.status}): ${msg}`, undefined, 'api', 'Google TTS')
+    throw new Error(msg)
+  }
+  const data = await res.json()
+  const audioBase64 = data.audioContent
+  
+  // Decode base64 to binary
+  const binaryString = atob(audioBase64)
+  const bytes = new Uint8Array(binaryString.length)
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i)
+  }
+  
+  return new Blob([bytes], { type: format === 'wav' ? 'audio/wav' : 'audio/mpeg' })
+}
+
 export interface FileUpload {
   name: string
   type: string

@@ -158,7 +158,7 @@ export default function ApiUsageTab() {
         <select
           value={selectedProvider}
           onChange={(e) => setSelectedProvider(e.target.value as ApiProvider | 'all')}
-          className="w-full max-w-xs rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white focus:border-accent focus:outline-none"
+          className="w-full max-w-xs rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white focus:outline-none"
         >
           <option value="all">All Providers</option>
           {providers.map((p) => (

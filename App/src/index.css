@@ -398,7 +398,10 @@ button:active,
 select:focus,
 input:focus,
 textarea:focus,
-a:focus {
+a:focus,
+details:focus,
+summary:focus,
+*:focus {
   outline: none !important;
   box-shadow: none !important;
   -webkit-tap-highlight-color: transparent !important;
@@ -409,14 +412,20 @@ button:focus-visible,
 select:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
-a:focus-visible {
+a:focus-visible,
+details:focus-visible,
+summary:focus-visible {
   outline: none !important;
-  border-color: rgba(56, 189, 248, 0.5) !important;
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+  box-shadow: none !important;
 }
 
-/* Force dark background for select options */
-select option {
+/* Force dark background for all select dropdowns and their children */
+select,
+select option,
+select optgroup,
+option,
+optgroup {
   background-color: #0f172a !important;
   color: #f8fafc !important;
 }
@@ -428,6 +437,68 @@ select option {
   outline: none !important;
   box-shadow: none !important;
   border-color: rgba(255,255,255,0.04) !important;
+}
+
+/* Glowing toggle switch styling */
+.glow-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.glow-toggle input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.glow-toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  margin-right: 8px;
+}
+
+.glow-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 2px;
+  top: 1px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.glow-toggle input[type="checkbox"]:checked + .glow-toggle-slider {
+  background: rgba(56, 189, 248, 0.3);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4), inset 0 0 8px rgba(56, 189, 248, 0.2);
+}
+
+.glow-toggle input[type="checkbox"]:checked + .glow-toggle-slider::before {
+  transform: translateX(20px);
+  background: #38bdf8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.glow-toggle:hover .glow-toggle-slider {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.glow-toggle input[type="checkbox"]:checked:hover + .glow-toggle-slider {
+  border-color: rgba(56, 189, 248, 0.8);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.5), inset 0 0 10px rgba(56, 189, 248, 0.3);
 }
 
 /* Lighten selection background (previous global user-select removal sometimes left artifacts) */
