@@ -416,7 +416,7 @@ a:focus-visible,
 details:focus-visible,
 summary:focus-visible {
   outline: none !important;
-  border-color: rgba(56, 189, 248, 0.3) !important;
+  border-color: transparent !important;
   box-shadow: none !important;
 }
 
@@ -436,7 +436,7 @@ optgroup {
 .no-highlight:focus-visible {
   outline: none !important;
   box-shadow: none !important;
-  border-color: rgba(255,255,255,0.04) !important;
+  border-color: transparent !important;
 }
 
 /* Glowing toggle switch styling */
@@ -446,6 +446,7 @@ optgroup {
   align-items: center;
   cursor: pointer;
   user-select: none;
+  vertical-align: middle;
 }
 
 .glow-toggle input[type="checkbox"] {
@@ -465,6 +466,7 @@ optgroup {
   border-radius: 20px;
   transition: all 0.3s ease;
   margin-right: 8px;
+  flex-shrink: 0;
 }
 
 .glow-toggle-slider::before {
@@ -472,7 +474,7 @@ optgroup {
   position: absolute;
   width: 16px;
   height: 16px;
-  left: 2px;
+  left: 1px;
   top: 1px;
   background: white;
   border-radius: 50%;

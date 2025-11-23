@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import type { MouseEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useChatStore } from '../state/chatStore'
 import { buildModelSnapshot } from '../utils/calculations'
 import { useSolarStore } from '../state/solarStore'
@@ -25,14 +26,15 @@ const GOOGLE_VOICES = [
 ]
 
 const ChatAssistant = () => {
+  const { t, i18n } = useTranslation()
   const config = useSolarStore((s) => s.config)
+  const setConfigValue = useSolarStore((s) => s.setConfigValue)
   const snapshot = buildModelSnapshot(config)
-  const { items: cartItems, checkCompatibility, getMissingComponents } = useCartStore()
+  const { items: cartItems, checkCompatibility, getMissingComponents, addItem } = useCartStore()
   const { apiKeys: googleApiKeys } = useGoogleApiStore()
   const {
     getProviderKey,
     hasProviderKey,
-    getAvailableProviders,
     clearProviderKey,
     loading,
     setLoading,
@@ -48,11 +50,20 @@ const ChatAssistant = () => {
     deleteConversation,
     switchConversation,
     addMessage,
+    providerKeys,
   } = useChatStore()
 
   const activeConv = conversations.find((c) => c.id === activeConversationId) || conversations[0]
   const messages = useMemo(() => activeConv?.messages ?? [], [activeConv])
-  const availableProviders = useMemo(() => getAvailableProviders(), [getAvailableProviders])
+  
+  const availableProviders = useMemo(() => {
+    const providers = (Object.keys(providerKeys) as any[]).filter(p => providerKeys[p]?.trim())
+    if (googleApiKeys.unified && !providers.includes('google')) {
+      providers.push('google')
+    }
+    return providers
+  }, [providerKeys, googleApiKeys.unified])
+
   const currentProviderKey = getProviderKey(provider)
 
   const [input, setInput] = useState('')
@@ -129,6 +140,36 @@ const ChatAssistant = () => {
     createConversation()
   }
 
+  const executeTool = (toolCall: any) => {
+    console.log('Executing tool:', toolCall)
+    try {
+      switch (toolCall.type) {
+        case 'navigate':
+          if (toolCall.tab) {
+            window.dispatchEvent(new CustomEvent('open-dashboard-tab', { detail: { tab: toolCall.tab } }))
+          }
+          break
+        case 'updateConfig':
+          if (toolCall.key && toolCall.value !== undefined) {
+            setConfigValue(toolCall.key, toolCall.value)
+          }
+          break
+        case 'addToCart':
+          if (toolCall.item) {
+            console.log('Adding to cart:', toolCall.item)
+          }
+          break
+        case 'analyzeGraph':
+           window.dispatchEvent(new CustomEvent('open-dashboard-tab', { detail: { tab: 'aiOverview' } }))
+           break
+        default:
+          console.warn('Unknown tool:', toolCall.type)
+      }
+    } catch (e) {
+      console.error('Tool execution failed:', e)
+    }
+  }
+
   const handleSend = async () => {
     const currentInput = inputRef.current
     if (!currentInput.trim()) return
@@ -191,6 +232,16 @@ const ChatAssistant = () => {
 
       const knowledge = 'Solar Concepts: PV efficiency, degradation (~0.5%/yr), inverter life, BOS costs, peak sun hours, ROI, break-even, battery autonomy. Provide practical, concise guidance. For shopping: validate specs, check NEC (690/705/706), suggest compatible components, warn about mismatches.'
 
+      const toolInstructions = `
+You can control the app UI. To perform an action, append a JSON block at the END of your message like this:
+<<<ACTIONS: [{"type": "navigate", "tab": "shopping"}, {"type": "updateConfig", "key": "monthlyUsage", "value": 500}]>>>
+
+Available Tools:
+- navigate(tab: "financial" | "production" | "battery" | "shopping" | "apis" | "api-usage" | "solarIntegration" | "datasheet" | "aiOverview")
+- updateConfig(key: string, value: any) - keys: monthlyUsage, address, panelCount, etc.
+- analyzeGraph() - Opens AI Overview tab
+`
+
       const chatMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
         {
           role: 'system',
@@ -198,6 +249,7 @@ const ChatAssistant = () => {
             'You are a helpful solar PV assistant. Keep responses EXTREMELY BRIEF, CLEAR, and PRACTICAL. Use bullet points. Avoid long explanations. Focus on actionable advice. Celebrate good choices, flag concerns. Do not output long blocks of text.',
         },
         { role: 'system', content: knowledge },
+        { role: 'system', content: toolInstructions },
         { role: 'system', content: contextBlob + cartContext },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: question },
@@ -221,7 +273,26 @@ const ChatAssistant = () => {
       if (!result.ok) {
         addMessage('assistant', `API error: ${result.error}`)
       } else {
-        addMessage('assistant', result.content)
+        // Parse for tools
+        const content = result.content
+        const actionBlockRegex = /<<<ACTIONS: (.*?)>>>/s
+        const match = content.match(actionBlockRegex)
+        
+        let finalContent = content
+        if (match) {
+          try {
+            const actions = JSON.parse(match[1])
+            if (Array.isArray(actions)) {
+              actions.forEach(executeTool)
+            }
+            // Remove the action block from the displayed message
+            finalContent = content.replace(match[0], '').trim()
+          } catch (e) {
+            console.error('Failed to parse actions:', e)
+          }
+        }
+        
+        addMessage('assistant', finalContent)
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
@@ -470,8 +541,8 @@ const ChatAssistant = () => {
     <div className="glass-panel xl:sticky xl:top-6 relative flex h-full max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-[28px] p-6 text-white">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold mb-1">Solar Chat Assistant</h3>
-          <p className="text-xs text-slate-300">Ask questions about system sizing, ROI, production, and get equipment recommendations.</p>
+          <h3 className="text-lg font-semibold mb-1">{t('chat.title')}</h3>
+          <p className="text-xs text-slate-300">{t('chat.subtitle')}</p>
         </div>
         <button
           onClick={() => setCollapsed(true)}
@@ -508,7 +579,7 @@ const ChatAssistant = () => {
         <button
           onClick={handleCreateConversation}
           className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:border-accent hover:text-accent"
-          title="Start another conversation"
+          title={t('chat.newChat')}
         >
           + New
         </button>
@@ -606,7 +677,7 @@ const ChatAssistant = () => {
               onClick={() => window.dispatchEvent(new CustomEvent('open-dashboard-tab', { detail: { tab: 'apis' } }))}
               className="rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-slate-950 transition hover:brightness-110"
             >
-              Configure APIs
+              {t('chat.configureApis')}
             </button>
           ) : hasProviderKey(provider) ? (
             <button
@@ -615,7 +686,16 @@ const ChatAssistant = () => {
               className="rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110"
               title={`Clear ${provider} key`}
             >
-              Clear Key
+              {t('chat.clearKey')}
+            </button>
+          ) : (provider === 'google' && googleApiKeys.unified) ? (
+             <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open-dashboard-tab', { detail: { tab: 'apis' } }))}
+              className="rounded-xl bg-blue-500/80 px-4 py-2 text-xs font-semibold text-white transition hover:brightness-110"
+              title="Managed via Unified Key"
+            >
+              Unified Key Active
             </button>
           ) : (
             <button
@@ -651,7 +731,7 @@ const ChatAssistant = () => {
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
-            placeholder="Ask a question about system sizing, ROI, production..."
+            placeholder={t('chat.placeholder')}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -670,7 +750,7 @@ const ChatAssistant = () => {
             className="rounded-xl bg-accent px-4 h-12 text-sm font-semibold text-slate-950 transition hover:brightness-110 disabled:opacity-40 flex items-center justify-center"
             style={{ minWidth: '70px' }}
           >
-            Send
+            {t('chat.send')}
           </button>
         </div>
 
@@ -681,13 +761,17 @@ const ChatAssistant = () => {
                 type="button"
                 onClick={stopListening}
                 className="inline-flex h-9 items-center rounded-lg border border-rose-500/40 bg-rose-500/20 px-3 font-semibold text-rose-200 hover:bg-rose-500/30"
-              >Stop Voice</button>
+              >
+                {t('chat.stopVoice')}
+              </button>
             ) : (
               <button
                 type="button"
                 onClick={startListening}
                 className="inline-flex h-9 items-center rounded-lg border border-accent/50 bg-accent/20 px-3 font-semibold text-accent hover:bg-accent/30"
-              >Start Voice</button>
+              >
+                {t('chat.startVoice')}
+              </button>
             )
           ) : (
             <span className="text-[10px] text-slate-500">Voice input unsupported in this browser.</span>
@@ -703,7 +787,7 @@ const ChatAssistant = () => {
           <label className="glow-toggle">
             <input type="checkbox" checked={liveMode} onChange={(e) => setLiveMode(e.target.checked)} />
             <span className="glow-toggle-slider"></span>
-            <span className="text-[10px] text-slate-300">Live Chat</span>
+            <span className="text-[10px] text-slate-300">{t('chat.liveChat')}</span>
           </label>
           {(provider === 'openai' || provider === 'google') && (
             <div className="tooltip-group relative">
@@ -728,7 +812,7 @@ const ChatAssistant = () => {
                   }} 
                 />
                 <span className="glow-toggle-slider"></span>
-                <span className="text-[10px] text-slate-300">Use AI Voice</span>
+                <span className="text-[10px] text-slate-300">{t('chat.useAiVoice')}</span>
               </label>
               <div 
                 id="ai-voice-tooltip"
@@ -775,7 +859,9 @@ const ChatAssistant = () => {
                   </optgroup>
                 )}
                 <optgroup label="System Voices" className="bg-slate-900 text-white">
-                  {availableVoices.map((voice) => (
+                  {availableVoices
+                    .filter(voice => !i18n.language || voice.lang.startsWith(i18n.language) || voice.lang.startsWith('en')) // Filter by language
+                    .map((voice) => (
                     <option key={voice.voiceURI} value={voice.voiceURI} className="bg-slate-900 text-white">
                       {voice.name} ({voice.lang})
                     </option>
@@ -802,7 +888,7 @@ const ChatAssistant = () => {
             className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-white/80 transition hover:border-accent hover:text-white"
           >
             <span className="text-base">+</span>
-            Upload Files
+            {t('chat.uploadFiles')}
           </button>
           {images.length > 0 && (
             <span className="text-[10px] text-slate-200">

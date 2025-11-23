@@ -291,7 +291,7 @@ const FinancialSummaryTab = ({ snapshot, crossoverData }: FinancialSummaryTabPro
       <ResponsiveContainer width="100%" height={360}>
         <LineChart data={crossoverData}>
           <CartesianGrid stroke="rgba(148,163,184,0.2)" strokeDasharray="3 3" />
-          <XAxis dataKey="year" stroke="#94a3b8" label={{ value: 'Year', position: 'insideBottom', dy: 12 }} />
+          <XAxis dataKey="year" stroke="#94a3b8" label={{ value: 'Year', position: 'insideBottom', dy: 10 }} />
           <YAxis
             stroke="#94a3b8"
             tickFormatter={(value) => formatCurrency(value, { maximumFractionDigits: 0 })}
@@ -301,7 +301,7 @@ const FinancialSummaryTab = ({ snapshot, crossoverData }: FinancialSummaryTabPro
             formatter={(value: number) => formatCurrency(value, { maximumFractionDigits: 0 })}
             labelFormatter={(label) => `Year ${label}`}
           />
-          <Legend />
+          <Legend verticalAlign="top" height={36} />
           <Line type="monotone" dataKey="utility" stroke="#38bdf8" strokeWidth={3} name="Utility (No Solar)" />
           <Line type="monotone" dataKey="solar" stroke="#f97316" strokeWidth={3} name="Solar System" />
         </LineChart>

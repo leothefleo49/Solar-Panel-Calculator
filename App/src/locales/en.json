@@ -1,0 +1,31 @@
+{
+  "app": {
+    "title": "Solar Panel Calculator",
+    "subtitle": "Financial & Technical Analysis"
+  },
+  "chat": {
+    "title": "Solar Chat Assistant",
+    "subtitle": "Ask questions about system sizing, ROI, production, and get equipment recommendations.",
+    "placeholder": "Ask a question about system sizing, ROI, production...",
+    "send": "Send",
+    "startVoice": "Start Voice",
+    "stopVoice": "Stop Voice",
+    "liveChat": "Live Chat",
+    "useAiVoice": "Use AI Voice",
+    "uploadFiles": "Upload Files",
+    "configureApis": "Configure APIs",
+    "clearKey": "Clear Key",
+    "newChat": "New Chat"
+  },
+  "tabs": {
+    "financial": "Financial Summary",
+    "production": "Production & Performance",
+    "battery": "Battery & Outage Simulation",
+    "shopping": "Shopping Cart",
+    "apis": "APIs",
+    "apiUsage": "API Usage",
+    "solarIntegration": "Google Solar Integration",
+    "datasheet": "25-Year Data Sheet",
+    "aiOverview": "AI Overview"
+  }
+}

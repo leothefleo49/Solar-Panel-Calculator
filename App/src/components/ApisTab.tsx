@@ -93,6 +93,10 @@ const ApisTab = () => {
       }
 
       // All valid - proceed with save
+      if (keyMode === 'unified' && apiKeys.unified && !providerKeys.google) {
+        setProviderKey('google', apiKeys.unified)
+      }
+
       setSaveStatus('saving')
       setTimeout(() => {
         setSaveStatus('saved')
