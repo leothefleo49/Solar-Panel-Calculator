@@ -4,6 +4,12 @@
  */
 
 import { isTauri } from '@tauri-apps/api/core';
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/plugin-process';
+import { tempDir } from '@tauri-apps/api/path';
+import { writeFile } from '@tauri-apps/plugin-fs';
+import { fetch } from '@tauri-apps/plugin-http';
+import { open } from '@tauri-apps/plugin-shell';
 
 export interface UpdateInfo {
   available: boolean;
@@ -130,7 +136,26 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
   const currentVersion = await getCurrentVersion();
   const platform = getPlatform();
 
-  // Check GitHub releases API for all platforms
+  // 1. Try Native Tauri Updater first (Desktop)
+  if (isTauri()) {
+    try {
+      const update = await check();
+      if (update?.available) {
+        return {
+          available: true,
+          currentVersion,
+          latestVersion: update.version,
+          releaseNotes: update.body,
+          downloadUrl: undefined, // Handled by native updater
+          platform: 'desktop',
+        };
+      }
+    } catch (error) {
+      console.warn('Native updater check failed, falling back to GitHub API:', error);
+    }
+  }
+
+  // 2. Fallback to GitHub API (Android/Web or if native fails)
   try {
     const response = await fetch(
       'https://api.github.com/repos/leothefleo49/Solar-Panel-Calculator/releases/latest',
@@ -183,7 +208,43 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
  * Download and install update (all platforms open download page)
  */
 export async function installUpdate(): Promise<void> {
-  // For simplicity, all platforms open the download page
+  // 1. Try Native Tauri Updater (Desktop)
+  if (isTauri()) {
+    try {
+      const update = await check();
+      if (update?.available) {
+        await update.downloadAndInstall();
+        await relaunch();
+        return;
+      }
+    } catch (error) {
+      console.error('Native update failed, trying manual download:', error);
+      
+      // 2. Fallback: Download and Run (Desktop)
+      try {
+        const updateInfo = await checkForUpdates();
+        if (updateInfo.downloadUrl && updateInfo.downloadUrl.endsWith('.exe') || updateInfo.downloadUrl?.endsWith('.msi')) {
+           const filename = updateInfo.downloadUrl.split('/').pop() || 'installer.exe';
+           const tempPath = await tempDir();
+           const filePath = `${tempPath}${filename}`;
+           
+           // Download
+           const response = await fetch(updateInfo.downloadUrl);
+           if (!response.ok) throw new Error('Download failed');
+           const buffer = await response.arrayBuffer();
+           await writeFile(filePath, new Uint8Array(buffer));
+           
+           // Run
+           await open(filePath);
+           return;
+        }
+      } catch (downloadError) {
+        console.error('Manual download failed:', downloadError);
+      }
+    }
+  }
+
+  // 3. Fallback: Open download page
   const updateInfo = await checkForUpdates();
   if (updateInfo.downloadUrl) {
     await openDownloadPage(updateInfo.downloadUrl);
