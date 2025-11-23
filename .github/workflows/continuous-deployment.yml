@@ -391,7 +391,7 @@ jobs:
         run: |
           sudo gem install cocoapods --no-document
       - name: Install Dependencies
-        run: npm ci
+        run: npm install --legacy-peer-deps
         working-directory: App
       - name: Add iOS Platform (Capacitor)
         run: |

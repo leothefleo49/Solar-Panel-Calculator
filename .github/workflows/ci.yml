@@ -34,7 +34,7 @@ jobs:
           cache-dependency-path: 'App/package-lock.json'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run ESLint
         run: npm run lint
@@ -85,7 +85,7 @@ jobs:
           workspaces: App/src-tauri -> target
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
         working-directory: App
 
       - name: Build Tauri App (Debug)
@@ -127,7 +127,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build web assets
         run: npm run build
@@ -163,7 +163,7 @@ jobs:
           cache-dependency-path: 'App/package-lock.json'
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Build Production Bundle
         run: npm run build:prod

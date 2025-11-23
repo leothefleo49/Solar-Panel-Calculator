@@ -3,7 +3,6 @@ import Dashboard from './components/Dashboard'
 import ChatAssistant from './components/ChatAssistant'
 import FullscreenButton from './components/FullscreenButton'
 import UpdateNotification from './components/UpdateNotification'
-import DebugHighlighter from './components/DebugHighlighter'
 
 import { useState, useEffect, useRef } from 'react'
 import { initializeAutoUpdater } from './utils/updater'
@@ -91,7 +90,6 @@ const App = () => {
         >↺ Reset Panels</button>
       </div>
       <UpdateNotification />
-      <DebugHighlighter />
       <div className="mx-auto flex w-full max-w-[1840px] gap-6 xl:gap-8 transition-all duration-500">
         <div className={leftCollapsed ? 'flex-none w-0' : 'flex-none transition-all duration-500'} style={{ width: leftCollapsed ? 0 : leftWidth }}>
           <Configurator />
