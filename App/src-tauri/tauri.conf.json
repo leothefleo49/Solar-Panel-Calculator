@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Solar Panel Calculator",
-  "version": "1.4.44",
+  "version": "1.4.45",
   "identifier": "com.solarpanel.calculator",
   "build": {
     "frontendDist": "../dist",
@@ -36,15 +36,7 @@
       }
     }
   },
-  "plugins": {
-    "fs": {
-      "scope": [
-        "$APP/**",
-        "$HOME/**",
-        "C:\\Users\\User\\Solar Panel Calculator\\App\\ui-debug-logs\\**"
-      ]
-    }
-  },
+  "plugins": {},
   "bundle": {
     "active": true,
     "targets": [
@@ -71,6 +63,5 @@
         "depends": []
       }
     }
-  },
-  "plugins": {}
+  }
 }
