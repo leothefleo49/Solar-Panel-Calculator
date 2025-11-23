@@ -1,28 +1,9 @@
 /**
  * Auto-update utility for Solar Panel Calculator
- * Handles version checking and update installation across platforms
+ * Handles version checking and opening download pages across platforms
  */
 
 import { isTauri } from '@tauri-apps/api/core';
-
-// Tauri updater (Desktop: Windows, macOS, Linux)
-let tauriCheck: any = null;
-let tauriDownload: any = null;
-let tauriInstall: any = null;
-
-// Try to import Tauri updater plugin only if running in Tauri
-if (isTauri()) {
-  import('@tauri-apps/plugin-updater')
-    .then((module) => {
-      tauriCheck = module.check;
-      // Modern API: use update.download() and update.install()
-      tauriDownload = (update: any) => update.download?.();
-      tauriInstall = (update: any) => update.install?.();
-    })
-    .catch((err) => {
-      console.warn('Tauri updater plugin not available:', err);
-    });
-}
 
 export interface UpdateInfo {
   available: boolean;
@@ -149,32 +130,7 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
   const currentVersion = await getCurrentVersion();
   const platform = getPlatform();
 
-  // For Tauri desktop apps, use built-in updater
-  if (isTauri() && tauriCheck) {
-    try {
-      const update = await tauriCheck();
-      
-      if (update?.available) {
-        return {
-          available: true,
-          currentVersion,
-          latestVersion: update.version,
-          releaseNotes: update.body,
-          platform: 'desktop',
-        };
-      }
-      
-      return {
-        available: false,
-        currentVersion,
-        platform: 'desktop',
-      };
-    } catch (error) {
-      console.error('Failed to check for Tauri updates:', error);
-    }
-  }
-
-  // For web/Android, check GitHub releases API
+  // Check GitHub releases API for all platforms
   try {
     const response = await fetch(
       'https://api.github.com/repos/leothefleo49/Solar-Panel-Calculator/releases/latest',
@@ -194,11 +150,14 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
     const available = compareVersions(latestVersion, currentVersion) > 0;
 
     // Use evergreen /releases/latest/download URLs
-    let downloadUrl: string | undefined;
+    let downloadUrl: string;
     if (platform === 'android') {
       // Evergreen URL - always points to latest APK
       downloadUrl = 'https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest/download/Solar-Panel-Calculator-Android.apk';
-    } else if (platform === 'web') {
+    } else if (platform === 'desktop') {
+      // Desktop: point to releases page where users can pick their platform
+      downloadUrl = 'https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest';
+    } else {
       downloadUrl = 'https://github.com/leothefleo49/Solar-Panel-Calculator/releases/latest';
     }
 
@@ -221,30 +180,15 @@ export async function checkForUpdates(): Promise<UpdateInfo> {
 }
 
 /**
- * Download and install update (Desktop only)
+ * Download and install update (all platforms open download page)
  */
 export async function installUpdate(): Promise<void> {
-  if (!isTauri() || !tauriCheck || !tauriDownload || !tauriInstall) {
-    throw new Error('Update installation only available on desktop platforms');
-  }
-
-  try {
-    // Check for update first
-    const update = await tauriCheck();
-    
-    if (!update?.available) {
-      throw new Error('No update available');
-    }
-
-    // Download the update
-    await tauriDownload(update);
-    
-    // Install the update
-    // On Windows/macOS, it will prompt to restart the app
-    await tauriInstall(update);
-  } catch (error) {
-    console.error('Failed to install update:', error);
-    throw error;
+  // For simplicity, all platforms open the download page
+  const updateInfo = await checkForUpdates();
+  if (updateInfo.downloadUrl) {
+    await openDownloadPage(updateInfo.downloadUrl);
+  } else {
+    await openDownloadPage();
   }
 }
 

@@ -38,20 +38,13 @@ export default function UpdateNotification() {
     try {
       setIsInstalling(true);
 
-      if (updateInfo.platform === 'desktop') {
-        // Desktop: Tauri will handle download and install
-        await installUpdate();
-        clearUpdateReminder(); // Clear reminder state - update being installed
-        // App will restart automatically
-      } else {
-        // Android/Web: Open download page
-        await openDownloadPage(updateInfo.downloadUrl);
-        clearUpdateReminder(); // User is downloading, clear reminder
-        setIsDismissed(true);
-      }
+      // All platforms: open the download page in browser
+      await openDownloadPage(updateInfo.downloadUrl);
+      clearUpdateReminder(); // User is downloading, clear reminder
+      setIsDismissed(true);
     } catch (error) {
-      console.error('Failed to install update:', error);
-      alert('Failed to install update. Please try downloading manually.');
+      console.error('Failed to open download page:', error);
+      alert('Failed to open download page. Please visit GitHub releases manually.');
     } finally {
       setIsInstalling(false);
     }
@@ -131,10 +124,8 @@ export default function UpdateNotification() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Installing...
+                  Opening...
                 </span>
-              ) : updateInfo.platform === 'desktop' ? (
-                '✨ Install Update'
               ) : (
                 '📥 Download Update'
               )}
