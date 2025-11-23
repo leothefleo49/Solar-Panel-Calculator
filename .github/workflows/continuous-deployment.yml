@@ -323,11 +323,18 @@ jobs:
           mkdir -p android/app/build/outputs/release-artifacts
           
           # Always name the release APK consistently for the evergreen link
-          if [ -f "$APK_DIR/release/app-release-signed.apk" ]; then
+          # Check for universal APK first (due to splits enabled)
+          if [ -f "$APK_DIR/release/app-universal-release-signed.apk" ]; then
+            cp "$APK_DIR/release/app-universal-release-signed.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
+          elif [ -f "$APK_DIR/release/app-universal-release-unsigned.apk" ]; then
+            cp "$APK_DIR/release/app-universal-release-unsigned.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
+          # Fallback to standard APKs
+          elif [ -f "$APK_DIR/release/app-release-signed.apk" ]; then
             cp "$APK_DIR/release/app-release-signed.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
           elif [ -f "$APK_DIR/release/app-release-unsigned.apk" ]; then
             cp "$APK_DIR/release/app-release-unsigned.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
           fi
+          
           if [ -f "$APK_DIR/debug/app-debug.apk" ]; then
             cp "$APK_DIR/debug/app-debug.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android-Debug.apk"
           fi
