@@ -404,15 +404,21 @@ a:focus {
   -webkit-tap-highlight-color: transparent !important;
 }
 
+/* Remove the default focus ring and use a subtle border change instead */
 button:focus-visible,
 select:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid rgba(56, 189, 248, 0.5);
-  outline-offset: 2px;
-  box-shadow: none;
-  border-color: transparent;
+  outline: none !important;
+  border-color: rgba(56, 189, 248, 0.5) !important;
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2) !important;
+}
+
+/* Force dark background for select options */
+select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
 }
 
 /* Optional utility to force no highlight on elements that still appear outlined */

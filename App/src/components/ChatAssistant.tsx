@@ -501,7 +501,7 @@ const ChatAssistant = () => {
             <select
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              className="premium-select rounded-xl border border-white/10 bg-slate-900 px-2 py-2 text-xs focus:border-accent focus:ring-accent min-w-[140px] text-white"
+              className="premium-select rounded-xl border border-white/10 bg-slate-900 px-2 py-2 text-xs focus:outline-none focus:border-white/30 min-w-[140px] text-white"
             >
               {provider === 'google' && (
                 <>
@@ -602,7 +602,7 @@ const ChatAssistant = () => {
                 handleSend()
               }
             }}
-            className="flex-1 resize-none overflow-hidden rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm focus:border-accent focus:ring-accent"
+            className="flex-1 resize-none overflow-hidden rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:border-white/30"
             style={{ minHeight: '3rem', maxHeight: '9rem' }}
           />
           <button
@@ -657,19 +657,19 @@ const ChatAssistant = () => {
                 id="preferred-voice"
                 value={preferredVoice || ''}
                 onChange={(e) => setPreferredVoice(e.target.value || null)}
-                className="rounded-xl border border-white/10 bg-slate-900 px-2 py-1 text-[10px] text-white focus:border-accent focus:ring-accent max-w-[150px] min-w-[100px]"
+                className="premium-select rounded-xl border border-white/10 bg-slate-900 px-2 py-1 text-[10px] text-white focus:outline-none focus:border-white/30 max-w-[150px] min-w-[100px]"
               >
-                <option value="" className="bg-slate-900">System Default</option>
+                <option value="" className="bg-slate-900 text-white">System Default</option>
                 {provider === 'openai' && (
                   <optgroup label="OpenAI Voices" className="bg-slate-900 text-white">
                     {OPENAI_VOICES.map((v) => (
-                      <option key={v} value={v} className="bg-slate-900 capitalize">{v}</option>
+                      <option key={v} value={v} className="bg-slate-900 text-white capitalize">{v}</option>
                     ))}
                   </optgroup>
                 )}
                 <optgroup label="System Voices" className="bg-slate-900 text-white">
                   {availableVoices.map((voice) => (
-                    <option key={voice.voiceURI} value={voice.voiceURI} className="bg-slate-900">
+                    <option key={voice.voiceURI} value={voice.voiceURI} className="bg-slate-900 text-white">
                       {voice.name} ({voice.lang})
                     </option>
                   ))}
