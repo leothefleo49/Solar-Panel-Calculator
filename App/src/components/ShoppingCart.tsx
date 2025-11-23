@@ -160,7 +160,7 @@ export default function ShoppingCart() {
       {items.length > 0 && (
         <div className={clsx(
           'rounded-lg border p-4',
-          compatibility.passed ? 'border-green-500/50 bg-green-500/10' : 'border-red-500/50 bg-red-500/10'
+          compatibility.passed ? 'border-green-500/50 bg-transparent' : 'border-red-500/50 bg-transparent'
         )}>
           <div className="flex items-start gap-3">
             <div className={clsx(
@@ -210,7 +210,7 @@ export default function ShoppingCart() {
 
       {/* Missing Components */}
       {missingComponents.length > 0 && (
-        <div className="rounded-lg border border-orange-500/50 bg-orange-500/10 p-4">
+        <div className="rounded-lg border border-orange-500/50 bg-transparent p-4">
           <h4 className="font-semibold text-orange-300">Missing Essential Components</h4>
           <ul className="mt-2 space-y-1 text-sm text-orange-200">
             {missingComponents.map((comp, i) => (
@@ -221,7 +221,7 @@ export default function ShoppingCart() {
       )}
 
       {/* Search Bar */}
-      <div className="space-y-4 rounded-lg border border-white/10 bg-white/5 p-4">
+      <div className="space-y-4 rounded-lg border border-white/10 bg-transparent p-4">
         <div className="flex items-start gap-2">
           <div className="flex-1 space-y-3">
             <div>
@@ -236,7 +236,7 @@ export default function ShoppingCart() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder="e.g., 'Renogy 400W', 'B08ABCD123' (ASIN), '123456789012' (UPC), or 'high efficiency inverter'"
-                  className="flex-1 rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white placeholder-white/40 focus:outline-none"
+                  className="flex-1 rounded-lg border border-white/20 bg-transparent px-4 py-2 text-white placeholder-white/40 focus:outline-none"
                 />
                 <button
                   onClick={handleSearch}
@@ -253,7 +253,7 @@ export default function ShoppingCart() {
               <select
                 value={searchCategory}
                 onChange={(e) => setSearchCategory(e.target.value as ProductCategory | '')}
-                className="premium-select rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-sm text-white focus:outline-none hover:border-white/30 transition-colors"
+                className="premium-select rounded-lg border border-white/20 bg-transparent px-3 py-1.5 text-sm text-white focus:outline-none hover:border-white/30 transition-colors"
               >
                 <option value="" className="bg-slate-900 text-white">All Categories</option>
                 {CATEGORIES.map((cat) => (
@@ -286,7 +286,7 @@ export default function ShoppingCart() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-2 text-[10px] text-blue-200">
+            <div className="rounded-lg border border-blue-500/30 bg-transparent p-2 text-[10px] text-blue-200">
               <p className="font-semibold mb-1">✨ Smart Search Features:</p>
               <ul className="space-y-0.5 ml-3">
                 <li>• <strong>Product Names:</strong> "Renogy 400W solar panel", "SMA Sunny Boy inverter"</li>
@@ -299,7 +299,7 @@ export default function ShoppingCart() {
             </div>
 
             {searchError && (
-              <div className="relative rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-300 animate-fadeIn">
+              <div className="relative rounded-lg border border-red-500/50 bg-transparent p-3 text-sm text-red-300 animate-fadeIn">
                 <strong>Error:</strong> {searchError}
                 {errorMeta && (
                   <div className="mt-1 text-[10px] text-red-400">
@@ -323,7 +323,7 @@ export default function ShoppingCart() {
             <p className="text-sm font-medium text-white">{searchResults.length} Results</p>
             <div className="modern-scroll max-h-96 space-y-2 overflow-y-auto pr-1">
               {searchResults.map((product, idx) => (
-                <div key={idx} className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+                <div key={idx} className="flex items-start gap-3 rounded-lg border border-white/10 bg-transparent p-3">
                   {product.image?.thumbnailLink && (
                     <img src={product.image.thumbnailLink} alt="" className="h-16 w-16 rounded object-cover" />
                   )}
@@ -351,7 +351,7 @@ export default function ShoppingCart() {
 
         {/* Manual Entry Form */}
         {showManualForm && (
-          <div className="space-y-4 rounded-lg border border-white/10 bg-white/5 p-4">
+          <div className="space-y-4 rounded-lg border border-white/10 bg-transparent p-4">
             <h4 className="font-semibold text-white">Manual Product Entry</h4>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -360,7 +360,7 @@ export default function ShoppingCart() {
                   type="text"
                   value={manualEntry.name || ''}
                   onChange={(e) => setManualEntry({ ...manualEntry, name: e.target.value })}
-                  className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white"
+                  className="w-full rounded-lg border border-white/20 bg-transparent px-3 py-2 text-white"
                   placeholder="e.g., Renogy 400W Monocrystalline"
                 />
               </div>
@@ -369,7 +369,7 @@ export default function ShoppingCart() {
                 <select
                   value={manualEntry.category}
                   onChange={(e) => setManualEntry({ ...manualEntry, category: e.target.value as ProductCategory })}
-                  className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white"
+                  className="w-full rounded-lg border border-white/20 bg-transparent px-3 py-2 text-white"
                 >
                   {CATEGORIES.map((cat) => (
                     <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -383,7 +383,7 @@ export default function ShoppingCart() {
                   min="1"
                   value={manualEntry.quantity || 1}
                   onChange={(e) => setManualEntry({ ...manualEntry, quantity: parseInt(e.target.value) || 1 })}
-                  className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white"
+                  className="w-full rounded-lg border border-white/20 bg-transparent px-3 py-2 text-white"
                 />
               </div>
               <div>
@@ -393,7 +393,7 @@ export default function ShoppingCart() {
                   step="0.01"
                   value={manualEntry.price || ''}
                   onChange={(e) => setManualEntry({ ...manualEntry, price: parseFloat(e.target.value) || undefined })}
-                  className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white"
+                  className="w-full rounded-lg border border-white/20 bg-transparent px-3 py-2 text-white"
                   placeholder="0.00"
                 />
               </div>
@@ -403,7 +403,7 @@ export default function ShoppingCart() {
                   type="url"
                   value={manualEntry.url || ''}
                   onChange={(e) => setManualEntry({ ...manualEntry, url: e.target.value })}
-                  className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white"
+                  className="w-full rounded-lg border border-white/20 bg-transparent px-3 py-2 text-white"
                   placeholder="https://..."
                 />
               </div>
@@ -412,7 +412,7 @@ export default function ShoppingCart() {
                 <textarea
                   value={manualEntry.notes || ''}
                   onChange={(e) => setManualEntry({ ...manualEntry, notes: e.target.value })}
-                  className="w-full rounded-lg border border-white/20 bg-white/5 px-3 py-2 text-white"
+                  className="w-full rounded-lg border border-white/20 bg-transparent px-3 py-2 text-white"
                   rows={2}
                   placeholder="Additional specs, notes, or compatibility info..."
                 />
@@ -444,7 +444,7 @@ export default function ShoppingCart() {
         ) : (
           <div className="space-y-2">
             {items.map((item) => (
-              <div key={item.id} className="rounded-lg border border-white/10 bg-white/5 p-4">
+              <div key={item.id} className="rounded-lg border border-white/10 bg-transparent p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -478,7 +478,7 @@ export default function ShoppingCart() {
                   </div>
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="rounded-lg border border-red-500/50 px-3 py-1 text-sm font-medium text-red-400 hover:bg-red-500/10"
+                    className="rounded-lg border border-red-500/50 px-3 py-1 text-sm font-medium text-red-400 hover:bg-transparent"
                   >
                     Remove
                   </button>
@@ -491,7 +491,7 @@ export default function ShoppingCart() {
 
       {/* Total */}
       {items.length > 0 && (
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+        <div className="rounded-lg border border-white/10 bg-transparent p-4">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-white">Estimated Total:</span>
             <span className="text-2xl font-bold text-accent">

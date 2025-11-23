@@ -104,7 +104,7 @@ export default function ApiUsageTab() {
                 resetUsage(undefined, currentMonth);
               }
             }}
-            className="rounded-lg border border-red-500/50 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
+            className="rounded-lg border border-red-500/50 px-4 py-2 text-sm font-medium text-red-400 hover:bg-transparent"
           >
             Reset Month
           </button>
@@ -116,14 +116,14 @@ export default function ApiUsageTab() {
 
       {/* Monthly Summary */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+        <div className="rounded-lg border border-white/10 bg-transparent p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-400">Total Cost (Month)</p>
             <InfoTooltip content="Estimated cost for all API usage this month (after free tier)." />
           </div>
           <p className="mt-2 text-3xl font-bold text-white">{formatCurrency(totalMonthlyCost)}</p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+        <div className="rounded-lg border border-white/10 bg-transparent p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-400">Total Requests</p>
             <InfoTooltip content="Total API requests made this month across all providers." />
@@ -132,7 +132,7 @@ export default function ApiUsageTab() {
             {filteredUsage.reduce((sum, u) => sum + u.totalRequests, 0)}
           </p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+        <div className="rounded-lg border border-white/10 bg-transparent p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-400">Free Tier Used</p>
             <InfoTooltip content="Requests covered by free tier limits this month." />
@@ -141,7 +141,7 @@ export default function ApiUsageTab() {
             {filteredUsage.reduce((sum, u) => sum + u.freeTierUsed, 0)}
           </p>
         </div>
-        <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+        <div className="rounded-lg border border-white/10 bg-transparent p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-400">Paid Requests</p>
             <InfoTooltip content="Requests billed beyond free tier this month." />
@@ -158,7 +158,7 @@ export default function ApiUsageTab() {
         <select
           value={selectedProvider}
           onChange={(e) => setSelectedProvider(e.target.value as ApiProvider | 'all')}
-          className="w-full max-w-xs rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-white focus:outline-none"
+          className="w-full max-w-xs rounded-lg border border-white/20 bg-transparent px-4 py-2 text-white focus:outline-none"
         >
           <option value="all">All Providers</option>
           {providers.map((p) => (
@@ -179,7 +179,7 @@ export default function ApiUsageTab() {
           const netCost = Math.max(0, paidCost - prepaid);
 
           return (
-            <div key={provider} className="rounded-lg border border-white/10 bg-white/5 p-4">
+            <div key={provider} className="rounded-lg border border-white/10 bg-transparent p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export default function ApiUsageTab() {
                     value={creditAmount[provider]}
                     onChange={(e) => setCreditAmount({ ...creditAmount, [provider]: e.target.value })}
                     placeholder="$0.00"
-                    className="w-24 rounded-lg border border-white/20 bg-white/5 px-3 py-1 text-sm text-white"
+                    className="w-24 rounded-lg border border-white/20 bg-transparent px-3 py-1 text-sm text-white"
                   />
                   <button
                     onClick={() => handleAddCredit(provider)}
@@ -262,7 +262,7 @@ export default function ApiUsageTab() {
           <h4 className="font-semibold text-white">Recent Usage</h4>
           <div className="modern-scroll max-h-96 space-y-2 overflow-y-auto pr-1">
             {filteredUsage.map((u) => (
-              <div key={`${u.provider}-${u.month}`} className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div key={`${u.provider}-${u.month}`} className="rounded-lg border border-white/10 bg-transparent p-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium text-white">{PROVIDER_LABELS[u.provider]}</p>
@@ -280,7 +280,7 @@ export default function ApiUsageTab() {
       )}
 
       {/* Help Text */}
-      <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4 text-sm text-blue-200">
+      <div className="rounded-lg border border-blue-500/30 bg-transparent p-4 text-sm text-blue-200">
         <p className="font-semibold">💡 How It Works</p>
         <ul className="mt-2 space-y-1 text-xs">
           <li>• <strong>Free Tier:</strong> Each API has monthly free limits. Usage within limits is $0.</li>

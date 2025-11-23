@@ -101,20 +101,20 @@ export default function SolarApiIntegration() {
         </div>
 
         {error && (
-          <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+          <div className="p-3 bg-transparent border border-red-500/50 rounded-lg text-red-400 text-sm">
             {error}
           </div>
         )}
 
         {!hasAnySolarAccess() || !hasMapsAccess() ? (
-          <div className="p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg text-yellow-400 text-sm">
+          <div className="p-4 bg-transparent border border-yellow-500/50 rounded-lg text-yellow-400 text-sm">
             ⚠️ Configure your Google Cloud API keys in the <strong>APIs tab</strong> to enable solar analysis.
             You need both Solar API and Maps API access.
           </div>
         ) : null}
 
         {analysisResult && (
-          <div className="p-4 bg-emerald-500/10 border border-emerald-500/50 rounded-lg space-y-3">
+          <div className="p-4 bg-transparent border border-emerald-500/50 rounded-lg space-y-3">
             <h3 className="text-emerald-400 font-semibold">Analysis Complete!</h3>
             <div className="text-sm text-slate-300 space-y-1">
               <p>

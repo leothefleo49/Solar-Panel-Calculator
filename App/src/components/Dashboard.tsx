@@ -211,7 +211,7 @@ const AIOverviewTab = ({ snapshot, config }: AIOverviewTabProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+      <div className="rounded-3xl border border-white/10 bg-transparent p-5">
         <h3 className="text-lg font-semibold">AI System Overview</h3>
         <p className="text-sm text-slate-300">Run an automated design & financial health review. The AI considers production, ROI, missing data, and resilience factors.</p>
         <div className="mt-4 flex flex-wrap gap-3 items-center">
@@ -234,7 +234,7 @@ const AIOverviewTab = ({ snapshot, config }: AIOverviewTabProps) => {
           <button
             type="button"
             onClick={() => exportSnapshot()}
-            className="rounded-xl border border-accent/50 bg-white/5 px-4 py-2 text-xs font-semibold text-white/90 hover:border-accent hover:bg-accent/10"
+            className="rounded-xl border border-accent/50 bg-transparent px-4 py-2 text-xs font-semibold text-white/90 hover:border-accent hover:bg-accent/10"
             title="Download current config + computed 25-year analysis as JSON"
           >
             Download Analysis
@@ -244,7 +244,7 @@ const AIOverviewTab = ({ snapshot, config }: AIOverviewTabProps) => {
           )}
         </div>
       </div>
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+      <div className="rounded-3xl border border-white/10 bg-transparent p-5">
         <h4 className="mb-2 text-sm font-semibold text-slate-200">Result</h4>
         <div className="text-xs whitespace-pre-line leading-relaxed text-slate-100 min-h-[160px]">
           {analysis || 'No analysis yet. Click Analyze Design.'}
@@ -372,7 +372,7 @@ type BatteryTabProps = {
 
 const BatteryTab = ({ simulation, setSimulationValue, result, netMetering }: BatteryTabProps) => (
   <div className="grid gap-6 lg:grid-cols-2">
-    <div className="space-y-4 rounded-3xl border border-white/10 bg-white/5 p-5">
+    <div className="space-y-4 rounded-3xl border border-white/10 bg-transparent p-5">
       <h3 className="text-lg font-semibold">Outage Scenario Inputs</h3>
       <p className="text-sm text-slate-300">
         Model the loads that matter most. The calculator uses your solar assumptions to estimate savings and
@@ -458,7 +458,7 @@ const DataSheetTab = ({ rows }: { rows: TableRow[] }) => {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
+        <div className="rounded-full border border-white/10 bg-transparent px-3 py-1 text-xs text-white/80">
           {displayRows.length} rows displayed (max 250)
         </div>
         <div className="inline-flex rounded-full bg-white/10 p-1 text-xs">
@@ -486,7 +486,7 @@ const DataSheetTab = ({ rows }: { rows: TableRow[] }) => {
       </div>
       <div className="modern-scroll overflow-auto pr-1 rounded-3xl border border-white/10">
         <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="bg-white/5 text-xs uppercase tracking-widest text-slate-300">
+          <thead className="bg-transparent text-xs uppercase tracking-widest text-slate-300">
             <tr>
               {COLUMN_CONFIG.map((column) => (
                 <th
@@ -504,7 +504,7 @@ const DataSheetTab = ({ rows }: { rows: TableRow[] }) => {
           </thead>
           <tbody>
             {displayRows.map((row, index) => (
-              <tr key={`${row.year}-${index}`} className="odd:bg-white/5">
+              <tr key={`${row.year}-${index}`} className="odd:bg-transparent">
                 <td className="px-4 py-3 text-white/90">{row.periodLabel ?? `Year ${row.year}`}</td>
                 <td className="px-4 py-3">{formatNumber(row.productionKwh, 0)} kWh</td>
                 <td className="px-4 py-3">{formatPercent(row.degradationPercent, 2)}</td>
@@ -566,7 +566,7 @@ type MetricCardProps = {
 }
 
 const MetricCard = ({ label, value, sublabel }: MetricCardProps) => (
-  <div className="rounded-3xl border border-white/10 bg-white/5 p-5 flex flex-col justify-between h-full">
+  <div className="rounded-3xl border border-white/10 bg-transparent p-5 flex flex-col justify-between h-full">
     <p className="text-xs uppercase tracking-[0.2em] text-slate-300">{label}</p>
     <p className="mt-2 text-2xl xl:text-3xl font-semibold break-words leading-tight">{value}</p>
     <p className="text-xs text-slate-400 mt-2">{sublabel}</p>
@@ -580,7 +580,7 @@ type ChartCardProps = {
 }
 
 const ChartCard = ({ title, description, children }: ChartCardProps) => (
-  <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+  <div className="rounded-3xl border border-white/10 bg-transparent p-5">
     <h3 className="text-lg font-semibold">{title}</h3>
     <p className="text-sm text-slate-300">{description}</p>
     <div className="mt-4 h-full">{children}</div>

@@ -5,7 +5,6 @@
 
 import { useState, useEffect } from 'react';
 import { 
-  installUpdate, 
   openDownloadPage, 
   dismissUpdateReminder,
   clearUpdateReminder,
@@ -65,7 +64,7 @@ export default function UpdateNotification() {
   return (
     <div className="fixed bottom-4 right-4 max-w-md bg-gradient-to-br from-slate-800 to-slate-900 border border-blue-500/30 rounded-lg shadow-2xl shadow-blue-500/20 p-6 z-50 animate-slide-up">
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+        <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-full flex items-center justify-center">
           <svg
             className="w-6 h-6 text-blue-400"
             fill="none"

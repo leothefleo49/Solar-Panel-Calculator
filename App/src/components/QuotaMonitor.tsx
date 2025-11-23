@@ -107,7 +107,7 @@ export default function QuotaMonitor() {
 
   if (Object.keys(quotaStatuses).length === 0) {
     return (
-      <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+      <div className="rounded-lg border border-white/10 bg-transparent p-4">
         <p className="text-sm text-slate-400">Configure API keys to monitor quotas in real-time.</p>
       </div>
     );
@@ -131,14 +131,14 @@ export default function QuotaMonitor() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {Object.entries(quotaStatuses).map(([key, status]) => (
-          <div key={key} className="rounded-lg border border-white/10 bg-white/5 p-4">
+          <div key={key} className="rounded-lg border border-white/10 bg-transparent p-4">
             <div className="flex items-start justify-between mb-3">
               <h4 className="font-semibold text-white">{status.provider}</h4>
               {status.loading && <span className="text-xs text-slate-400">Loading...</span>}
             </div>
 
             {status.error ? (
-              <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3">
+              <div className="rounded-lg border border-red-500/30 bg-transparent p-3">
                 <p className="text-xs text-red-300">❌ {status.error}</p>
               </div>
             ) : status.quota ? (
@@ -194,7 +194,7 @@ export default function QuotaMonitor() {
 
                 {/* Cost Estimate */}
                 {status.quota.cost && (
-                  <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-2">
+                  <div className="rounded-lg border border-green-500/30 bg-transparent p-2">
                     <div className="text-xs space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-green-300">Input cost/1M tokens:</span>
@@ -210,7 +210,7 @@ export default function QuotaMonitor() {
 
                 {/* Warnings */}
                 {getUsagePercentage(status.quota) > 80 && (
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2">
+                  <div className="rounded-lg border border-amber-500/30 bg-transparent p-2">
                     <p className="text-xs text-amber-300">⚠️ High usage detected. Consider upgrading or monitoring closely.</p>
                   </div>
                 )}
@@ -222,7 +222,7 @@ export default function QuotaMonitor() {
         ))}
       </div>
 
-      <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
+      <div className="rounded-lg border border-blue-500/30 bg-transparent p-3">
         <p className="text-xs text-blue-200">
           <strong>💡 Note:</strong> Quota data is cached for 5 minutes to avoid excessive API calls. 
           Some providers may not expose detailed quota information. Free tier limits may vary by region.

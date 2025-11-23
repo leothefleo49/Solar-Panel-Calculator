@@ -56,7 +56,7 @@ const Configurator = () => {
     if (field.type === 'toggle') {
       const value = Boolean(config[field.key])
       return (
-        <div className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+        <div className="flex cursor-pointer items-center justify-between rounded-2xl border border-white/10 bg-transparent px-4 py-3">
           <div>
             <div className="mb-1 flex items-center gap-2">
               <p className="text-sm font-semibold text-white">{field.label}</p>
@@ -102,7 +102,7 @@ const Configurator = () => {
                   'flex-1 rounded-xl px-4 py-2 text-sm font-medium transition',
                   currentValue === option
                     ? 'bg-accent text-slate-900'
-                    : 'border border-white/20 bg-white/5 text-slate-300 hover:border-accent/50',
+                    : 'border border-white/20 bg-transparent text-slate-300 hover:border-accent/50',
                   disabled && 'opacity-40 cursor-not-allowed'
                 )}
               >
@@ -137,7 +137,7 @@ const Configurator = () => {
               min={field.min}
               max={field.max}
               step={field.step ?? 1}
-              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             />
             <span className="text-sm text-slate-400">units</span>
           </div>
@@ -162,7 +162,7 @@ const Configurator = () => {
               min={field.min}
               max={field.max}
               step={field.step ?? 10}
-              className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             />
             <button
               type="button"
@@ -190,7 +190,7 @@ const Configurator = () => {
           <select
             value={config[field.key] as string}
             onChange={handleSelectChange(field.key)}
-            className="premium-select block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none"
+            className="premium-select block w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:outline-none"
           >
             {field.options?.map((option) => (
               <option key={option} value={option} className="bg-slate-900">
@@ -231,7 +231,7 @@ const Configurator = () => {
                   'flex-1 rounded-lg px-3 py-1 text-xs font-medium transition',
                   usageMode === 'monthly'
                     ? 'bg-accent text-slate-900'
-                    : 'border border-white/20 bg-white/5 text-slate-300 hover:border-accent/50'
+                    : 'border border-white/20 bg-transparent text-slate-300 hover:border-accent/50'
                 )}
               >
                 Monthly
@@ -243,7 +243,7 @@ const Configurator = () => {
                   'flex-1 rounded-lg px-3 py-1 text-xs font-medium transition',
                   usageMode === 'yearly'
                     ? 'bg-accent text-slate-900'
-                    : 'border border-white/20 bg-white/5 text-slate-300 hover:border-accent/50'
+                    : 'border border-white/20 bg-transparent text-slate-300 hover:border-accent/50'
                 )}
               >
                 Yearly
@@ -266,7 +266,7 @@ const Configurator = () => {
             max={max}
             step={step}
             disabled={disabled}
-            className="block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 pr-16 text-sm text-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="block w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 pr-16 text-sm text-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
           {displaySuffix && (
             <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-400">
@@ -365,7 +365,7 @@ const Configurator = () => {
       <div className="modern-scroll flex-1 space-y-4 overflow-y-auto pr-1">
         {CONFIG_SECTIONS.map((section) => (
           <details key={section.id} className="section-details">
-            <summary className="summary-trigger mb-3 cursor-pointer select-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base font-semibold text-white hover:bg-white/10">
+            <summary className="summary-trigger mb-3 cursor-pointer select-none rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-base font-semibold text-white hover:bg-white/10">
               <span>{section.title}</span>
               <span className="caret-icon" aria-hidden="true" />
             </summary>

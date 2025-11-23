@@ -36,6 +36,15 @@
       }
     }
   },
+  "plugins": {
+    "fs": {
+      "scope": [
+        "$APP/**",
+        "$HOME/**",
+        "C:\\Users\\User\\Solar Panel Calculator\\App\\ui-debug-logs\\**"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": [

@@ -3,6 +3,7 @@ import Dashboard from './components/Dashboard'
 import ChatAssistant from './components/ChatAssistant'
 import FullscreenButton from './components/FullscreenButton'
 import UpdateNotification from './components/UpdateNotification'
+import DebugHighlighter from './components/DebugHighlighter'
 
 import { useState, useEffect, useRef } from 'react'
 import { initializeAutoUpdater } from './utils/updater'
@@ -90,6 +91,7 @@ const App = () => {
         >↺ Reset Panels</button>
       </div>
       <UpdateNotification />
+      <DebugHighlighter />
       <div className="mx-auto flex w-full max-w-[1840px] gap-6 xl:gap-8 transition-all duration-500">
         <div className={leftCollapsed ? 'flex-none w-0' : 'flex-none transition-all duration-500'} style={{ width: leftCollapsed ? 0 : leftWidth }}>
           <Configurator />
@@ -98,7 +100,7 @@ const App = () => {
           <div
             role="separator"
             onMouseDown={(e) => startResize('left', e)}
-            className="hidden xl:block w-[6px] cursor-col-resize bg-white/5 hover:bg-white/10 rounded-full my-2"
+            className="hidden xl:block w-[6px] cursor-col-resize bg-transparent hover:bg-white/10 rounded-full my-2"
             title="Drag to resize Configurator"
           />
         )}
@@ -112,7 +114,7 @@ const App = () => {
           <div
             role="separator"
             onMouseDown={(e) => startResize('right', e)}
-            className="hidden xl:block w-[6px] cursor-col-resize bg-white/5 hover:bg-white/10 rounded-full my-2"
+            className="hidden xl:block w-[6px] cursor-col-resize bg-transparent hover:bg-white/10 rounded-full my-2"
             title="Drag to resize Chat"
           />
         )}

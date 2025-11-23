@@ -12,6 +12,9 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version)
   },
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
   plugins: [react()],
   build: {
     target: 'es2020',

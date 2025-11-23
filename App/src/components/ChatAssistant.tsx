@@ -30,7 +30,7 @@ const ChatAssistant = () => {
   const config = useSolarStore((s) => s.config)
   const setConfigValue = useSolarStore((s) => s.setConfigValue)
   const snapshot = buildModelSnapshot(config)
-  const { items: cartItems, checkCompatibility, getMissingComponents, addItem } = useCartStore()
+  const { items: cartItems, checkCompatibility, getMissingComponents } = useCartStore()
   const { apiKeys: googleApiKeys } = useGoogleApiStore()
   const {
     getProviderKey,
@@ -57,7 +57,7 @@ const ChatAssistant = () => {
   const messages = useMemo(() => activeConv?.messages ?? [], [activeConv])
   
   const availableProviders = useMemo(() => {
-    const providers = (Object.keys(providerKeys) as any[]).filter(p => providerKeys[p]?.trim())
+    const providers = (Object.keys(providerKeys) as Array<keyof typeof providerKeys>).filter(p => providerKeys[p]?.trim())
     if (googleApiKeys.unified && !providers.includes('google')) {
       providers.push('google')
     }
@@ -563,7 +563,7 @@ Available Tools:
             className={`group relative flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition ${
               conv.id === activeConversationId
                 ? 'border-accent bg-accent/20 text-accent font-semibold'
-                : 'border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:text-white'
+                : 'border-white/10 bg-transparent text-slate-300 hover:border-white/20 hover:text-white'
             }`}
           >
             <span className="max-w-[120px] truncate">{conv.title}</span>
@@ -578,7 +578,7 @@ Available Tools:
         ))}
         <button
           onClick={handleCreateConversation}
-          className="flex-shrink-0 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white transition hover:border-accent hover:text-accent"
+          className="flex-shrink-0 rounded-lg border border-white/10 bg-transparent px-3 py-1.5 text-xs font-semibold text-white transition hover:border-accent hover:text-accent"
           title={t('chat.newChat')}
         >
           + New
@@ -740,7 +740,7 @@ Available Tools:
                 handleSend()
               }
             }}
-            className="flex-1 resize-none overflow-hidden rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm focus:outline-none focus:border-white/30"
+            className="flex-1 resize-none overflow-hidden rounded-xl border border-white/10 bg-transparent px-3 py-2 text-sm focus:outline-none focus:border-white/30"
             style={{ minHeight: '3rem', maxHeight: '9rem' }}
           />
           <button
@@ -781,7 +781,7 @@ Available Tools:
               type="button"
               onClick={speakLastAssistant}
               disabled={!lastAssistantRef.current}
-              className="inline-flex h-9 items-center rounded-lg border border-white/10 bg-white/5 px-3 font-semibold text-white/80 hover:border-accent hover:text-white disabled:opacity-40"
+              className="inline-flex h-9 items-center rounded-lg border border-white/10 bg-transparent px-3 font-semibold text-white/80 hover:border-accent hover:text-white disabled:opacity-40"
             >Play Last Reply</button>
           )}
           <label className="glow-toggle">
@@ -885,7 +885,7 @@ Available Tools:
           <button
             type="button"
             onClick={() => document.getElementById('chat-image-input')?.click()}
-            className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 text-white/80 transition hover:border-accent hover:text-white"
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-transparent px-3 text-white/80 transition hover:border-accent hover:text-white"
           >
             <span className="text-base">+</span>
             {t('chat.uploadFiles')}

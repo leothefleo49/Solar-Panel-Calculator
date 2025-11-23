@@ -39,7 +39,7 @@ const InfoTooltip = ({ content }: InfoTooltipProps) => {
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className="ml-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/40 bg-white/5 text-white/90 transition hover:border-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="ml-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/40 bg-transparent text-white/90 transition hover:border-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         aria-label={content}
       >
         <span className="font-bold text-sm leading-[0] tracking-wide">i</span>

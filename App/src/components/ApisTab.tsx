@@ -131,16 +131,16 @@ const ApisTab = () => {
         </button>
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+      <div className="rounded-3xl border border-white/10 bg-transparent p-5">
         <h3 className="text-lg font-semibold flex items-center gap-2">Google APIs Configuration <InfoTooltip content="Manage keys for Solar, Maps/Geocoding, Shopping. Use a unified key (enable all APIs on one key) OR separate keys per service." /></h3>
         <p className="text-sm text-slate-300 mt-1">Configure Google Cloud APIs for solar analysis, address lookup, and product search.</p>
         
         {/* Enhanced Quick Start Guide */}
-        <div className="mt-3 rounded-2xl border border-accent/30 bg-accent/5 p-4 space-y-2">
+        <div className="mt-3 rounded-2xl border border-accent/30 bg-transparent p-4 space-y-2">
           <p className="font-semibold text-white/90 text-sm">🚀 Quick Start Guide - Three Options:</p>
           
           <div className="space-y-3 text-xs text-slate-300">
-            <div className="rounded-xl border border-green-500/30 bg-green-500/5 p-3">
+            <div className="rounded-xl border border-green-500/30 bg-transparent p-3">
               <p className="font-semibold text-green-400 mb-1.5">✨ Option 1: Unified Key (Easiest - Recommended for Beginners)</p>
               <ol className="list-decimal list-inside space-y-1 ml-2">
                 <li>Go to <button type="button" onClick={() => openExternalUrl('https://console.cloud.google.com/')} className="text-accent hover:underline font-medium">Google Cloud Console</button></li>
@@ -154,7 +154,7 @@ const ApisTab = () => {
               <p className="text-green-300 text-[10px]">💰 Cost: Pay-as-you-go for all services ($200 free credits for new accounts)</p>
             </div>
 
-            <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-3">
+            <div className="rounded-xl border border-blue-500/30 bg-transparent p-3">
               <p className="font-semibold text-blue-400 mb-1.5">⚡ Option 2: Separate Keys (More Control)</p>
               <ol className="list-decimal list-inside space-y-1 ml-2">
                 <li>Create separate API keys for Solar, Maps, Shopping in Cloud Console</li>
@@ -166,7 +166,7 @@ const ApisTab = () => {
               <p className="text-blue-300 text-[10px]">💰 Cost: Cloud Console (pay-as-you-go + $300 free trial for 90 days if new), AI Studio (free tier: 15 RPM / 1M TPM / 1500 RPD for Gemini Flash)</p>
             </div>
 
-            <div className="rounded-xl border border-purple-500/30 bg-purple-500/5 p-3">
+            <div className="rounded-xl border border-purple-500/30 bg-transparent p-3">
               <p className="font-semibold text-purple-400 mb-1.5">🎯 Option 3: Multi-Provider (Best Quality & Flexibility)</p>
               <ol className="list-decimal list-inside space-y-1 ml-2">
                 <li>Use Unified or Separate keys for Google services (Solar/Maps/Shopping)</li>
@@ -206,7 +206,7 @@ const ApisTab = () => {
           <button
             type="button"
             onClick={() => setShowKeys(v => !v)}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:border-accent hover:text-accent"
+            className="rounded-xl border border-white/10 bg-transparent px-3 py-2 text-xs font-semibold text-white hover:border-accent hover:text-accent"
           >{showKeys ? 'Hide Keys' : 'Show Keys'}</button>
         </div>
         <div className="mt-5 space-y-4">
@@ -219,7 +219,7 @@ const ApisTab = () => {
                   value={apiKeys.unified || ''}
                   onChange={(e) => setUnifiedKey(e.target.value)}
                   placeholder="Paste unified Google Cloud key"
-                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none"
+                  className="flex-1 rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:outline-none"
                 />
                 {apiKeys.unified && (
                   <button type="button" onClick={clearUnifiedKey} className="rounded-xl bg-red-500/80 px-4 py-3 text-xs font-semibold">Clear</button>
@@ -235,7 +235,7 @@ const ApisTab = () => {
                   value={apiKeys.solar || ''}
                   onChange={(e) => setSolarKey(e.target.value)}
                   placeholder="Solar API key"
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
                 />
                 {apiKeys.solar && <button type="button" onClick={clearSolarKey} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
               </div>
@@ -246,7 +246,7 @@ const ApisTab = () => {
                   value={apiKeys.maps || ''}
                   onChange={(e) => setMapsKey(e.target.value)}
                   placeholder="Maps API key"
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
                 />
                 {apiKeys.maps && <button type="button" onClick={clearMapsKey} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
               </div>
@@ -257,7 +257,7 @@ const ApisTab = () => {
                   value={apiKeys.shopping || ''}
                   onChange={(e) => setShoppingKey(e.target.value)}
                   placeholder="Custom Search API key"
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
                 />
                 {apiKeys.shopping && <button type="button" onClick={clearShoppingKey} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
               </div>
@@ -268,7 +268,7 @@ const ApisTab = () => {
                   value={apiKeys.shoppingCx || ''}
                   onChange={(e) => setShoppingCx(e.target.value)}
                   placeholder="Custom Search CX"
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
                 />
                 {apiKeys.shoppingCx && <button type="button" onClick={clearShoppingCx} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
               </div>
@@ -277,7 +277,7 @@ const ApisTab = () => {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+      <div className="rounded-3xl border border-white/10 bg-transparent p-5">
         <h3 className="text-lg font-semibold flex items-center gap-2">AI Provider Keys <InfoTooltip content="Configure keys for different AI chat providers. You can add multiple providers and switch between them in the chat assistant." /></h3>
         <p className="text-sm text-slate-300 mt-1">Add API keys for AI providers you want to use in the chat assistant. Only configured providers will be available.</p>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -288,7 +288,7 @@ const ApisTab = () => {
               value={providerKeys.google || ''}
               onChange={(e) => setProviderKey('google', e.target.value)}
               placeholder="Gemini API key"
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
             />
             {(!providerKeys.google && apiKeys.unified) && (
               <button
@@ -306,7 +306,7 @@ const ApisTab = () => {
               value={providerKeys.openai || ''}
               onChange={(e) => setProviderKey('openai', e.target.value)}
               placeholder="OpenAI API key"
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
             />
             {providerKeys.openai && <button type="button" onClick={() => clearProviderKey('openai')} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
           </div>
@@ -317,7 +317,7 @@ const ApisTab = () => {
               value={providerKeys.anthropic || ''}
               onChange={(e) => setProviderKey('anthropic', e.target.value)}
               placeholder="Anthropic API key"
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
             />
             {providerKeys.anthropic && <button type="button" onClick={() => clearProviderKey('anthropic')} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
           </div>
@@ -328,14 +328,14 @@ const ApisTab = () => {
               value={providerKeys.grok || ''}
               onChange={(e) => setProviderKey('grok', e.target.value)}
               placeholder="xAI API key"
-              className="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-transparent px-4 py-3 text-sm text-white focus:border-accent focus:ring-accent"
             />
             {providerKeys.grok && <button type="button" onClick={() => clearProviderKey('grok')} className="mt-2 rounded-xl bg-red-500/80 px-4 py-2 text-xs font-semibold">Clear</button>}
           </div>
         </div>
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-5 space-y-4">
+      <div className="rounded-3xl border border-white/10 bg-transparent p-5 space-y-4">
         <h4 className="text-sm font-semibold uppercase tracking-widest text-slate-300">Detailed Setup Instructions</h4>
         <div className="space-y-3 text-xs text-slate-300">
           <div>
@@ -378,7 +378,7 @@ const ApisTab = () => {
             </ul>
           </div>
         </div>
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3">
+        <div className="rounded-xl border border-amber-500/30 bg-transparent p-3">
           <p className="text-[10px] text-amber-200">
             <strong>🔒 Security:</strong> Never commit API keys to git. Keys are stored locally in browser/app storage. 
             Clear keys before sharing screenshots. Use API restrictions to limit unauthorized usage.
@@ -397,7 +397,7 @@ const ApisTab = () => {
                 const statusIcon = result.valid ? '✅' : '❌';
                 const statusColor = result.valid ? 'text-green-400' : 'text-red-400';
                 return (
-                  <div key={key} className={clsx('rounded-lg border p-3', result.valid ? 'border-green-500/30 bg-green-500/5' : 'border-red-500/30 bg-red-500/10')}>
+                  <div key={key} className={clsx('rounded-lg border p-3', result.valid ? 'border-green-500/30 bg-transparent' : 'border-red-500/30 bg-transparent')}>
                     <div className="flex items-start gap-2">
                       <span className="text-xl">{statusIcon}</span>
                       <div className="flex-1">
@@ -410,7 +410,7 @@ const ApisTab = () => {
                           <p className="text-xs text-slate-400">Status Code: {result.statusCode}</p>
                         )}
                         {result.suggestedFixes && result.suggestedFixes.length > 0 && (
-                          <div className="mt-2 rounded-lg border border-blue-500/30 bg-blue-500/5 p-2">
+                          <div className="mt-2 rounded-lg border border-blue-500/30 bg-transparent p-2">
                             <p className="text-xs text-blue-300 font-semibold">💡 Suggested Fixes:</p>
                             <ul className="text-xs text-blue-200 mt-1 list-disc list-inside space-y-1">
                               {result.suggestedFixes.map((fix, idx) => (
