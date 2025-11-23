@@ -76,11 +76,20 @@ jobs:
               fs.writeFileSync(cargoPath, cargo);
               console.log("Updated Cargo.toml");
             }
+
+            // Update android/app/build.gradle
+            const gradlePath = "App/android/app/build.gradle";
+            if (fs.existsSync(gradlePath)) {
+              let gradle = fs.readFileSync(gradlePath, "utf8");
+              gradle = gradle.replace(/versionName ".*"/, `versionName "${version}"`);
+              fs.writeFileSync(gradlePath, gradle);
+              console.log("Updated android/app/build.gradle");
+            }
           '
 
       - name: Commit & Push Changes
         run: |
-          git add App/package.json App/src-tauri/tauri.conf.json App/src-tauri/Cargo.toml
+          git add App/package.json App/src-tauri/tauri.conf.json App/src-tauri/Cargo.toml App/android/app/build.gradle
           git commit -m "chore(release): bump version to ${{ steps.bump.outputs.version }} [skip ci]"
           git push origin HEAD:main
 
@@ -322,17 +331,26 @@ jobs:
           APK_DIR="android/app/build/outputs/apk"
           mkdir -p android/app/build/outputs/release-artifacts
           
-          # Always name the release APK consistently for the evergreen link
-          # Check for universal APK first (due to splits enabled)
-          if [ -f "$APK_DIR/release/app-universal-release-signed.apk" ]; then
-            cp "$APK_DIR/release/app-universal-release-signed.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
-          elif [ -f "$APK_DIR/release/app-universal-release-unsigned.apk" ]; then
-            cp "$APK_DIR/release/app-universal-release-unsigned.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
-          # Fallback to standard APKs
-          elif [ -f "$APK_DIR/release/app-release-signed.apk" ]; then
-            cp "$APK_DIR/release/app-release-signed.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
-          elif [ -f "$APK_DIR/release/app-release-unsigned.apk" ]; then
-            cp "$APK_DIR/release/app-release-unsigned.apk" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
+          echo "Searching for APKs in $APK_DIR..."
+          find "$APK_DIR" -name "*.apk"
+          
+          # Find the universal release APK (signed or unsigned)
+          # We prefer signed if available, but unsigned is fine for GitHub
+          UNIVERSAL_APK=$(find "$APK_DIR" -name "*universal*release*.apk" | head -n 1)
+          
+          if [ -n "$UNIVERSAL_APK" ]; then
+            echo "Found universal APK: $UNIVERSAL_APK"
+            cp "$UNIVERSAL_APK" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
+          else
+            # Fallback to any release APK if universal not found
+            RELEASE_APK=$(find "$APK_DIR" -name "*release*.apk" | grep -v "unaligned" | head -n 1)
+            if [ -n "$RELEASE_APK" ]; then
+               echo "Found release APK: $RELEASE_APK"
+               cp "$RELEASE_APK" "android/app/build/outputs/release-artifacts/Solar-Panel-Calculator-Android.apk"
+            else
+               echo "ERROR: No release APK found!"
+               exit 1
+            fi
           fi
           
           if [ -f "$APK_DIR/debug/app-debug.apk" ]; then
