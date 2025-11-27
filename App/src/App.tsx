@@ -3,9 +3,22 @@ import Dashboard from './components/Dashboard'
 import ChatAssistant from './components/ChatAssistant'
 import FullscreenButton from './components/FullscreenButton'
 import UpdateNotification from './components/UpdateNotification'
+import LanguageSwitcher from './components/LanguageSwitcher'
 
 import { useState, useEffect, useRef } from 'react'
 import { initializeAutoUpdater } from './utils/updater'
+
+// Auto-inject UI Debugger in dev mode
+if (import.meta.env.DEV) {
+  import('ui-debugger-pro').then(module => {
+    if (module && 'UIDebugger' in module) {
+      // UI Debugger will auto-mount itself
+      console.log('UI Debugger Pro loaded')
+    }
+  }).catch(() => {
+    console.log('UI Debugger Pro not available')
+  })
+}
 
 const App = () => {
   const [leftCollapsed, setLeftCollapsed] = useState(false)
@@ -82,7 +95,10 @@ const App = () => {
   return (
     <div className="min-h-screen px-3 py-6 sm:px-6 lg:px-10">
       <div className="flex items-center justify-between">
-        <FullscreenButton />
+        <div className="flex flex-col gap-2">
+          <FullscreenButton />
+          <LanguageSwitcher />
+        </div>
         <button
           onClick={resetLayout}
           title="Reset Layout"
@@ -98,7 +114,7 @@ const App = () => {
           <div
             role="separator"
             onMouseDown={(e) => startResize('left', e)}
-            className="hidden xl:block w-[6px] cursor-col-resize bg-transparent hover:bg-white/10 rounded-full my-2"
+            className="hidden xl:block w-[6px] cursor-col-resize bg-white/20 hover:bg-accent/60 rounded-full my-2 transition-colors"
             title="Drag to resize Configurator"
           />
         )}
@@ -112,7 +128,7 @@ const App = () => {
           <div
             role="separator"
             onMouseDown={(e) => startResize('right', e)}
-            className="hidden xl:block w-[6px] cursor-col-resize bg-transparent hover:bg-white/10 rounded-full my-2"
+            className="hidden xl:block w-[6px] cursor-col-resize bg-white/20 hover:bg-accent/60 rounded-full my-2 transition-colors"
             title="Drag to resize Chat"
           />
         )}

@@ -6,6 +6,7 @@ import { buildModelSnapshot } from '../utils/calculations'
 import { useSolarStore } from '../state/solarStore'
 import { useCartStore } from '../state/cartStore'
 import { useGoogleApiStore } from '../state/googleApiStore'
+import { useApiUsageStore } from '../state/apiUsageStore'
 import { callOpenAI, callGeminiFlash, callClaude, callGrok, openaiTts, googleTts } from '../utils/aiProviders'
 import type { FileUpload } from '../utils/aiProviders'
 
@@ -32,10 +33,12 @@ const ChatAssistant = () => {
   const snapshot = buildModelSnapshot(config)
   const { items: cartItems, checkCompatibility, getMissingComponents } = useCartStore()
   const { apiKeys: googleApiKeys } = useGoogleApiStore()
+  const { getRemainingFreeTier, getMonthlyUsage, getTotalCost } = useApiUsageStore()
   const {
     getProviderKey,
     hasProviderKey,
     clearProviderKey,
+    setProviderKey,
     loading,
     setLoading,
     provider,
@@ -96,19 +99,19 @@ const ChatAssistant = () => {
     textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeightPx)}px`
   }, [input])
 
-  // Auto-play response when new assistant message arrives
+  // Auto-play response when new assistant message arrives (only in live mode)
   useEffect(() => {
     const lastMsg = messages[messages.length - 1]
-    if (lastMsg?.role === 'assistant' && lastMsg.id !== lastPlayedMsgId.current) {
+    if (lastMsg?.role === 'assistant' && lastMsg.id !== lastPlayedMsgId.current && liveMode) {
       lastPlayedMsgId.current = lastMsg.id
-      // Only auto-play if user has enabled AI voice or we have TTS support
+      // Only auto-play if live mode is enabled
       if (useAiVoice || ttsSupported) {
         // Small delay to ensure state is settled
         setTimeout(() => speakLastAssistant(), 500)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, useAiVoice, ttsSupported])
+  }, [messages, useAiVoice, ttsSupported, liveMode])
 
   // Auto-select first available provider if current one has no key
   useEffect(() => {
@@ -116,6 +119,23 @@ const ChatAssistant = () => {
       setProvider(availableProviders[0])
     }
   }, [provider, hasProviderKey, availableProviders, setProvider])
+
+  // Listen for API keys updated event to immediately refresh available providers
+  useEffect(() => {
+    const handleApiKeysUpdated = () => {
+      // Force re-evaluation of available providers
+      const providers = (Object.keys(providerKeys) as Array<keyof typeof providerKeys>).filter(p => providerKeys[p]?.trim())
+      if (googleApiKeys.unified && !providers.includes('google')) {
+        providers.push('google')
+      }
+      // If current provider now has a key, keep it. Otherwise switch to first available.
+      if (!hasProviderKey(provider) && providers.length > 0) {
+        setProvider(providers[0])
+      }
+    }
+    window.addEventListener('apiKeysUpdated', handleApiKeysUpdated)
+    return () => window.removeEventListener('apiKeysUpdated', handleApiKeysUpdated)
+  }, [provider, hasProviderKey, setProvider, providerKeys, googleApiKeys])
 
   const handleDeleteConversation = (id: string, e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -147,26 +167,58 @@ const ChatAssistant = () => {
         case 'navigate':
           if (toolCall.tab) {
             window.dispatchEvent(new CustomEvent('open-dashboard-tab', { detail: { tab: toolCall.tab } }))
+            addMessage('system', `✓ Navigated to ${toolCall.tab} tab`)
           }
           break
         case 'updateConfig':
           if (toolCall.key && toolCall.value !== undefined) {
             setConfigValue(toolCall.key, toolCall.value)
+            addMessage('system', `✓ Updated ${toolCall.key} to ${toolCall.value}`)
           }
           break
         case 'addToCart':
           if (toolCall.item) {
-            console.log('Adding to cart:', toolCall.item)
+            // Dispatch event to shopping cart to add item
+            window.dispatchEvent(new CustomEvent('add-to-cart', { detail: toolCall.item }))
+            addMessage('system', `✓ Added ${toolCall.item.name} to cart`)
           }
           break
         case 'analyzeGraph':
            window.dispatchEvent(new CustomEvent('open-dashboard-tab', { detail: { tab: 'aiOverview' } }))
+           addMessage('system', '✓ Opened AI Overview for graph analysis')
            break
+        case 'setApiKey':
+          if (toolCall.provider && toolCall.key) {
+            setProviderKey(toolCall.provider, toolCall.key)
+            addMessage('system', `✓ Configured ${toolCall.provider} API key`)
+            window.dispatchEvent(new Event('apiKeysUpdated'))
+          }
+          break
+        case 'runSolarAnalysis':
+          if (toolCall.address) {
+            window.dispatchEvent(new CustomEvent('run-solar-analysis', { detail: { address: toolCall.address } }))
+            addMessage('system', `✓ Triggering solar analysis for: ${toolCall.address}`)
+          }
+          break
+        case 'highlightElement':
+          if (toolCall.selector) {
+            const el = document.querySelector(toolCall.selector)
+            if (el) {
+              el.classList.add('ai-highlight')
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              setTimeout(() => el.classList.remove('ai-highlight'), 4000)
+              addMessage('system', `✓ Highlighted element: ${toolCall.selector}`)
+            } else {
+              console.warn('Element not found:', toolCall.selector)
+            }
+          }
+          break
         default:
           console.warn('Unknown tool:', toolCall.type)
       }
     } catch (e) {
       console.error('Tool execution failed:', e)
+      addMessage('system', `✗ Tool execution failed: ${(e as Error).message}`)
     }
   }
 
@@ -207,7 +259,28 @@ const ChatAssistant = () => {
         attachments = await readFileUploads(images)
       }
 
-      const contextBlob = `System Summary:\nArray Size: ${snapshot.systemSizeKw.toFixed(2)} kWdc\nAnnual Production: ${snapshot.annualProduction.toFixed(0)} kWh\nBreak-Even Year: ${snapshot.summary.breakEvenYear ?? 'Not reached'}\n25-Year Savings: $${snapshot.summary.totalSavings.toFixed(0)}\nNet Upfront Cost: $${snapshot.summary.netUpfrontCost.toFixed(0)}\nAverage Monthly Production: ${snapshot.averageMonthlyProduction.toFixed(0)} kWh\nNet Metering: ${config.netMetering ? 'Enabled' : 'Disabled'}\n`
+      // API Usage Context - Real-time monitoring data
+      const currentMonth = new Date().toISOString().slice(0, 7)
+      const googleSolarUsage = getMonthlyUsage('google-solar', currentMonth)
+      const geminiUsage = getMonthlyUsage('google-gemini', currentMonth)
+      const openaiUsage = getMonthlyUsage('openai', currentMonth)
+      const apiUsageContext = `\nAPI Usage This Month:\n`
+        + `- Google Solar: ${googleSolarUsage?.totalRequests || 0} requests, Free Tier Remaining: ${getRemainingFreeTier('google-solar')}, Cost: $${googleSolarUsage?.estimatedCost.toFixed(2) || '0.00'}\n`
+        + `- Google Gemini: ${geminiUsage?.totalRequests || 0} requests (${geminiUsage?.totalTokens || 0} tokens), Free Tier Remaining: ${getRemainingFreeTier('google-gemini')}, Cost: $${geminiUsage?.estimatedCost.toFixed(2) || '0.00'}\n`
+        + `- OpenAI: ${openaiUsage?.totalRequests || 0} requests (${openaiUsage?.totalTokens || 0} tokens), Cost: $${openaiUsage?.estimatedCost.toFixed(2) || '0.00'}\n`
+        + `- Total Estimated Cost: $${getTotalCost(currentMonth).toFixed(2)}\n`
+        + `Note: Limits and costs are automatically tracked from actual API responses.\n`
+
+      // Comprehensive UI Context
+      const uiContext = `
+Current UI State:
+- Active Dashboard Tab: ${document.querySelector('.tab-pill--active')?.textContent || 'Unknown'}
+- Configurator Fields: panelCount=${config.panelCount}, panelWattage=${config.panelWattage}, monthlyUsage=${config.monthlyUsage}, utilityCostPerKwh=${config.utilityCostPerKwh}, batteryCapacity=${config.batteryCapacity}
+- Available Tabs: Financial Summary, Production & Performance, Battery & Outage Simulation, Shopping Cart, APIs, API Usage, Google Solar Integration, 25-Year Data Sheet, AI Overview
+- Navigation: You can open any tab by using the navigate tool
+`
+
+      const contextBlob = `System Summary:\nArray Size: ${snapshot.systemSizeKw.toFixed(2)} kWdc\nAnnual Production: ${snapshot.annualProduction.toFixed(0)} kWh\nBreak-Even Year: ${snapshot.summary.breakEvenYear ?? 'Not reached'}\n25-Year Savings: $${snapshot.summary.totalSavings.toFixed(0)}\nNet Upfront Cost: $${snapshot.summary.netUpfrontCost.toFixed(0)}\nAverage Monthly Production: ${snapshot.averageMonthlyProduction.toFixed(0)} kWh\nNet Metering: ${config.netMetering ? 'Enabled' : 'Disabled'}\nROI: ${(snapshot.summary.roiPercent * 100).toFixed(1)}%\n`
       
       // Shopping cart context
       const compatibility = checkCompatibility()
@@ -237,19 +310,35 @@ You can control the app UI. To perform an action, append a JSON block at the END
 <<<ACTIONS: [{"type": "navigate", "tab": "shopping"}, {"type": "updateConfig", "key": "monthlyUsage", "value": 500}]>>>
 
 Available Tools:
-- navigate(tab: "financial" | "production" | "battery" | "shopping" | "apis" | "api-usage" | "solarIntegration" | "datasheet" | "aiOverview")
-- updateConfig(key: string, value: any) - keys: monthlyUsage, address, panelCount, etc.
-- analyzeGraph() - Opens AI Overview tab
+1. navigate(tab: string) - Open any dashboard tab: "financial", "production", "battery", "shopping", "apis", "api-usage", "solarIntegration", "datasheet", "aiOverview"
+2. updateConfig(key: string, value: any) - Update configurator:
+   Keys: address, panelCount, panelWattage, monthlyUsage, utilityRate, netMeteringRate, installCost, federalTaxCredit, degradationRate, systemLifespan, batteryCapacityKwh, batteryEfficiency, batteryRoundTrip, netMetering
+3. addToCart(item: object) - Add component to shopping cart with: {name, category, price, quantity, specs}
+4. analyzeGraph() - Open AI Overview tab and analyze current financial/production graphs
+5. setApiKey(provider: string, key: string) - Configure API keys: provider = "google"|"openai"|"anthropic"|"grok"
+6. runSolarAnalysis(address: string) - Trigger Google Solar API analysis for an address
+
+7. highlightElement(selector: string) - Highlight a UI element to guide the user (e.g., ".tab-pill--active", "button[title='Expand Configurator']", "#monthlyUsage")
+
+Guidance Tips:
+- Always explain what you're doing before executing tools
+- For address changes, use updateConfig then suggest runSolarAnalysis
+- When user asks about specific components, navigate to shopping tab
+- If user asks about graphs, navigate to relevant tab first then describe what you see
+- Provide step-by-step navigation instructions ("I'll open the Financial tab so you can see...")
+- Use highlightElement to point out specific controls or values
 `
 
       const chatMessages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
         {
           role: 'system',
           content:
-            'You are a helpful solar PV assistant. Keep responses EXTREMELY BRIEF, CLEAR, and PRACTICAL. Use bullet points. Avoid long explanations. Focus on actionable advice. Celebrate good choices, flag concerns. Do not output long blocks of text.',
+            'You are a helpful solar PV assistant. Keep responses EXTREMELY BRIEF, CLEAR, and PRACTICAL. Use bullet points. Avoid long explanations. Focus on actionable advice. Celebrate good choices, flag concerns. Do not output long blocks of text. You have deep understanding of the UI and can guide users through navigation, data entry, and analysis.',
         },
         { role: 'system', content: knowledge },
         { role: 'system', content: toolInstructions },
+        { role: 'system', content: apiUsageContext },
+        { role: 'system', content: uiContext },
         { role: 'system', content: contextBlob + cartContext },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: question },
@@ -268,6 +357,18 @@ Available Tools:
         result = await callGrok(apiKey, model, chatMessages, attachments)
       } else {
         result = await callOpenAI(apiKey, model, chatMessages, attachments)
+      }
+
+      // Track API usage in real-time
+      const { trackUsage } = useApiUsageStore.getState()
+      if (provider === 'google') {
+        trackUsage('google-gemini', 1, result.content.length, model)
+      } else if (provider === 'openai') {
+        trackUsage('openai', 1, result.content.length, model)
+      } else if (provider === 'anthropic') {
+        trackUsage('anthropic', 1, result.content.length, model)
+      } else if (provider === 'grok') {
+        trackUsage('grok', 1, result.content.length, model)
       }
 
       if (!result.ok) {
@@ -527,10 +628,10 @@ Available Tools:
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="glass-panel fixed right-0 top-1/2 z-20 -translate-y-1/2 rounded-l-[28px] p-2 text-white hover:bg-white/10 transition"
+        className="glass-panel fixed right-0 top-1/2 z-20 -translate-y-1/2 rounded-l-[28px] p-2 text-white hover:bg-white/10 transition-all duration-200 hover:scale-110 group"
         title="Expand Chat Assistant"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
@@ -538,7 +639,7 @@ Available Tools:
   }
 
   return (
-    <div className="glass-panel xl:sticky xl:top-6 relative flex h-full max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-[28px] p-6 text-white">
+    <div className="glass-panel xl:sticky xl:top-6 relative flex h-full max-h-[calc(100vh-3rem)] flex-col overflow-hidden rounded-[28px] p-6 text-white transition-all duration-500">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <h3 className="text-lg font-semibold mb-1">{t('chat.title')}</h3>
@@ -546,10 +647,10 @@ Available Tools:
         </div>
         <button
           onClick={() => setCollapsed(true)}
-          className="rounded-lg p-1.5 hover:bg-white/10 transition ml-2"
+          className="flex items-center justify-center w-8 h-8 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 rounded-lg transition-all duration-200 hover:scale-110 ml-2 group"
           title="Minimize Chat Assistant"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-accent group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ outline: 'none' }}>
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </button>
@@ -592,7 +693,7 @@ Available Tools:
               <button
                 type="button"
                 onClick={() => setProvider('google')}
-                className={provider === 'google' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+                className={provider === 'google' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs hover:shadow-lg hover:shadow-accent/20 transition-all'}
               >
                 Google
               </button>
@@ -601,7 +702,7 @@ Available Tools:
               <button
                 type="button"
                 onClick={() => setProvider('openai')}
-                className={provider === 'openai' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+                className={provider === 'openai' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs hover:shadow-lg hover:shadow-accent/20 transition-all'}
               >
                 OpenAI
               </button>
@@ -610,7 +711,7 @@ Available Tools:
               <button
                 type="button"
                 onClick={() => setProvider('anthropic')}
-                className={provider === 'anthropic' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+                className={provider === 'anthropic' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs hover:shadow-lg hover:shadow-accent/20 transition-all'}
               >
                 Claude
               </button>
@@ -619,7 +720,7 @@ Available Tools:
               <button
                 type="button"
                 onClick={() => setProvider('grok')}
-                className={provider === 'grok' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs'}
+                className={provider === 'grok' ? 'tab-pill tab-pill--active text-xs' : 'tab-pill tab-pill--idle text-xs hover:shadow-lg hover:shadow-accent/20 transition-all'}
               >
                 Grok
               </button>
@@ -709,7 +810,7 @@ Available Tools:
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-3 pr-1 modern-scroll min-h-0 w-full">
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1 modern-scroll min-h-0 w-full mb-4">
         {messages.map((m) => (
           <div
             key={m.id}
@@ -727,7 +828,7 @@ Available Tools:
         {loading && <div className="text-xs text-slate-300 typing-dots"><span></span><span></span><span></span></div>}
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="space-y-2">
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
@@ -784,14 +885,14 @@ Available Tools:
               className="inline-flex h-9 items-center rounded-lg border border-white/10 bg-transparent px-3 font-semibold text-white/80 hover:border-accent hover:text-white disabled:opacity-40"
             >Play Last Reply</button>
           )}
-          <label className="glow-toggle">
+          <label className="glow-toggle inline-flex items-center">
             <input type="checkbox" checked={liveMode} onChange={(e) => setLiveMode(e.target.checked)} />
             <span className="glow-toggle-slider"></span>
             <span className="text-[10px] text-slate-300">{t('chat.liveChat')}</span>
           </label>
           {(provider === 'openai' || provider === 'google') && (
             <div className="tooltip-group relative">
-              <label className="glow-toggle">
+              <label className="glow-toggle inline-flex items-center">
                 <input 
                   type="checkbox" 
                   checked={useAiVoice} 
@@ -816,8 +917,14 @@ Available Tools:
               </label>
               <div 
                 id="ai-voice-tooltip"
-                className="tooltip-content absolute bottom-full left-0 mb-2 w-64 rounded-lg bg-slate-800 p-3 text-xs text-slate-200 shadow-xl border border-white/10 opacity-0 transition-opacity duration-300 pointer-events-none z-50"
-                style={{ transition: 'opacity 0.3s ease' }}
+                className="tooltip-content absolute mb-2 w-64 rounded-lg bg-slate-800 p-3 text-xs text-slate-200 shadow-xl border border-white/10 opacity-0 transition-opacity duration-300 pointer-events-none z-50"
+                style={{ 
+                  transition: 'opacity 0.3s ease',
+                  bottom: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  maxWidth: 'min(16rem, calc(100vw - 2rem))'
+                }}
               >
                 <div className="flex items-start gap-2">
                   <svg className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -860,7 +967,14 @@ Available Tools:
                 )}
                 <optgroup label="System Voices" className="bg-slate-900 text-white">
                   {availableVoices
-                    .filter(voice => !i18n.language || voice.lang.startsWith(i18n.language) || voice.lang.startsWith('en')) // Filter by language
+                    .filter(voice => {
+                      // Filter voices by current language
+                      const userLang = i18n.language.split('-')[0] // Get base language code (e.g., 'en' from 'en-US')
+                      const voiceLang = voice.lang.split('-')[0]
+                      // If user lang is en, show en. If user lang is other, show other.
+                      // The user requested "only shows voices in that language".
+                      return voiceLang === userLang
+                    })
                     .map((voice) => (
                     <option key={voice.voiceURI} value={voice.voiceURI} className="bg-slate-900 text-white">
                       {voice.name} ({voice.lang})

@@ -1,1 +1,31 @@
-{}
+{
+  "app": {
+    "title": "Solarmodul-Rechner",
+    "subtitle": "Finanz- und Technische Analyse"
+  },
+  "chat": {
+    "title": "Solar-Chat-Assistent",
+    "subtitle": "Stellen Sie Fragen zur Systemgröße, ROI, Produktion und erhalten Sie Ausrüstungsempfehlungen.",
+    "placeholder": "Fragen Sie nach Systemgröße, ROI, Produktion...",
+    "send": "Senden",
+    "startVoice": "Sprache starten",
+    "stopVoice": "Sprache stoppen",
+    "liveChat": "Live-Chat",
+    "useAiVoice": "KI-Stimme verwenden",
+    "uploadFiles": "Dateien hochladen",
+    "configureApis": "APIs konfigurieren",
+    "clearKey": "Schlüssel löschen",
+    "newChat": "Neuer Chat"
+  },
+  "tabs": {
+    "financial": "Finanzübersicht",
+    "production": "Produktion und Leistung",
+    "battery": "Batterie und Stromausfall-Simulation",
+    "shopping": "Warenkorb",
+    "apis": "APIs",
+    "apiUsage": "API-Nutzung",
+    "solarIntegration": "Google Solar Integration",
+    "datasheet": "25-Jahres-Datenblatt",
+    "aiOverview": "KI-Übersicht"
+  }
+}

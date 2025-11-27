@@ -3,7 +3,7 @@
  * Allows users to analyze solar potential for any address
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGoogleApiStore } from '../state/googleApiStore';
 import { useChatStore } from '../state/chatStore';
 import {
@@ -22,6 +22,20 @@ export default function SolarApiIntegration() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<SolarAnalysisResult | null>(null);
+
+  // Listen for AI-triggered solar analysis
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const custom = e as CustomEvent<{ address: string }>
+      if (custom.detail?.address) {
+        setAddress(custom.detail.address)
+        // Trigger analysis after a brief delay to let state update
+        setTimeout(() => handleAnalyze(), 100)
+      }
+    }
+    window.addEventListener('run-solar-analysis', handler)
+    return () => window.removeEventListener('run-solar-analysis', handler)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAnalyze = async () => {
     if (!address.trim()) {

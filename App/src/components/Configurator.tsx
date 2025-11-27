@@ -301,10 +301,10 @@ const Configurator = () => {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="glass-panel fixed left-0 top-1/2 z-20 -translate-y-1/2 rounded-r-[28px] p-2 text-white hover:bg-white/10 transition"
+        className="glass-panel fixed left-0 top-1/2 z-20 -translate-y-1/2 rounded-r-[28px] p-2 text-white hover:bg-white/10 transition-all duration-200 hover:scale-110 group"
         title="Expand Configurator"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </button>
@@ -312,7 +312,7 @@ const Configurator = () => {
   }
 
   return (
-    <aside className="glass-panel relative z-20 flex h-full min-h-0 flex-col overflow-visible rounded-[28px] p-6 text-white">
+    <aside className="glass-panel relative z-20 flex h-full min-h-0 flex-col overflow-visible rounded-[28px] p-6 text-white transition-all duration-500">
       <div className="mb-6 flex items-start justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.2em] text-accent">Configurator</p>
@@ -354,10 +354,10 @@ const Configurator = () => {
         </div>
         <button
           onClick={() => setCollapsed(true)}
-          className="rounded-lg p-1.5 hover:bg-white/10 transition"
+          className="flex items-center justify-center w-8 h-8 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 rounded-lg transition-all duration-200 hover:scale-110 group"
           title="Minimize Configurator"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-accent group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>

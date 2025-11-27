@@ -38,7 +38,15 @@
   background: rgba(15, 23, 42, 0.75);
   border: 1px solid rgba(148, 163, 184, 0.15);
   backdrop-filter: blur(16px);
-  box-shadow: 0 30px 80px rgba(2, 6, 23, 0.55);
+  /* box-shadow removed as requested */
+}
+
+.ai-highlight {
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.8), 0 0 40px rgba(56, 189, 248, 0.4);
+  border-color: rgba(56, 189, 248, 0.9) !important;
+  z-index: 50;
+  position: relative;
+  transition: all 0.3s ease;
 }
 
 .tooltip-group {
@@ -214,6 +222,7 @@ body::-webkit-scrollbar-corner {
 :-moz-full-screen::backdrop {
   scrollbar-color: rgba(56, 189, 248, 0.8) transparent !important;
   background-color: #020617 !important;
+  scrollbar-width: thin !important;
 }
 
 :fullscreen *::-webkit-scrollbar,
@@ -372,7 +381,7 @@ details[open] > .summary-trigger .caret-icon {
 .tab-pill--active {
   background: linear-gradient(120deg, #38bdf8, #0ea5e9);
   color: #04121f;
-  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.25);
+  /* box-shadow removed */
   border-color: transparent;
 }
 
@@ -393,15 +402,30 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 /* Remove aggressive default focus outlines, replace with subtle glow only on keyboard navigation */
+button,
 button:focus,
 button:active,
+select,
 select:focus,
+select:active,
+input,
 input:focus,
+input:active,
+textarea,
 textarea:focus,
+textarea:active,
+a,
 a:focus,
+a:active,
+details,
 details:focus,
+details:active,
+summary,
 summary:focus,
-*:focus {
+summary:active,
+*:focus,
+*:active,
+*:focus-within {
   outline: none !important;
   box-shadow: none !important;
   -webkit-tap-highlight-color: transparent !important;
@@ -414,7 +438,8 @@ input:focus-visible,
 textarea:focus-visible,
 a:focus-visible,
 details:focus-visible,
-summary:focus-visible {
+summary:focus-visible,
+*:focus-visible {
   outline: none !important;
   border-color: transparent !important;
   box-shadow: none !important;
@@ -444,6 +469,7 @@ optgroup {
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 0.5rem;
   cursor: pointer;
   user-select: none;
   vertical-align: middle;
@@ -505,8 +531,13 @@ optgroup {
 
 /* Lighten selection background (previous global user-select removal sometimes left artifacts) */
 ::selection {
-  background: rgba(56, 189, 248, 0.25);
-  color: #f8fafc;
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #f8fafc !important;
+}
+
+::-moz-selection {
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #f8fafc !important;
 }
 
 /* Force word wrapping to prevent layout expansion */

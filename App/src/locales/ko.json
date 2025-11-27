@@ -1,0 +1,31 @@
+{
+  "app": {
+    "title": "태양광 패널 계산기",
+    "subtitle": "재무 및 기술 분석"
+  },
+  "chat": {
+    "title": "태양광 채팅 어시스턴트",
+    "subtitle": "시스템 크기, ROI, 생산량에 대해 질문하고 장비 추천을 받으세요.",
+    "placeholder": "시스템 크기, ROI, 생산량에 대해 질문...",
+    "send": "전송",
+    "startVoice": "음성 시작",
+    "stopVoice": "음성 중지",
+    "liveChat": "라이브 채팅",
+    "useAiVoice": "AI 음성 사용",
+    "uploadFiles": "파일 업로드",
+    "configureApis": "API 설정",
+    "clearKey": "키 삭제",
+    "newChat": "새 채팅"
+  },
+  "tabs": {
+    "financial": "재무 요약",
+    "production": "생산량 및 성능",
+    "battery": "배터리 및 정전 시뮬레이션",
+    "shopping": "장바구니",
+    "apis": "API",
+    "apiUsage": "API 사용량",
+    "solarIntegration": "Google Solar 연동",
+    "datasheet": "25년 데이터 시트",
+    "aiOverview": "AI 개요"
+  }
+}

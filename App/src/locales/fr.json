@@ -1,1 +1,31 @@
-{}
+{
+  "app": {
+    "title": "Calculateur de Panneaux Solaires",
+    "subtitle": "Analyse Financière et Technique"
+  },
+  "chat": {
+    "title": "Assistant Chat Solaire",
+    "subtitle": "Posez des questions sur le dimensionnement, le ROI, la production et obtenez des recommandations.",
+    "placeholder": "Posez une question sur le dimensionnement, le ROI...",
+    "send": "Envoyer",
+    "startVoice": "Démarrer la Voix",
+    "stopVoice": "Arrêter la Voix",
+    "liveChat": "Chat en Direct",
+    "useAiVoice": "Utiliser la Voix IA",
+    "uploadFiles": "Télécharger des Fichiers",
+    "configureApis": "Configurer les APIs",
+    "clearKey": "Effacer la Clé",
+    "newChat": "Nouveau Chat"
+  },
+  "tabs": {
+    "financial": "Résumé Financier",
+    "production": "Production et Performance",
+    "battery": "Batterie et Simulation de Panne",
+    "shopping": "Panier",
+    "apis": "APIs",
+    "apiUsage": "Utilisation de l'API",
+    "solarIntegration": "Intégration Google Solar",
+    "datasheet": "Données sur 25 Ans",
+    "aiOverview": "Aperçu IA"
+  }
+}

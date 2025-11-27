@@ -47,6 +47,7 @@ const Dashboard = () => {
   const simulation = useSolarStore((state) => state.simulation)
   const setSimulationValue = useSolarStore((state) => state.setSimulationValue)
   const [activeTab, setActiveTab] = useState<TabId>('financial')
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   // Listen for global UI events (e.g., ChatAssistant requesting APIs tab)
   useEffect(() => {
@@ -91,34 +92,59 @@ const Dashboard = () => {
   )
 
   return (
-    <section className="glass-panel h-full rounded-[28px] p-6 text-white">
-      <header className="flex flex-col gap-2 border-b border-white/10 pb-4 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.2em] text-accent">Dashboard</p>
-          <h2 className="mt-2 text-3xl font-semibold">Solar Panel System Financial & Technical Analysis</h2>
-          <p className="text-sm text-slate-300">
-            Every visualization updates instantly as you tweak the configurator. Use the tabs to explore finances,
-            production, resilience, and the full amortization schedule.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs">
-          <div className="rounded-full border border-white/10 px-3 py-1 text-white/80">
-            Array Size: {formatNumber(snapshot.systemSizeKw, 2)} kWdc
-          </div>
-          <div className="rounded-full border border-white/10 px-3 py-1 text-white/80">
-            Annual Production: {formatNumber(snapshot.annualProduction, 0)} kWh
-          </div>
-        </div>
-      </header>
+    <section 
+      className={clsx(
+        "glass-panel relative transition-all duration-500 ease-in-out overflow-hidden text-white",
+        isCollapsed ? "h-[60px] rounded-[28px]" : "h-full rounded-[28px] p-6"
+      )}
+    >
+      {/* Collapse/Expand Button */}
+      <div className={clsx("absolute z-20 transition-all duration-500", isCollapsed ? "left-1/2 -translate-x-1/2 top-2" : "top-4 right-4")}>
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="flex items-center justify-center w-8 h-8 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 rounded-lg transition-all duration-200 hover:scale-110 group"
+          title={isCollapsed ? 'Expand Dashboard' : 'Collapse Dashboard'}
+        >
+          <svg
+            className={`w-4 h-4 text-accent transition-transform duration-500 ${isCollapsed ? 'rotate-90' : '-rotate-90'}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            style={{ outline: 'none' }}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
 
-      <nav className="mt-6 flex flex-wrap gap-3">
+      <div className={clsx("transition-opacity duration-300", isCollapsed ? "opacity-0 pointer-events-none" : "opacity-100")}>
+        <header className="flex flex-col gap-2 border-b border-white/10 pb-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.2em] text-accent">Dashboard</p>
+              <h2 className="mt-2 text-3xl font-semibold">Solar Panel System Financial & Technical Analysis</h2>
+              <p className="text-sm text-slate-300">
+                Every visualization updates instantly as you tweak the configurator. Use the tabs to explore finances,
+                production, resilience, and the full amortization schedule.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <div className="rounded-full border border-white/10 px-3 py-1 text-white/80">
+                Array Size: {formatNumber(snapshot.systemSizeKw, 2)} kWdc
+              </div>
+              <div className="rounded-full border border-white/10 px-3 py-1 text-white/80">
+                Annual Production: {formatNumber(snapshot.annualProduction, 0)} kWh
+              </div>
+            </div>
+          </header>
+
+          <nav className="mt-6 flex flex-wrap gap-3">
         {TAB_DEFINITION.map((tab) => (
           <button
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id)}
             className={clsx(
-              'tab-pill text-sm',
+              'tab-pill text-sm transition-all',
               activeTab === tab.id ? 'tab-pill--active' : 'tab-pill--idle',
             )}
           >
@@ -148,6 +174,7 @@ const Dashboard = () => {
         {activeTab === 'solarIntegration' && <SolarIntegrationTab />}
         {activeTab === 'datasheet' && <DataSheetTab rows={snapshot.projection} />}
         {activeTab === 'aiOverview' && <AIOverviewTab snapshot={snapshot} config={config} />}
+      </div>
       </div>
     </section>
   )
@@ -291,7 +318,7 @@ const FinancialSummaryTab = ({ snapshot, crossoverData }: FinancialSummaryTabPro
       <ResponsiveContainer width="100%" height={360}>
         <LineChart data={crossoverData}>
           <CartesianGrid stroke="rgba(148,163,184,0.2)" strokeDasharray="3 3" />
-          <XAxis dataKey="year" stroke="#94a3b8" label={{ value: 'Year', position: 'insideBottom', dy: 10 }} />
+          <XAxis dataKey="year" stroke="#94a3b8" label={{ value: 'Year', position: 'insideBottom', offset: -5, dy: 15 }} />
           <YAxis
             stroke="#94a3b8"
             tickFormatter={(value) => formatCurrency(value, { maximumFractionDigits: 0 })}
@@ -324,7 +351,7 @@ const ProductionTab = ({ panelChartData, monthlyData }: ProductionTabProps) => (
       <ResponsiveContainer width="100%" height={320}>
         <LineChart data={panelChartData}>
           <CartesianGrid stroke="rgba(148,163,184,0.2)" strokeDasharray="3 3" />
-          <XAxis dataKey="year" stroke="#94a3b8" label={{ value: 'Year', position: 'insideBottom', dy: 12 }} />
+          <XAxis dataKey="year" stroke="#94a3b8" label={{ value: 'Year', position: 'insideBottom', offset: -5, dy: 15 }} />
           <YAxis
             stroke="#94a3b8"
             tickFormatter={(value) => `${formatNumber(value / 1000, 1)} MWh`}

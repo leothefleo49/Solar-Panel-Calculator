@@ -1,1 +1,31 @@
-{}
+{
+  "app": {
+    "title": "太阳能板计算器",
+    "subtitle": "财务与技术分析"
+  },
+  "chat": {
+    "title": "太阳能聊天助手",
+    "subtitle": "询问系统规模、投资回报率、发电量问题，获取设备推荐。",
+    "placeholder": "询问系统规模、投资回报率、发电量...",
+    "send": "发送",
+    "startVoice": "开始语音",
+    "stopVoice": "停止语音",
+    "liveChat": "实时聊天",
+    "useAiVoice": "使用AI语音",
+    "uploadFiles": "上传文件",
+    "configureApis": "配置API",
+    "clearKey": "清除密钥",
+    "newChat": "新聊天"
+  },
+  "tabs": {
+    "financial": "财务摘要",
+    "production": "发电量与性能",
+    "battery": "电池与停电模拟",
+    "shopping": "购物车",
+    "apis": "API",
+    "apiUsage": "API使用情况",
+    "solarIntegration": "Google Solar集成",
+    "datasheet": "25年数据表",
+    "aiOverview": "AI概览"
+  }
+}

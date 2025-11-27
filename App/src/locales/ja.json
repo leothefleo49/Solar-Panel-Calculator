@@ -1,0 +1,31 @@
+{
+  "app": {
+    "title": "ソーラーパネル計算機",
+    "subtitle": "財務・技術分析"
+  },
+  "chat": {
+    "title": "ソーラーチャットアシスタント",
+    "subtitle": "システムサイズ、ROI、発電量について質問し、機器の推奨を受けましょう。",
+    "placeholder": "システムサイズ、ROI、発電量について質問...",
+    "send": "送信",
+    "startVoice": "音声開始",
+    "stopVoice": "音声停止",
+    "liveChat": "ライブチャット",
+    "useAiVoice": "AI音声を使用",
+    "uploadFiles": "ファイルをアップロード",
+    "configureApis": "APIを設定",
+    "clearKey": "キーを削除",
+    "newChat": "新しいチャット"
+  },
+  "tabs": {
+    "financial": "財務サマリー",
+    "production": "発電量とパフォーマンス",
+    "battery": "バッテリーと停電シミュレーション",
+    "shopping": "ショッピングカート",
+    "apis": "API",
+    "apiUsage": "API使用状況",
+    "solarIntegration": "Google Solar連携",
+    "datasheet": "25年間データシート",
+    "aiOverview": "AI概要"
+  }
+}

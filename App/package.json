@@ -52,11 +52,11 @@
     "@capacitor/browser": "^7.0.2",
     "@tauri-apps/plugin-dialog": "^2.0.0",
     "@tauri-apps/plugin-fs": "^2.0.0",
+    "@tauri-apps/plugin-http": "^2.0.0",
+    "@tauri-apps/plugin-process": "^2.0.0",
     "@tauri-apps/plugin-shell": "^2.0.0",
     "@tauri-apps/plugin-store": "^2.0.0",
     "@tauri-apps/plugin-updater": "^2.0.0",
-    "@tauri-apps/plugin-http": "^2.0.0",
-    "@tauri-apps/plugin-process": "^2.0.0",
     "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",
     "i18next": "^25.6.3",
@@ -66,6 +66,7 @@
     "react-i18next": "^16.3.5",
     "react-is": "^19.2.0",
     "recharts": "^3.4.1",
+    "ui-debugger-pro": "^7.0.1",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
