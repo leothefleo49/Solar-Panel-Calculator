@@ -5,6 +5,46 @@ All notable changes to the Solar Panel Calculator will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.49] - 2025-06-28
+
+### Added
+- **Expanded Language Support**: Added 5 new languages (Italian, Portuguese, Japanese, Korean, Russian)
+  - Total of 10 languages now supported: English, Spanish, French, German, Italian, Portuguese, Chinese, Japanese, Korean, Russian
+  - Complete translations for all UI elements including tabs, chat, and app titles
+- **AI UI Highlighting**: New `highlightElement` tool for AI assistant
+  - AI can now highlight any UI element to guide users visually
+  - Gentle blue pulsing glow effect that auto-removes after 5 seconds
+  - Supports highlighting by element ID or selector
+- **Voice Filtering by Language**: Text-to-speech voices now filtered by selected app language
+  - Automatically shows only voices matching current language
+  - Falls back to all voices if no language-specific voices available
+
+### Changed
+- **Language Switcher Redesign**: Converted from full-page overlay to compact dropdown
+  - Click to open dropdown, click outside to close
+  - Shows flag emoji + language name for each option
+  - Current language displays in the button
+- **Dashboard Collapse Animation**: Improved vertical collapse behavior
+  - Collapses to 60px height (was fully hidden)
+  - Smooth CSS transition animation
+  - Consistent styling with Configurator and ChatAssistant collapse buttons
+- **Unified Panel Collapse Buttons**: All three panels (Configurator, Dashboard, ChatAssistant) now use matching collapse button styles
+  - Consistent positioning and appearance
+  - Smooth animations across all panels
+
+### Fixed
+- **tauri.conf.json Parse Error**: Removed extra closing brace that prevented Windows app from launching
+  - This was the root cause of "app won't open after download" issue
+- **Removed Default UI Glows**: Eliminated distracting default box-shadows throughout the app
+  - Cleaner, more modern appearance
+  - AI highlighting now stands out properly
+
+### Technical
+- Updated all locale files (de.json, fr.json, es.json, zh.json, it.json, pt.json, ja.json, ko.json, ru.json) with complete translations
+- Added `.ai-highlight` CSS class for AI-controlled element highlighting
+- Enhanced ChatAssistant with `highlightElement` tool integration
+- Improved LanguageSwitcher with `useEffect` for click-outside detection
+
 ## [1.4.15] - 2025-11-17
 
 ### Fixed
